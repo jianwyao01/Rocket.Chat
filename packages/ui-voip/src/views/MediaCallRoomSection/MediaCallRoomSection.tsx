@@ -1,5 +1,6 @@
 import { css } from '@rocket.chat/css-in-js';
-import { Box, ButtonGroup, Icon } from '@rocket.chat/fuselage';
+import { Box, ButtonGroup, Icon, Palette } from '@rocket.chat/fuselage';
+import type { ReactNode } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -84,22 +85,39 @@ const callHeaderTimerStyles = css`
 
 // Visual grouping for "toggle + its device chevron": tightens the gap
 // between the toggle button and its adjacent device picker so they read
-// as one composite control rather than two unrelated buttons. The
-// chevron also nudges left slightly so it sits flush against the toggle.
-const controlGroupStyles = css`
+// A device toggle and its selector, fused into one control: a single rounded
+// outline with a hairline between the halves, so they read as one thing that
+// does two things rather than as two buttons that happen to be adjacent.
+//
+// The selector sits first, on the inline start, where it is out of the way of
+// the toggle the user actually reaches for — and its chevron points *up*,
+// toward where its menu opens from a bottom bar.
+const deviceControlStyles = css`
 	display: inline-flex;
-	align-items: center;
-	gap: 0;
-`;
+	align-items: stretch;
+	overflow: hidden;
+	border-radius: var(--rcx-border-radius-medium, 4px);
 
-const chevronWrapStyles = css`
-	margin-inline-start: -2px;
+	& button {
+		border-radius: 0;
+	}
+
+	/* Both halves are wrapped, so the hairline lands on the second one's button either way. */
+	& > * + * button {
+		border-inline-start: 1px solid ${Palette.stroke['stroke-extra-light'].toString()};
+	}
 `;
 
 // Fullscreen toggle in the call header — small icon-only button styled
 // to read as "header action" rather than a primary control. White-on-
 // transparent with a subtle hover background, matching the other header
 // pill's chrome.
+const headerDividerStyles = css`
+	inline-size: 1px;
+	block-size: 20px;
+	background-color: ${Palette.stroke['stroke-extra-light'].toString()};
+`;
+
 const headerActionsRowStyles = css`
 	display: inline-flex;
 	align-items: center;
@@ -154,9 +172,22 @@ type MediaCallRoomSectionProps = {
 	 * drift apart.
 	 */
 	actionsContainer?: HTMLElement | null;
+	/**
+	 * Actions about the *call* rather than about the caller's own devices — who is in it, and so on. They belong
+	 * beside the call's own header actions at the top, away from the mic and camera a user reaches for, which is
+	 * where a host with panels of its own puts them.
+	 */
+	headerActions?: ReactNode;
 };
 
-const MediaCallRoomSection = ({ showChat, onToggleChat, user, hideChatToggle, actionsContainer }: MediaCallRoomSectionProps) => {
+const MediaCallRoomSection = ({
+	showChat,
+	onToggleChat,
+	user,
+	hideChatToggle,
+	actionsContainer,
+	headerActions,
+}: MediaCallRoomSectionProps) => {
 	const { t } = useTranslation();
 
 	const {
@@ -316,31 +347,35 @@ const MediaCallRoomSection = ({ showChat, onToggleChat, user, hideChatToggle, ac
 
 	const callControls = (
 		<>
-			<Box className={controlGroupStyles}>
-				<ToggleButton
-					label={t('Mute')}
-					icons={['mic', 'mic-off']}
-					titles={[t('Mute'), t('Unmute')]}
-					pressed={muted}
-					dangerWhenPressed
-					onToggle={onMute}
-				/>
-				<Box className={chevronWrapStyles}>
+			<Box className={deviceControlStyles}>
+				<Box>
 					<DevicePicker chevron />
+				</Box>
+				<Box>
+					<ToggleButton
+						label={t('Mute')}
+						icons={['mic', 'mic-off']}
+						titles={[t('Mute'), t('Unmute')]}
+						pressed={muted}
+						dangerWhenPressed
+						onToggle={onMute}
+					/>
 				</Box>
 			</Box>
 			{onToggleCamera && (
-				<Box className={controlGroupStyles}>
-					<ToggleButton
-						label={t('Camera')}
-						icons={['video', 'video-off']}
-						titles={[t('Stop_camera'), t('Start_camera')]}
-						pressed={!(localCamera?.active ?? false)}
-						dangerWhenPressed
-						onToggle={onToggleCamera}
-					/>
-					<Box className={chevronWrapStyles}>
+				<Box className={deviceControlStyles}>
+					<Box>
 						<CameraPicker />
+					</Box>
+					<Box>
+						<ToggleButton
+							label={t('Camera')}
+							icons={['video', 'video-off']}
+							titles={[t('Stop_camera'), t('Start_camera')]}
+							pressed={!(localCamera?.active ?? false)}
+							dangerWhenPressed
+							onToggle={onToggleCamera}
+						/>
 					</Box>
 				</Box>
 			)}
@@ -450,6 +485,13 @@ const MediaCallRoomSection = ({ showChat, onToggleChat, user, hideChatToggle, ac
 					>
 						<Icon name={isFullscreen ? 'arrow-collapse' : 'arrow-expand'} size='x16' />
 					</Box>
+					{headerActions && (
+						<>
+							{/* Ruled off, because what follows is about the call rather than about this view of it. */}
+							<Box className={headerDividerStyles} />
+							{headerActions}
+						</>
+					)}
 				</Box>
 			</Box>
 			<CallStage
@@ -462,7 +504,12 @@ const MediaCallRoomSection = ({ showChat, onToggleChat, user, hideChatToggle, ac
 			{/* The same controls either way: a surface with a bar of its own is handed them to place, and
 			    otherwise they sit in the call's own strip below the stage. */}
 			{actionsContainer ? (
-				createPortal(<ButtonGroup large>{callControls}</ButtonGroup>, actionsContainer)
+				createPortal(
+					<ButtonGroup large style={{ gap: 8 }}>
+						{callControls}
+					</ButtonGroup>,
+					actionsContainer,
+				)
 			) : (
 				<ActionStrip
 					rightSlot={

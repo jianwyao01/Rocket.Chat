@@ -117,28 +117,33 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 		[controlsHost],
 	);
 
-	// This window's own panels, at the end of the same bar.
-	const panelActions = (
-		<>
-			<CallBarAction
-				icon='team'
-				label={t('Members')}
-				pressed={activePanel === 'members'}
-				badgeCount={presentCount}
-				badgeTitle={t('__count__people_in_the_call', { count: presentCount })}
-				onClick={() => togglePanel('members')}
-			/>
-			<CallBarAction
-				icon='balloon'
-				label={t('Chat')}
-				pressed={chatVisible}
-				badgeCount={unread}
-				badgeVariant={unreadVariant}
-				badgeTitle={unreadTitle}
-				onClick={() => togglePanel('chat')}
-			/>
-		</>
+	// Who is in the call is a fact about the call, so for a provider that brings its own header it goes up there
+	// beside the call's own actions. The chat is this window's, and stays on this window's bar.
+	const membersAction = (
+		<CallBarAction
+			icon='team'
+			label={t('Members')}
+			pressed={activePanel === 'members'}
+			badgeCount={presentCount}
+			badgeTitle={t('__count__people_in_the_call', { count: presentCount })}
+			onClick={() => togglePanel('members')}
+		/>
 	);
+
+	const chatAction = (
+		<CallBarAction
+			icon='balloon'
+			label={t('Chat')}
+			pressed={chatVisible}
+			badgeCount={unread}
+			badgeVariant={unreadVariant}
+			badgeTitle={unreadTitle}
+			onClick={() => togglePanel('chat')}
+		/>
+	);
+
+	// An iframe provider has no header of ours to put anything in, so both stay on the bar.
+	const embedded = !conference.url;
 
 	// No access to the conference's room — show the unauthorized screen for the whole page rather than a
 	// broken split with a "not found" chat panel.
@@ -200,6 +205,7 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 							user={self}
 							hideChatToggle
 							actionsContainer={controlsHost}
+							headerActions={membersAction}
 						/>
 					)}
 				</Box>
@@ -222,7 +228,10 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 				</CallPanel>
 			</Box>
 
-			<CallBar centre={<Box ref={mountControlsHost} display='flex' alignItems='center' />}>{panelActions}</CallBar>
+			<CallBar centre={<Box ref={mountControlsHost} display='flex' alignItems='center' />}>
+				{!embedded && membersAction}
+				{chatAction}
+			</CallBar>
 		</Box>
 	);
 };

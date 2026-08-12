@@ -39,7 +39,7 @@ const CallBar = ({ centre, children }: CallBarProps) => (
 		<Box flexGrow={1} flexBasis={0} />
 		{centre}
 		<Box flexGrow={1} flexBasis={0} display='flex' justifyContent='flex-end'>
-			<ButtonGroup>{children}</ButtonGroup>
+			<ButtonGroup style={{ gap: 8 }}>{children}</ButtonGroup>
 		</Box>
 	</Box>
 );
