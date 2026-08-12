@@ -18,7 +18,9 @@ type CallBarActionProps = {
 
 const CallBarAction = ({ label, icon, pressed, onClick, badgeCount = 0, badgeVariant = 'secondary', badgeTitle }: CallBarActionProps) => (
 	<Box position='relative' display='flex'>
-		<IconButton medium icon={icon} title={label} aria-label={label} pressed={pressed} onClick={onClick} />
+		{/* `secondary` so these sit in the row as equals with the call's own controls — a ghost button beside a
+		    filled one reads as disabled rather than as merely inactive. */}
+		<IconButton medium secondary icon={icon} title={label} aria-label={label} pressed={pressed} onClick={onClick} />
 		{badgeCount > 0 && (
 			<Box position='absolute' insetBlockStart={-4} insetInlineEnd={-4} pointerEvents='none'>
 				<Badge variant={badgeVariant} title={badgeTitle}>

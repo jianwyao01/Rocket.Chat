@@ -55,7 +55,7 @@ const useAvailableVideoInputs = () => {
 };
 
 // eslint-disable-next-line react/no-multi-comp
-const CameraPicker = ({ secondary = false, className }: { secondary?: boolean; className?: string }) => {
+const CameraPicker = ({ secondary = true, className }: { secondary?: boolean; className?: string }) => {
 	const { t } = useTranslation();
 	const { onVideoInputChange, currentCameraDeviceId } = useMediaCallView();
 	const devices = useAvailableVideoInputs();
@@ -94,7 +94,7 @@ const CameraPicker = ({ secondary = false, className }: { secondary?: boolean; c
 				const id = deviceId.slice(0, -'-videoinput'.length);
 				onVideoInputChange?.(id);
 			}}
-			button={<CameraPickerButton secondary={secondary} tiny />}
+			button={<CameraPickerButton secondary={secondary} />}
 		/>
 	);
 };

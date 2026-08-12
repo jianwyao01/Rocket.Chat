@@ -166,7 +166,7 @@ const DevicePicker = ({ secondary = false, chevron = false, className }: DeviceP
 
 				console.warn('Device Picker - Failed to select device: Invalid deviceId', deviceId);
 			}}
-			button={<DevicePickerButton secondary={secondary} chevron={chevron} tiny={!secondary || chevron} />}
+			button={<DevicePickerButton secondary={secondary || chevron} chevron={chevron} tiny={!chevron && !secondary} />}
 		/>
 	);
 };
