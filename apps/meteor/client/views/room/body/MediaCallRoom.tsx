@@ -1,5 +1,6 @@
 import type { IRoom } from '@rocket.chat/core-typings';
 import { isDirectMessageRoom } from '@rocket.chat/core-typings';
+import { useCurrentRoutePath } from '@rocket.chat/ui-contexts';
 import type { PeerInfo } from '@rocket.chat/ui-voip';
 import {
 	MediaCallRoomActivity,
@@ -26,7 +27,13 @@ export type MediaCallRoomProps = {
 
 /**
  * Decides whether to render the call activity (top-half call view + chat below)
- * in the current room. Three modes:
+ * in the current room.
+ *
+ * Never in the dedicated call window: that window already shows the call, and the room it renders in its chat
+ * panel *is* the call's room — so this would draw a second, fully live copy of the call inside the chat beside
+ * the first one.
+ *
+ * Otherwise, three modes:
  *  - 1:1 DM call: MediaCallRoomActivity with the default session-driven provider
  *  - Group call in this room: MediaCallRoomActivity reading from the app-level
  *    LiveKitVideoConfBridge (mounted in MeteorProvider.tsx). The LK connection
@@ -41,11 +48,18 @@ const MediaCallRoom = ({ children }: MediaCallRoomProps) => {
 	const room = useRoom();
 	const { activeCall: activeLkCall } = useLiveKitVideoConf();
 
+	// The call window renders this room inside its chat panel; the call itself is already on screen there.
+	const inCallWindow = !!useCurrentRoutePath()?.startsWith('/conference/');
+
 	const screenShareEnabled = features.includes('screen-share');
 
 	// Group-call detection: the LiveKit context owns the active LK call's rid
 	// (set by useGroupCallRoomAction.joinCall). Decoupled from VoIP entirely.
 	const isGroupCallHere = activeLkCall?.rid === room?._id;
+
+	if (inCallWindow) {
+		return <>{children}</>;
+	}
 
 	if (isGroupCallHere) {
 		return <MediaCallRoomActivity provider={null}>{children}</MediaCallRoomActivity>;

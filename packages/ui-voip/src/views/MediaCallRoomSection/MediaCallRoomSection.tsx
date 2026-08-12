@@ -317,7 +317,14 @@ const MediaCallRoomSection = ({ showChat, onToggleChat, user, hideChatToggle, ac
 	const callControls = (
 		<>
 			<Box className={controlGroupStyles}>
-				<ToggleButton label={t('Mute')} icons={['mic', 'mic-off']} titles={[t('Mute'), t('Unmute')]} pressed={muted} onToggle={onMute} />
+				<ToggleButton
+					label={t('Mute')}
+					icons={['mic', 'mic-off']}
+					titles={[t('Mute'), t('Unmute')]}
+					pressed={muted}
+					dangerWhenPressed
+					onToggle={onMute}
+				/>
 				<Box className={chevronWrapStyles}>
 					<DevicePicker chevron />
 				</Box>
@@ -329,6 +336,7 @@ const MediaCallRoomSection = ({ showChat, onToggleChat, user, hideChatToggle, ac
 						icons={['video', 'video-off']}
 						titles={[t('Stop_camera'), t('Start_camera')]}
 						pressed={!(localCamera?.active ?? false)}
+						dangerWhenPressed
 						onToggle={onToggleCamera}
 					/>
 					<Box className={chevronWrapStyles}>
