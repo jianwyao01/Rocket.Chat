@@ -20,6 +20,7 @@ import { availabilityErrors } from '../../../lib/videoConference/constants';
 import { canAccessRoomIdAsync } from '../../lib/authorization/canAccessRoom';
 import { canSendMessageAsync } from '../../lib/authorization/canSendMessage';
 import { hasPermissionAsync } from '../../lib/authorization/hasPermission';
+import { canAccessConference } from '../../lib/videoConfAccess';
 import { videoConfProviders } from '../../lib/videoConfProviders';
 import { API } from '../api';
 import { getPaginationItems } from '../lib/getPaginationItems';
@@ -64,34 +65,6 @@ const cancelResponseSchema = ajv.compile<void>({
 	required: ['success'],
 	additionalProperties: false,
 });
-
-/**
- * Being in the call and being able to read its chat are separate things, so authorization accepts either:
- * membership of the conference, or access to a room the conference lives in.
- *
- * Membership covers people added from outside the room — they were added to the *call*, not to a room, so
- * there is no subscription to check. The room checks cover everyone who can already see the conversation:
- * `rid` is the room the call started in, and `discussionRid` the discussion its chat may have moved to,
- * whose members may have no access to the parent room.
- */
-const canAccessConference = async (
-	call: Pick<VideoConference, 'rid' | 'discussionRid' | 'users'>,
-	userId: string | undefined,
-): Promise<boolean> => {
-	if (!userId) {
-		return false;
-	}
-
-	if (call.users.some(({ _id }) => _id === userId)) {
-		return true;
-	}
-
-	if (await canAccessRoomIdAsync(call.rid, userId)) {
-		return true;
-	}
-
-	return !!call.discussionRid && canAccessRoomIdAsync(call.discussionRid, userId);
-};
 
 /**
  * How every conference endpoint below starts: the call has to exist, and the caller has to be allowed near it.

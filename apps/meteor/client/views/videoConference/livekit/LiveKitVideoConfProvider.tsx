@@ -1,6 +1,6 @@
 /* eslint-disable react/no-multi-comp */
 import { LiveKitRoom, RoomAudioRenderer, useLocalParticipant, useParticipants, useRoomContext, useTracks } from '@livekit/components-react';
-import { useUserAvatarPath } from '@rocket.chat/ui-contexts';
+import { useToastMessageDispatch, useUserAvatarPath } from '@rocket.chat/ui-contexts';
 import { MediaCallViewContext, defaultMediaCallContextValue, playJoinChime, type RemoteParticipantInfo } from '@rocket.chat/ui-voip';
 import type { LocalAudioTrack, RemoteParticipant } from 'livekit-client';
 import { ParticipantKind, RoomEvent, Track } from 'livekit-client';
@@ -28,11 +28,19 @@ const headersOf = () => ({
 
 type LKCreds = { serverUrl: string; token: string; roomName: string };
 
+/**
+ * Throws rather than returning null when the credentials are refused, because the two mean opposite things to
+ * whoever is waiting: no credentials *yet* is a call still connecting, while credentials refused is a call that
+ * will never connect. Swallowing the difference produced the worst possible screen — the call apparently running,
+ * the user alone in it, and every control inert — with nothing anywhere to say why.
+ */
 const fetchTransportConfig = async (callId: string): Promise<LKCreds | null> => {
 	const res = await fetch(`/api/v1/video-conference.livekit.transport.config?callId=${encodeURIComponent(callId)}`, {
 		headers: headersOf(),
 	});
-	if (!res.ok) return null;
+	if (!res.ok) {
+		throw new Error(`transport config refused with ${res.status}`);
+	}
 	const data = (await res.json()) as { service: string; livekit?: LKCreds };
 	return data.service === 'livekit' && data.livekit ? data.livekit : null;
 };
@@ -501,6 +509,7 @@ const InnerProvider = ({
  * LiveKitVideoConfProvider context.
  */
 const LiveKitVideoConfBridge = ({ children }: { children: ReactNode }) => {
+	const dispatchToastMessage = useToastMessageDispatch();
 	const { activeCall, leaveCall } = useLiveKitVideoConf();
 	const callId = activeCall?.callId;
 	const [creds, setCreds] = useState<LKCreds | null>(null);
@@ -513,13 +522,23 @@ const LiveKitVideoConfBridge = ({ children }: { children: ReactNode }) => {
 			return;
 		}
 		let cancelled = false;
-		void fetchTransportConfig(callId).then((c) => {
-			if (!cancelled) setCreds(c);
-		});
+		void fetchTransportConfig(callId)
+			.then((c) => {
+				if (!cancelled) setCreds(c);
+			})
+			// Nothing to connect to, so there is no call to sit in. Leaving says so — where staying would show a
+			// call that looks live and answers nothing — and the toast is what names the reason.
+			.catch((error) => {
+				if (cancelled) {
+					return;
+				}
+				dispatchToastMessage({ type: 'error', message: error });
+				leaveCall();
+			});
 		return () => {
 			cancelled = true;
 		};
-	}, [callId]);
+	}, [callId, dispatchToastMessage, leaveCall]);
 
 	const onLeave = useCallback(() => {
 		if (callId) {

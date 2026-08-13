@@ -142,7 +142,7 @@ Self-contained module for everything that talks to LK or AWS. Files largely unch
 
 ### REST APIs
 
-All endpoints live in `apps/meteor/ee/server/api/videoConferenceLiveKit.ts`. All authorise the caller as a member of the room and rate-limit per user.
+All endpoints live in `apps/meteor/ee/server/api/videoConferenceLiveKit.ts`, rate-limited per user. Authorization is `canAccessConference` — conference membership **or** access to the call's room — the same rule every conference endpoint uses, and deliberately not room access alone: a call member added from outside the room (the third person in a DM call) has no subscription to check, and checking for one refuses them their own call. See [Access Control](../video-conference-persistent-chat/README.md#access-control).
 
 | Method | Path | Purpose |
 |---|---|---|

@@ -1,6 +1,6 @@
 import { VideoConferenceStatus } from '@rocket.chat/core-typings';
 import { Logger } from '@rocket.chat/logger';
-import { VideoConference as VideoConferenceModel, Rooms } from '@rocket.chat/models';
+import { VideoConference as VideoConferenceModel } from '@rocket.chat/models';
 import {
 	ajv,
 	validateBadRequestErrorResponse,
@@ -9,8 +9,8 @@ import {
 } from '@rocket.chat/rest-typings';
 
 import { API } from '../../../server/api/api';
-import { canAccessRoomAsync } from '../../../server/lib/authorization/canAccessRoom';
 import notifications from '../../../server/lib/notifications/core/lib/Notifications';
+import { canAccessConference } from '../../../server/lib/videoConfAccess';
 import { createLiveKitAccessToken, getLiveKitConfig, isLiveKitFullyConfigured } from '../lib/livekit';
 
 const logger = new Logger('VideoConference/LiveKit/API');
@@ -39,10 +39,16 @@ const callIdQuerySchema = ajv.compile<{ callId: string }>({
 
 const livekitRoomNameFor = (callId: string) => `mc-${callId}`;
 
-// Resolves the call + verifies the caller has access to the call's room.
-// Returns the call doc on success; the API endpoint maps the error code to
-// the right HTTP response. LiveKit calls are always room-scoped, so any
-// room member is allowed to drive transport state.
+/**
+ * Resolves the call and verifies the caller is allowed near it. Returns the call doc on success; the endpoint
+ * maps the error code to the right HTTP response.
+ *
+ * Allowed is `canAccessConference` — the same rule the conference endpoints use — and deliberately not "can
+ * access the call's room". Membership of a call is granted without any room access, so a conference started in a
+ * DM and joined by a third person has a member with no subscription to that DM: checking the room refused them
+ * the credentials for their own call, and, because a missing token is indistinguishable from a call that hasn't
+ * connected yet, they got a call window showing them alone with controls that did nothing.
+ */
 async function authorizeCall(
 	callId: string | undefined,
 	userId: string,
@@ -54,8 +60,7 @@ async function authorizeCall(
 	const call = await VideoConferenceModel.findOneById(callId);
 	if (!call) return { error: 'invalid-call' };
 	if (!call.rid) return { error: 'invalid-call' };
-	const room = await Rooms.findOneById(call.rid);
-	if (!room || !(await canAccessRoomAsync(room, { _id: userId }))) {
+	if (!(await canAccessConference(call, userId))) {
 		return { error: 'forbidden' };
 	}
 	return { call };
