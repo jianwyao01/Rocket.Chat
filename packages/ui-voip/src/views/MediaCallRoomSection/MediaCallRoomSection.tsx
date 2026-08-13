@@ -1,6 +1,5 @@
 import { css } from '@rocket.chat/css-in-js';
-import { Box, ButtonGroup, Icon, Palette } from '@rocket.chat/fuselage';
-import type { ReactNode } from 'react';
+import { Box, ButtonGroup, Icon } from '@rocket.chat/fuselage';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -60,10 +59,6 @@ const reactionButtonStyles = css`
 	}
 `;
 
-// Language picker popover — anchored to its pill in the header. `top: 100%`
-// puts it just below the pill; `right: 0` aligns its right edge to the
-// pill so the menu hangs left into the call surface (the pill sits near
-// the right end of the header).
 const callHeaderStyles = css`
 	display: flex;
 	align-items: center;
@@ -83,8 +78,6 @@ const callHeaderTimerStyles = css`
 	font-variant-numeric: tabular-nums;
 `;
 
-// Visual grouping for "toggle + its device chevron": tightens the gap
-// between the toggle button and its adjacent device picker so they read
 // A device toggle and its selector, fused into one control: a single rounded
 // outline with a hairline between the halves, so they read as one thing that
 // does two things rather than as two buttons that happen to be adjacent.
@@ -107,16 +100,6 @@ const deviceControlStyles = css`
 	& > *:first-child button {
 		opacity: 0.7;
 	}
-`;
-
-// Fullscreen toggle in the call header — small icon-only button styled
-// to read as "header action" rather than a primary control. White-on-
-// transparent with a subtle hover background, matching the other header
-// pill's chrome.
-const headerDividerStyles = css`
-	inline-size: 1px;
-	block-size: 20px;
-	background-color: ${Palette.stroke['stroke-extra-light'].toString()};
 `;
 
 const headerActionsRowStyles = css`
@@ -174,11 +157,13 @@ type MediaCallRoomSectionProps = {
 	 */
 	actionsContainer?: HTMLElement | null;
 	/**
-	 * Actions about the *call* rather than about the caller's own devices — who is in it, and so on. They belong
-	 * beside the call's own header actions at the top, away from the mic and camera a user reaches for, which is
-	 * where a host with panels of its own puts them.
+	 * Where to put the call's header, when the surface hosting the call has a bar of its own for it. The
+	 * conference window does, spanning above its side panels — inside the call area the header stopped at the
+	 * panel's edge and moved whenever a panel opened.
+	 *
+	 * Same arrangement as `actionsContainer`: the header is moved, not rebuilt.
 	 */
-	headerActions?: ReactNode;
+	headerContainer?: HTMLElement | null;
 };
 
 const MediaCallRoomSection = ({
@@ -187,7 +172,7 @@ const MediaCallRoomSection = ({
 	user,
 	hideChatToggle,
 	actionsContainer,
-	headerActions,
+	headerContainer,
 }: MediaCallRoomSectionProps) => {
 	const { t } = useTranslation();
 
@@ -346,6 +331,27 @@ const MediaCallRoomSection = ({
 		}
 	}, [liveLevel, localHandRaised, onToggleHand]);
 
+	// Ends apart: how long the call has been running on one side, what this view offers on the other.
+	const callHeader = (
+		<>
+			<Box className={callHeaderTimerStyles}>
+				<Timer startAt={startedAt} />
+			</Box>
+			<Box className={headerActionsRowStyles}>
+				<Box
+					is='button'
+					type='button'
+					className={fullscreenButtonStyles}
+					onClick={onToggleFullscreen}
+					title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+					aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+				>
+					<Icon name={isFullscreen ? 'arrow-collapse' : 'arrow-expand'} size='x16' />
+				</Box>
+			</Box>
+		</>
+	);
+
 	const callControls = (
 		<>
 			<Box className={deviceControlStyles}>
@@ -471,30 +477,9 @@ const MediaCallRoomSection = ({
 			flexDirection='column'
 			minHeight={0}
 		>
-			<Box className={callHeaderStyles}>
-				<Box className={callHeaderTimerStyles}>
-					<Timer startAt={startedAt} />
-				</Box>
-				<Box className={headerActionsRowStyles}>
-					<Box
-						is='button'
-						type='button'
-						className={fullscreenButtonStyles}
-						onClick={onToggleFullscreen}
-						title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-						aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-					>
-						<Icon name={isFullscreen ? 'arrow-collapse' : 'arrow-expand'} size='x16' />
-					</Box>
-					{headerActions && (
-						<>
-							{/* Ruled off, because what follows is about the call rather than about this view of it. */}
-							<Box className={headerDividerStyles} />
-							{headerActions}
-						</>
-					)}
-				</Box>
-			</Box>
+			{/* The window may own a bar for this — when it does, the header goes up there, spanning above the side
+			    panels rather than stopping at the call area's edge. */}
+			{headerContainer ? createPortal(callHeader, headerContainer) : <Box className={callHeaderStyles}>{callHeader}</Box>}
 			<CallStage
 				localParticipant={localParticipant}
 				remoteParticipants={remoteParticipants}

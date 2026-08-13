@@ -17,6 +17,7 @@ import ConferenceUnauthorizedPage from './ConferenceUnauthorizedPage';
 import PageLoading from '../root/PageLoading';
 import CallBar from './components/CallBar/CallBar';
 import CallBarAction from './components/CallBar/CallBarAction';
+import CallTopBar from './components/CallBar/CallTopBar';
 import CallPanel from './components/CallPanel/CallPanel';
 import { useCallPreferences } from './hooks/useCallPreferences';
 import { useConferenceEmbedded } from './hooks/useConferenceEmbedded';
@@ -117,6 +118,20 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 		[controlsHost],
 	);
 
+	// The same arrangement for the call's header, which goes in this window's top bar.
+	const headerHost = useMemo(() => {
+		const node = document.createElement('div');
+		// Ends apart, filling the bar: the call's header is a timer on one side and its own actions on the other.
+		node.style.cssText = 'display:flex;flex:1;min-width:0;align-items:center;justify-content:space-between';
+		return node;
+	}, []);
+	const mountHeaderHost = useCallback(
+		(node: HTMLElement | null) => {
+			node?.appendChild(headerHost);
+		},
+		[headerHost],
+	);
+
 	// Who is in the call is a fact about the call, so for a provider that brings its own header it goes up there
 	// beside the call's own actions. The chat is this window's, and stays on this window's bar.
 	const membersAction = (
@@ -190,6 +205,14 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 			    to be open, and a banner that moved as panels changed would read as a different message each time. */}
 			{room.chatAccess && <ChatAccessNotice callId={callId} access={room.chatAccess} />}
 
+			{/* Only a provider that renders in here has a header to give; an iframe keeps its chrome inside the
+			    frame. Above the row below, so it spans the side panels the way the bottom bar does. */}
+			{embedded && (
+				<CallTopBar host={<Box ref={mountHeaderHost} display='flex' flexGrow={1} minWidth={0} alignItems='center' />}>
+					{membersAction}
+				</CallTopBar>
+			)}
+
 			<Box display='flex' flexGrow={1} minHeight={0} position='relative'>
 				<Box flexGrow={1} minWidth={0} display='flex' flexDirection='column' position='relative'>
 					{/* A provider with a page of its own gets an iframe; one that runs the call in here renders it
@@ -205,7 +228,7 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 							user={self}
 							hideChatToggle
 							actionsContainer={controlsHost}
-							headerActions={membersAction}
+							headerContainer={headerHost}
 						/>
 					)}
 				</Box>
