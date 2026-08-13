@@ -520,6 +520,12 @@ Each row says how many people are in the call. Faces would answer the question b
 worth walking into — and the payload was built to carry a few participants for exactly that, but a count is what
 the first release ships; see [Deferred to follow-ups](#deferred-to-follow-ups).
 
+Each row is named by `conferenceNameFor` (`lib/videoConference/conferenceName.ts`), shared with the call window so
+the two can't disagree: a group conference's own title; otherwise the reader's own subscription, since a DM is
+named per side; and for a **direct** call with no subscription to read, whoever started it. That last case is the
+member added from outside a DM, and it is not a nicety — a DM room carries neither `name` nor `fname`, so falling
+back to the room reached `getRoomName`'s last resort and showed them the raw room id.
+
 ### A ringing call is listed, not popped
 
 An incoming call used to take over the screen with a popup that had to be answered before anything else could

@@ -53,6 +53,7 @@ import {
 	isLoggableConference,
 } from '../../../lib/videoConference/callHistory';
 import { resolveChatAccessMode } from '../../../lib/videoConference/chatAccess';
+import { conferenceNameFor } from '../../../lib/videoConference/conferenceName';
 import { availabilityErrors, shouldRingVideoConference } from '../../../lib/videoConference/constants';
 import { isUnaskedConferenceMember } from '../../../lib/videoConference/memberStatus';
 import { expiredPresenceLeases, INFERRED_LEAVE_REASONS } from '../../../lib/videoConference/presence';
@@ -1389,7 +1390,9 @@ export class VideoConfService extends ServiceClassInternal implements IVideoConf
 	public async listJoinableCalls(uid: IUser['_id']): Promise<JoinableVideoConference[]> {
 		const running = await VideoConferenceModel.find(
 			{ endedAt: { $exists: false } },
-			{ projection: { rid: 1, discussionRid: 1, users: 1, title: 1, type: 1, createdAt: 1 }, sort: { createdAt: -1 } },
+			// `createdBy` is here because naming a direct call needs it — a call is named after a person, and for a
+			// member with no subscription that person is whoever started it.
+			{ projection: { rid: 1, discussionRid: 1, users: 1, title: 1, type: 1, createdAt: 1, createdBy: 1 }, sort: { createdAt: -1 } },
 		).toArray();
 
 		const occupied = running.filter(({ users }) => hasActiveParticipants(users));
@@ -1423,8 +1426,10 @@ export class VideoConfService extends ServiceClassInternal implements IVideoConf
 
 				return {
 					callId: call._id,
-					name:
-						(isGroupVideoConference(call) && call.title) || subscription?.fname || subscription?.name || (await this.getRoomName(call.rid)),
+					// The room is the last resort, and only for a call named after a room in the first place — a
+					// direct call is named after a person, including for a member who has no subscription to read
+					// one from. `getRoomName` ends at the raw room id, which is nobody's idea of a name.
+					name: conferenceNameFor(call, uid, subscription?.fname || subscription?.name) || (await this.getRoomName(call.rid)),
 					createdAt: call.createdAt,
 					usersCount: present.length,
 					joined: !!member && isInVideoConference(member),

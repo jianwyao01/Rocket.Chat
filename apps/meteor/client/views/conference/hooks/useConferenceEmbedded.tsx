@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 
 import type { CallPreferences } from './useCallPreferences';
+import { conferenceNameFor } from '../../../../lib/videoConference/conferenceName';
 import { isUnaskedConferenceMember } from '../../../../lib/videoConference/memberStatus';
 import { videoConferenceQueryKeys } from '../../../lib/queryKeys';
 import { mapVideoConfUserFromApi } from '../../../lib/utils/mapVideoConfUserFromApi';
@@ -75,8 +76,15 @@ export const useConferenceEmbedded = (callId: string) => {
 	// Membership timestamps arrive as strings over REST; revive them once here so nothing downstream has to care.
 	const members = useMemo(() => info?.users.map(mapVideoConfUserFromApi) ?? [], [info?.users]);
 
-	/** What the call is called: its own name if it has one, otherwise the room it belongs to. */
-	const currentName = (info?.type === 'videoconference' && info.title) || info?.chatAccess.name || '';
+	/**
+	 * What the call is called: its own name if it has one, the person it is with if it is a direct call, and only
+	 * then the room it belongs to. A DM room carries no name — that lives on each side's subscription — so a
+	 * direct call named after its room is a call with no name at all, which is what the window used to show.
+	 */
+	const currentName = useMemo(
+		() => (info ? conferenceNameFor({ ...info, title: 'title' in info ? info.title : undefined }, uid) || info.chatAccess.name : ''),
+		[info, uid],
+	);
 
 	const chatAccess = useMemo((): ConferenceChatAccess | undefined => {
 		if (!info) {

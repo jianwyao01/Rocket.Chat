@@ -99,9 +99,9 @@ describe('naming the call', () => {
 
 	// A conference in a room is offered as the meeting it is, rather than as the room's bare name.
 	it('offers the name it was given as a default', async () => {
-		renderPreflight({ canName: true, defaultName: 'Meeting in general' });
+		renderPreflight({ canName: true, defaultName: 'Meeting in "general"' });
 
-		expect(await screen.findByLabelText('Call_name')).toHaveValue('Meeting in general');
+		expect(await screen.findByLabelText('Call_name')).toHaveValue('Meeting in "general"');
 	});
 
 	it('hands the chosen name out with the devices', async () => {

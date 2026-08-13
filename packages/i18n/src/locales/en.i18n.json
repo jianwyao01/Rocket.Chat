@@ -3592,7 +3592,7 @@
   "Media": "Media",
   "Media_URL": "Media URL",
   "Medium": "Medium",
-  "Meeting_in__roomName__": "Meeting in {{roomName}}",
+  "Meeting_in__roomName__": "Meeting in \"{{roomName}}\"",
   "Members": "Members",
   "Members_List": "Members List",
   "Mentions": "Mentions",

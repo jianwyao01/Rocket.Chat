@@ -11,8 +11,20 @@ let running: VideoConference[] = [];
 let subscribedRids: string[] = [];
 let subscriptionNames: Record<string, string | undefined> = {};
 
+/**
+ * Answers with only the fields the query asked for, as a database would.
+ *
+ * Not pedantry: handing back the whole fixture hides a projection that forgot a field the code goes on to read,
+ * and the failure lands in production as an endpoint that throws — which is exactly what happened here when
+ * naming a call started needing `createdBy`.
+ */
+const project = <T extends Record<string, unknown>>(doc: T, projection?: Record<string, 1>): Partial<T> =>
+	projection ? (Object.fromEntries(Object.entries(doc).filter(([key]) => key === '_id' || projection[key])) as Partial<T>) : { ...doc };
+
 const VideoConferenceModelMock = {
-	find: sinon.stub().callsFake(() => ({ toArray: async () => running.map((call) => ({ ...call, users: [...call.users] })) })),
+	find: sinon.stub().callsFake((_query: unknown, options?: { projection?: Record<string, 1> }) => ({
+		toArray: async () => running.map((call) => project({ ...call, users: [...call.users] }, options?.projection)),
+	})),
 };
 
 const SubscriptionsMock = {
@@ -217,15 +229,29 @@ describe('VideoConfService.listJoinableCalls', () => {
 			expect(call.name).to.equal('Alice Liddell');
 		});
 
-		// A member added from outside the room has no subscription to name it from.
-		it('falls back to the room when there is no subscription to name it from', async () => {
+		// A member added from outside the room has no subscription to name it from, and the room cannot help: a DM
+		// room carries neither `name` nor `fname`, so this used to end at `getRoomName`'s last resort and show the
+		// reader a raw room id. Whoever started the call is who they want named.
+		it('names a direct call after whoever started it when there is no subscription', async () => {
 			running = [
 				buildDirectCall([buildMember({ _id: 'other' }), buildMember({ _id: me, joined: false, joinedAt: undefined })], { rid: 'the-dm' }),
 			];
 
 			const [call] = await service.listJoinableCalls(me);
 
-			expect(call.name).to.equal('name-of-the-dm');
+			// `buildDirectCall` names the creator "Creator User" — the point is that it is a person, not the room.
+			expect(call.name).to.equal('Creator User');
+			expect(RoomsMock.findOneById.called, 'no room lookup is needed to name a call after a person').to.be.false;
+		});
+
+		// The group case still ends at the room, which is the right answer for a call named after one.
+		it('falls back to the room for a group conference with no title', async () => {
+			running = [buildGroupCall([buildMember({ _id: 'other' })], { rid: 'channel', title: undefined as unknown as string })];
+			subscribedRids = ['channel'];
+
+			const [call] = await service.listJoinableCalls(me);
+
+			expect(call.name).to.equal('name-of-channel');
 		});
 	});
 });
