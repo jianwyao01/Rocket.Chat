@@ -102,9 +102,10 @@ const deviceControlStyles = css`
 		border-radius: 0;
 	}
 
-	/* Both halves are wrapped, so the hairline lands on the second one's button either way. */
-	& > * + * button {
-		border-inline-start: 1px solid ${Palette.stroke['stroke-extra-light'].toString()};
+	/* The selector takes its toggle's colour, a shade down, so it reads as the quieter half of one control
+	   rather than as a second button that happens to be the same colour. */
+	& > *:first-child button {
+		opacity: 0.7;
 	}
 `;
 
@@ -349,7 +350,7 @@ const MediaCallRoomSection = ({
 		<>
 			<Box className={deviceControlStyles}>
 				<Box>
-					<DevicePicker chevron />
+					<DevicePicker chevron danger={muted} />
 				</Box>
 				<Box>
 					<ToggleButton
@@ -365,7 +366,7 @@ const MediaCallRoomSection = ({
 			{onToggleCamera && (
 				<Box className={deviceControlStyles}>
 					<Box>
-						<CameraPicker />
+						<CameraPicker danger={!(localCamera?.active ?? false)} />
 					</Box>
 					<Box>
 						<ToggleButton

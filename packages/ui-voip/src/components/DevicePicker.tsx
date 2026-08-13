@@ -49,10 +49,19 @@ const getDefaultDeviceItem = (label: string, type: 'input' | 'output') => ({
 	id: `default-${type}`,
 });
 
-export type DevicePickerProps = { secondary?: boolean; className?: string; chevron?: boolean };
+export type DevicePickerProps = {
+	secondary?: boolean;
+	className?: string;
+	chevron?: boolean;
+	/**
+	 * Whether the device this selector belongs to is off. It takes the same colour as that toggle so the two
+	 * halves read as one control rather than a red button with a grey tail.
+	 */
+	danger?: boolean;
+};
 
 // eslint-disable-next-line react/no-multi-comp
-const DevicePicker = ({ secondary = false, chevron = false, className }: DevicePickerProps) => {
+const DevicePicker = ({ secondary = false, chevron = false, danger = false, className }: DevicePickerProps) => {
 	const { t } = useTranslation();
 
 	const { onDeviceChange } = useMediaCallView();
@@ -166,7 +175,7 @@ const DevicePicker = ({ secondary = false, chevron = false, className }: DeviceP
 
 				console.warn('Device Picker - Failed to select device: Invalid deviceId', deviceId);
 			}}
-			button={<DevicePickerButton secondary={secondary || chevron} chevron={chevron} tiny={!chevron && !secondary} />}
+			button={<DevicePickerButton secondary={secondary || chevron} danger={danger} chevron={chevron} tiny={!chevron && !secondary} />}
 		/>
 	);
 };
