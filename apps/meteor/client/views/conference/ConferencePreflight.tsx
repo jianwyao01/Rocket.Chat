@@ -106,7 +106,7 @@ const ConferencePreflight = ({
 	})();
 
 	const previewColumn = (
-		<Box display='flex' flexDirection='column' alignItems='center' width='100%' maxWidth='x800' minWidth={0}>
+		<Box display='flex' flexDirection='column' alignItems='center' width='100%' maxWidth='x700' minWidth={0}>
 			{/* A provider that runs the call in here takes the devices too, so this shows what will actually be sent:
 			    the camera itself, and which camera and microphone it is. A URL-based provider takes neither, so there
 			    it keeps saying what will happen rather than promising a choice it can't make. */}
@@ -179,7 +179,7 @@ const ConferencePreflight = ({
 
 			{/* Below the preview rather than on it: which device is a setting, not a control you reach for
 			    mid-thought, and a named device needs room the tile's corner doesn't have.
-			
+
 			    None of them is gated on the device being on. Arriving muted is normal, and someone who does may
 			    still care which microphone gets unmuted later — refusing the choice until they turn it on would
 			    make them turn it on just to set it. */}
@@ -189,6 +189,7 @@ const ConferencePreflight = ({
 					width='100%'
 					alignItems='center'
 					marginBlockStart={12}
+					paddingInline={20}
 					// A grid rather than flex: equal columns are what make the three read as one set, and flex
 					// sizes to content however hard it is pushed. `minmax(0, 1fr)` is what lets them truncate.
 					style={{ gap: 8, gridAutoFlow: 'column', gridAutoColumns: 'minmax(0, 1fr)' }}
