@@ -4307,6 +4307,7 @@
   "Parent_channel_doesnt_exist": "Channel does not exist.",
   "Parent_channel_or_team": "Parent channel or team",
   "Participants": "Participants",
+  "Participants_in_the_call": "Participants in the call",
   "Password": "Password",
   "Password_Change_Disabled": "Your Rocket.Chat administrator has disabled the changing of passwords",
   "Password_Changed_Description": "You may use the following placeholders:  \n - `[password]` for the temporary password.  \n - `[name]`, `[fname]`, `[lname]` for the user's full name, first name or last name, respectively.  \n - `[email]` for the user's email.  \n - `[Site_Name]` and `[Site_URL]` for the Application Name and URL respectively. ",

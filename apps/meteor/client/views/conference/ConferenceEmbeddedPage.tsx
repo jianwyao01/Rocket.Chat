@@ -14,6 +14,7 @@ import ConferenceIframe from './ConferenceIframe';
 import ConferencePageError from './ConferencePageError';
 import ConferencePreflight from './ConferencePreflight';
 import ConferenceUnauthorizedPage from './ConferenceUnauthorizedPage';
+import { PREFLIGHT_FACES_SHOWN } from '../../../lib/videoConference/constants';
 import PageLoading from '../root/PageLoading';
 import CallBar from './components/CallBar/CallBar';
 import CallBarAction from './components/CallBar/CallBarAction';
@@ -109,8 +110,9 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 	const { showUnread, unreadCount, unreadVariant, unreadTitle } = useUnreadDisplay(subscription ?? emptyUnreadData);
 	const unread = !chatVisible && showUnread ? unreadCount.total : 0;
 
-	// How many people are actually in the call, which is the number worth glancing at.
-	const presentCount = call.members.filter(isInVideoConference).length;
+	// Who is actually in the call — the faces worth glancing at, and how many there are altogether.
+	const present = useMemo(() => call.members.filter(isInVideoConference), [call.members]);
+	const presentCount = present.length;
 
 	// Where the call puts its own controls — see `actionsContainer`. Created up front rather than captured from
 	// a ref, so it is non-null on the very first render: a ref would still be empty then, and the call would
@@ -197,6 +199,9 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 				action={call.placing ? 'start' : 'join'}
 				isDirect={call.canRing}
 				canName={call.canRename}
+				// The same faces the sidebar showed on the way here, from this window's own copy of the members —
+				// a screen has room for more of them than a row does.
+				participants={{ people: present.slice(0, PREFLIGHT_FACES_SHOWN), total: presentCount }}
 				capabilities={call.capabilities}
 				onConfirm={(preferences, name) => conference.join({ state: preferences, name })}
 				onCancel={leaveNow}

@@ -54,7 +54,7 @@ import {
 } from '../../../lib/videoConference/callHistory';
 import { resolveChatAccessMode } from '../../../lib/videoConference/chatAccess';
 import { conferenceNameFor } from '../../../lib/videoConference/conferenceName';
-import { availabilityErrors, shouldRingVideoConference } from '../../../lib/videoConference/constants';
+import { availabilityErrors, CALL_FACES_SHOWN, shouldRingVideoConference } from '../../../lib/videoConference/constants';
 import { isUnaskedConferenceMember } from '../../../lib/videoConference/memberStatus';
 import { expiredPresenceLeases, INFERRED_LEAVE_REASONS } from '../../../lib/videoConference/presence';
 import { readSecondaryPreferred } from '../../database/readSecondaryPreferred';
@@ -1432,6 +1432,9 @@ export class VideoConfService extends ServiceClassInternal implements IVideoConf
 					name: conferenceNameFor(call, uid, subscription?.fname || subscription?.name) || (await this.getRoomName(call.rid)),
 					createdAt: call.createdAt,
 					usersCount: present.length,
+					// A few of them travel with the call so the list can show faces. Capped here rather than at the
+					// reader, because a call in a busy channel would otherwise send a roster to draw three avatars.
+					participants: present.slice(0, CALL_FACES_SHOWN).map(({ _id, username, name }) => ({ _id, username, name })),
 					joined: !!member && isInVideoConference(member),
 					declined: !!member?.declined,
 					// Whether that ring is still live is the reader's to decide, so the moment is what travels.

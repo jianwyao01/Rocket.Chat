@@ -3,6 +3,8 @@ import { Box, Icon } from '@rocket.chat/fuselage';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import CallParticipants from '../CallParticipants';
+
 type CallSummaryProps = {
 	call: JoinableVideoConference;
 	/** Ringing calls say so in red; the rest are just calls. */
@@ -27,8 +29,13 @@ const CallSummary = ({ call, ringing, children }: CallSummaryProps) => {
 				<Box fontScale='p2b' color='default' withTruncatedText>
 					{call.name}
 				</Box>
-				<Box fontScale='micro' color='hint'>
-					{t('__count__people_in_the_call', { count: call.usersCount })}
+				{/* Named as well as shown: under a call's title, a bare row of faces is a row of faces of nobody in
+				    particular until you know it is the people already in there. */}
+				<Box display='flex' alignItems='center' style={{ gap: 4 }}>
+					<Box fontScale='micro' color='hint' flexShrink={0}>
+						{t('Participants')}
+					</Box>
+					<CallParticipants people={call.participants} total={call.usersCount} />
 				</Box>
 			</Box>
 			{children}

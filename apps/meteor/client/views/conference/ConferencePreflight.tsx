@@ -1,6 +1,7 @@
 import type { VideoConferenceCapabilities } from '@rocket.chat/core-typings';
 import { Box, Button, ButtonGroup, Field, FieldRow, Icon, TextInput } from '@rocket.chat/fuselage';
 import { useBreakpoints } from '@rocket.chat/fuselage-hooks';
+import type { ComponentProps } from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,6 +10,7 @@ import CallDeviceToggle from './CallDeviceToggle';
 import { useCallDevicePreview } from './hooks/useCallDevicePreview';
 import type { CallPreferences } from './hooks/useCallPreferences';
 import { useCallPreferences } from './hooks/useCallPreferences';
+import CallParticipants from '../../components/CallParticipants';
 
 type ConferencePreflightProps = {
 	/** What the call is called, or would be: its own name, or the room it belongs to. */
@@ -24,6 +26,11 @@ type ConferencePreflightProps = {
 	canName: boolean;
 	/** What to offer as the name. Defaults to what the call is called, which is right for one that already exists. */
 	defaultName?: string;
+	/**
+	 * Who is already in the call, as faces. Only meaningful for a join — nobody is in a call that hasn't started —
+	 * and it is the same thing the sidebar shows about the call, which is what the reader saw on their way here.
+	 */
+	participants?: ComponentProps<typeof CallParticipants>;
 	capabilities: VideoConferenceCapabilities;
 	onConfirm: (preferences: CallPreferences, name: string) => void;
 	onCancel: () => void;
@@ -52,6 +59,7 @@ const ConferencePreflight = ({
 	isDirect,
 	canName,
 	defaultName,
+	participants,
 	capabilities,
 	onConfirm,
 	onCancel,
@@ -245,6 +253,21 @@ const ConferencePreflight = ({
 							/>
 						</FieldRow>
 					</Field>
+				</Box>
+			)}
+
+			{/* Who is in there already, which is the other half of what the reader is deciding: the call has a name
+			    above and people in it here. Faces rather than a count, and the same ones the sidebar showed them. */}
+			{action === 'join' && participants && (
+				<Box marginBlockStart={16} display='flex' flexDirection='column' alignItems='center'>
+					{/* Said in words as well as in faces: a row of avatars is only obvious once you already know what
+					    it is a row of, and the count alone lives in the group's label where nothing reads it aloud. */}
+					<Box fontScale='c1' color='hint'>
+						{t('Participants_in_the_call')}
+					</Box>
+					<Box marginBlockStart={8}>
+						<CallParticipants {...participants} size='x24' />
+					</Box>
 				</Box>
 			)}
 

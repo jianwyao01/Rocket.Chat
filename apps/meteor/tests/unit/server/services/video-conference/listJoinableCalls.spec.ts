@@ -4,6 +4,7 @@ import { after, before, beforeEach, describe, it } from 'mocha';
 import sinon from 'sinon';
 
 import { buildDirectCall, buildGroupCall, buildMember, createService, resetAll } from './testHarness';
+import { CALL_FACES_SHOWN } from '../../../../../lib/videoConference/constants';
 
 const me = 'me';
 
@@ -183,7 +184,9 @@ describe('VideoConfService.listJoinableCalls', () => {
 		});
 
 		// Faces, not just a number: the row shows who is already in there, and the count is what a "+3" comes from.
-		it('carries a few of the people in it', async () => {
+		// The list shows faces rather than a number, so a few of the people travel with the call — capped here,
+		// because a call in a busy channel would otherwise send a whole roster to draw three avatars.
+		it('carries a few of the people in it, and says how many there are altogether', async () => {
 			running = [
 				buildGroupCall(
 					[buildMember({ _id: 'one' }), buildMember({ _id: 'two' }), buildMember({ _id: 'three' }), buildMember({ _id: 'four' })],
@@ -197,6 +200,24 @@ describe('VideoConfService.listJoinableCalls', () => {
 			const [call] = await service.listJoinableCalls(me);
 
 			expect(call.usersCount).to.equal(4);
+			expect(call.participants).to.have.length(CALL_FACES_SHOWN);
+			expect(call.participants.map(({ _id }: { _id: string }) => _id)).to.deep.equal(['one', 'two', 'three']);
+			// Enough to draw a face with, and nothing else — a payload is not a place to publish a roster.
+			expect(Object.keys(call.participants[0]).sort()).to.deep.equal(['_id', 'name', 'username']);
+		});
+
+		// Faces are of the people who are *in* the call, not of everyone invited to it.
+		it('carries nobody who is not in the call', async () => {
+			running = [
+				buildGroupCall([buildMember({ _id: 'here' }), buildMember({ _id: 'invited', joined: false, joinedAt: undefined })], {
+					rid: 'channel',
+				}),
+			];
+			subscribedRids = ['channel'];
+
+			const [call] = await service.listJoinableCalls(me);
+
+			expect(call.participants.map(({ _id }: { _id: string }) => _id)).to.deep.equal(['here']);
 		});
 
 		it('counts nobody who is not in the call', async () => {

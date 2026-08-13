@@ -516,9 +516,15 @@ reading "in call" left them with something they could do nothing about. Rows are
 a *Show all N calls* toggle for the rest and a `40vh` scroll region with that toggle outside it: this is a route to
 a call, not a place to read a list.
 
-Each row says how many people are in the call. Faces would answer the question better — whether this is a call
-worth walking into — and the payload was built to carry a few participants for exactly that, but a count is what
-the first release ships; see [Deferred to follow-ups](#deferred-to-follow-ups).
+Each row says who is in the call, as **faces** under a `Participants` label: `CallParticipants` draws an avatar
+for each of the few the payload carries — capped at `CALL_FACES_SHOWN` (3), since a row has a name to fit beside
+them — and turns the rest into a `+N` shaped like one more avatar. The whole count is still the group's label, both
+for anyone who cannot see the avatars and because "+2" means nothing without a total. Faces answer the question
+the reader actually has, which is whether this is a call worth walking into; a number never did.
+
+The same faces appear on the [preflight](#the-preflight-screen) when joining, under a *Participants in the call*
+label and five at a time — a screen has more room than a sidebar row. Those come from the call window's own copy
+of the members, so nothing extra travels for them.
 
 Each row is named by `conferenceNameFor` (`lib/videoConference/conferenceName.ts`), shared with the call window so
 the two can't disagree: a group conference's own title; otherwise the reader's own subscription, since a DM is
@@ -819,7 +825,6 @@ git — `git show 5ab58858d7d:<path>` restores any of them intact.
 |---|---|---|
 | **Telling the caller nobody picked up** (`CallOutcomeModal`, `useCallOutcome`) | the caller is in the call either way; this only names what already happened | the members panel shows each member still ringing, waiting, or declined |
 | **The provider → parent bridge** (`useProviderCallBridge`) | **no provider implements it** — not the bundled Jitsi app, which declares only `{ mic, cam, title }` | our own bar owns the panels; a provider showing its own toolbar shows two |
-| **Faces in the calls list** (`CallParticipants`, `participants` on the joinable payload) | polish over a number that answers the same question less well | `__count__people_in_the_call` |
 | **The navbar stand-in** (`NavBarItemOngoingCalls`) | only reachable with the sidebar collapsed | nothing there; the sidebar card covers the rest |
 | **Handing internal links to the opener** (the desktop bridge and the `postMessage` handshake) | needs a bridge on both sides for a nicer landing | a `noopener` new tab — see [Confined Navigation](#confined-navigation) |
 | **Regrouping the room's call list** into Ongoing/Past, named after the discussion | a redesign of a list that already works, and one every workspace sees | the existing flat list, with the fix that it no longer counts members who never joined |

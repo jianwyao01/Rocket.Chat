@@ -143,8 +143,9 @@ describe('a call that is ringing', () => {
 
 		expect(await screen.findByText('Alice')).toBeInTheDocument();
 		expect(screen.getByText('Incoming_call')).toBeInTheDocument();
-		// The ringing item says the same thing about itself as the calls below: how many are in there.
-		expect(screen.getByText('__count__people_in_the_call')).toBeInTheDocument();
+		// The ringing item says the same thing about itself as the calls below: who is in there, named and shown.
+		expect(screen.getByText('Participants')).toBeInTheDocument();
+		expect(screen.getByTitle('__count__people_in_the_call')).toBeInTheDocument();
 	});
 
 	it('says how many are incoming when there is more than one', async () => {

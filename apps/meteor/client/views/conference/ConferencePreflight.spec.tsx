@@ -83,6 +83,28 @@ it('can be walked away from', async () => {
 	expect(onConfirm).not.toHaveBeenCalled();
 });
 
+// The other half of what this screen is asking: not only how you will arrive, but who is already in there.
+describe('who is already in the call', () => {
+	const people = ['alice', 'bob', 'carol', 'dave', 'erin'].map((username) => ({ _id: username, username }));
+
+	it('shows their faces when joining, under a label saying what they are', async () => {
+		const { container } = renderPreflight({ action: 'join', participants: { people, total: 8 } });
+
+		expect(await screen.findByText('Participants_in_the_call')).toBeInTheDocument();
+		expect(container.querySelectorAll('img')).toHaveLength(5);
+		expect(screen.getByText('+3')).toBeInTheDocument();
+	});
+
+	// Nobody is in a call that hasn't started, so there is nothing to show and no space to leave for it.
+	it('shows nothing when starting a call', async () => {
+		renderPreflight({ action: 'start', participants: { people, total: 8 } });
+
+		await screen.findByRole('button', { name: 'Start_call' });
+		expect(screen.queryByText('Participants_in_the_call')).not.toBeInTheDocument();
+		expect(screen.queryByTitle('__count__people_in_the_call')).not.toBeInTheDocument();
+	});
+});
+
 describe('naming the call', () => {
 	it('is not offered to everyone', async () => {
 		renderPreflight();
