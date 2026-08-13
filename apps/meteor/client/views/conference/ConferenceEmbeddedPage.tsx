@@ -21,6 +21,7 @@ import CallTopBar from './components/CallBar/CallTopBar';
 import CallPanel from './components/CallPanel/CallPanel';
 import { useCallPreferences } from './hooks/useCallPreferences';
 import { useConferenceEmbedded } from './hooks/useConferenceEmbedded';
+import { useConferencePresenceLease } from './hooks/useConferencePresenceLease';
 import { useConferenceSubscription } from './hooks/useConferenceSubscription';
 import { useConfinedNavigation } from './hooks/useConfinedNavigation';
 import { useEmbeddedConferenceCall } from './hooks/useEmbeddedConferenceCall';
@@ -52,6 +53,10 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 	// Closing this window is the only end-of-call signal a provider that doesn't report one leaves us, and the
 	// call has to end for its history to be written.
 	const { leaveNow } = useLeaveConferenceOnClose(callId);
+
+	// What covers the times that signal can't get through — the workspace being down while the call carries on in
+	// the provider, or this window dying without a word. Leaving is inferred from these renewals stopping.
+	useConferencePresenceLease(callId, conference.joined);
 
 	// How the user chose to arrive. Read from where the preflight put it rather than from this window's own
 	// join, because starting a call joins on the *start* screen — this window then finds the result in the

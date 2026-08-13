@@ -38,18 +38,19 @@ async function twirp<T>(method: string, body: Record<string, unknown>): Promise<
 }
 
 /**
- * Count participants currently connected to the given LK room. Returns 0 if
- * the room doesn't exist (LK returns an empty participants array, not an
- * error). Used by the reconciler to decide whether a group call doc is stale.
+ * Who is connected to the given LK room, by the identity we mint their token with — which is their Rocket.Chat
+ * user id, so the answer needs no translation. An empty array is LiveKit stating the room is empty, including the
+ * case of a room that no longer exists at all.
+ *
+ * `undefined` means we could not ask: a transient LiveKit outage must read as "no answer" rather than "nobody is
+ * there", or a call would be emptied by our own inability to reach the SFU.
  */
-export async function countRoomParticipants(roomName: string): Promise<number> {
+export async function listRoomParticipantIdentities(roomName: string): Promise<string[] | undefined> {
 	try {
-		const resp = await twirp<{ participants?: unknown[] }>('ListParticipants', { room: roomName });
-		return resp.participants?.length ?? 0;
+		const resp = await twirp<{ participants?: { identity?: string }[] }>('ListParticipants', { room: roomName });
+		return (resp.participants ?? []).map(({ identity }) => identity).filter((identity): identity is string => !!identity);
 	} catch (err) {
 		logger.warn({ msg: 'ListParticipants failed', err, roomName });
-		// Be conservative: on error we report "unknown" by returning -1 so the
-		// caller can avoid acting on a transient LK outage.
-		return -1;
+		return undefined;
 	}
 }

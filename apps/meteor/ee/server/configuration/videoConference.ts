@@ -10,8 +10,8 @@ import { callbacks } from '../../../server/lib/callbacks';
 import { CORE_PROVIDER_APP_ID, videoConfProviders } from '../../../server/lib/videoConfProviders';
 import { videoConfTypes } from '../../../server/lib/videoConfTypes';
 import { settings } from '../../../server/settings';
-import { registerGroupCallReconcileCron } from '../lib/livekit/cleanup';
 import { isLiveKitFullyConfigured } from '../lib/livekit/config';
+import { registerLiveKitPresenceProbe } from '../lib/livekit/presence';
 import { addSettings } from '../settings/video-conference';
 
 // Bind/unbind LK provider in the videoConfProviders registry based on whether
@@ -26,6 +26,10 @@ const refreshLiveKitProviderRegistration = (): void => {
 	} else {
 		videoConfProviders.unRegisterProvider('livekit');
 	}
+
+	// Whether LiveKit can be asked who is in a room follows the same credentials, so it is decided in the same
+	// place. The presence sweep works without it — this only lets it stop guessing where it doesn't have to.
+	registerLiveKitPresenceProbe();
 };
 
 Meteor.startup(async () => {
@@ -74,10 +78,5 @@ Meteor.startup(async () => {
 		// API key + API secret, so we re-evaluate whenever any of those flip.
 		refreshLiveKitProviderRegistration();
 		settings.watchByRegex(/^VideoConf_LiveKit_(Enabled|Url|Api_Key|Api_Secret)$/, () => refreshLiveKitProviderRegistration());
-
-		// Reconcile group calls against LK presence every minute so calls
-		// whose participants vanished (browser crash, missed leave POST)
-		// don't stay "active" indefinitely.
-		await registerGroupCallReconcileCron();
 	});
 });

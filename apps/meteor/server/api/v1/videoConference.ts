@@ -401,6 +401,41 @@ API.v1.post(
 	},
 );
 
+/**
+ * Renews the caller's presence lease on a call — the conference window saying it is still in it.
+ *
+ * The counterpart of `video-conference.leave`, and the reason a lost leave is survivable: leaving is inferred from
+ * renewals stopping, so nothing has to reach us at the moment someone goes. Provider-agnostic, because the window
+ * doing the renewing is ours whatever runs the media.
+ */
+API.v1.post(
+	'video-conference.heartbeat',
+	{
+		authRequired: true,
+		body: isVideoConfCallIdProps,
+		// Renewals are every `PRESENCE_HEARTBEAT_MS`, so twice a minute, plus one whenever the window is brought
+		// back to the front. The allowance is for that: bursts of attention, not a higher steady rate.
+		rateLimiterOptions: { numRequestsAllowed: 20, intervalTimeInMS: 60000 },
+		response: {
+			200: cancelResponseSchema,
+			400: validateBadRequestErrorResponse,
+			401: validateUnauthorizedErrorResponse,
+		},
+	},
+	async function action() {
+		const { callId } = this.bodyParams;
+
+		const conference = await loadAccessibleConference(callId, this.userId);
+		if (!conference) {
+			return API.v1.failure('invalid-params');
+		}
+
+		await VideoConf.renewPresence(conference.userId, callId);
+
+		return API.v1.success();
+	},
+);
+
 API.v1.post(
 	'video-conference.ring',
 	{

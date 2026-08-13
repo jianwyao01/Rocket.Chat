@@ -44,6 +44,14 @@ export type VideoConferenceEndpoints = {
 		POST: (params: VideoConfCallIdProps) => void;
 	};
 
+	/**
+	 * Renews the caller's presence lease on the call. Leaving is inferred from these stopping, so that a departure
+	 * nobody could report — a workspace outage, a crashed tab — is still recorded.
+	 */
+	'/v1/video-conference.heartbeat': {
+		POST: (params: VideoConfCallIdProps) => void;
+	};
+
 	/** Rings the members who aren't in the call again; returns the ids actually rung. */
 	'/v1/video-conference.ring': {
 		POST: (params: VideoConfRingProps) => { rang: string[] };

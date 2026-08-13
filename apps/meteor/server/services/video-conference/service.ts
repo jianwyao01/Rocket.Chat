@@ -55,6 +55,7 @@ import {
 import { resolveChatAccessMode } from '../../../lib/videoConference/chatAccess';
 import { availabilityErrors, shouldRingVideoConference } from '../../../lib/videoConference/constants';
 import { isUnaskedConferenceMember } from '../../../lib/videoConference/memberStatus';
+import { expiredPresenceLeases, INFERRED_LEAVE_REASONS } from '../../../lib/videoConference/presence';
 import { readSecondaryPreferred } from '../../database/readSecondaryPreferred';
 import { canAccessRoomIdAsync } from '../../lib/authorization/canAccessRoom';
 import { callbacks } from '../../lib/callbacks';
@@ -71,6 +72,7 @@ import { roomCoordinator } from '../../lib/rooms/roomCoordinator';
 import { updateCounter } from '../../lib/statistics/functions/updateStatsCounter';
 import { getUserAvatarURL } from '../../lib/utils/getUserAvatarURL';
 import { getUserPreference } from '../../lib/utils/lib/getUserPreference';
+import { videoConfPresence } from '../../lib/videoConfPresence';
 import { videoConfProviders } from '../../lib/videoConfProviders';
 import { videoConfTypes } from '../../lib/videoConfTypes';
 import { addUsersToRoomMethod } from '../../meteor-methods/rooms/addUsersToRoom';
@@ -1215,7 +1217,7 @@ export class VideoConfService extends ServiceClassInternal implements IVideoConf
 		await this.recordConferenceInHistory(call._id, { ended: false });
 
 		if (call.type === 'direct') {
-			await this.ringCalleeOnCallerArrival(call as IDirectVideoConference, _id);
+			await this.ringCalleeOnCallerArrival(call, _id);
 			return this.updateDirectCall(call, _id);
 		}
 
@@ -1522,6 +1524,71 @@ export class VideoConfService extends ServiceClassInternal implements IVideoConf
 		}, EMPTY_CALL_GRACE_MS);
 	}
 
+	/**
+	 * Renews a member's presence lease: their call window telling us it is still in the call.
+	 *
+	 * Provider-agnostic by construction — the conference window is ours whoever runs the media, so this is the one
+	 * presence signal that exists for every provider. See `lib/videoConference/presence` for why presence is a
+	 * lease rather than a reported departure.
+	 */
+	public async renewPresence(uid: IUser['_id'], callId: VideoConference['_id']): Promise<void> {
+		await VideoConferenceModel.renewUserPresenceById(callId, uid, new Date(), INFERRED_LEAVE_REASONS);
+	}
+
+	/**
+	 * Marks everyone whose presence lease has run out as having left, and ends the calls that empties.
+	 *
+	 * This is the durable half of leaving. `leaveCall` is the reported half: accurate, immediate, and impossible
+	 * to rely on — it needs a live client talking to a live server, so it is lost exactly when the workspace goes
+	 * down under a call that carries on in the provider. It is also lost by a crashed tab or a closed laptop, and
+	 * the grace period `leaveCall` schedules for an emptied call is an in-process timer that a restart discards.
+	 * Leases cover all of it, because their evidence lives in the database rather than in anyone's memory.
+	 *
+	 * Departures are stamped with the last evidence we had, never with the moment of the sweep — see
+	 * `expiredPresenceLeases`. Callers must respect `isPresenceSweepDue` first: right after a restart every lease
+	 * looks expired whether or not anyone actually left.
+	 */
+	public async expirePresenceLeases(now = new Date()): Promise<void> {
+		for await (const call of VideoConferenceModel.findActiveWithMembers()) {
+			try {
+				// A provider that can say who is in its room is asked first, and its answer renews leases the same
+				// way a client's heartbeat does. Silence is not absence: `undefined` leaves the leases as they are.
+				const present = await videoConfPresence.getProbe(call.providerName)?.(call);
+				const users = present ? call.users.map((user) => (present.includes(user._id) ? { ...user, lastSeenAt: now } : user)) : call.users;
+
+				if (present?.length) {
+					await VideoConferenceModel.renewUsersPresenceById(call._id, present, now);
+				}
+
+				const expired = expiredPresenceLeases(users, now);
+				if (!expired.length) {
+					continue;
+				}
+
+				for (const { uid, leftAt } of expired) {
+					logger.info({ msg: 'Presence lease expired', callId: call._id, uid, leftAt });
+					await VideoConferenceModel.setUserLeftById(call._id, uid, leftAt, 'timeout');
+					// Embedded providers keep a second per-participant record, and the two disagreeing is how a
+					// call ends up counted as occupied by one half of the code and empty by the other.
+					await VideoConferenceModel.markEmbeddedParticipantLeft(call._id, uid, leftAt);
+				}
+
+				this.notifyVideoConfUpdate(call.rid, call._id);
+				this.notifyConferenceUpdate(call._id);
+
+				// No second grace period: the lease *was* the grace period, and it is far longer than the one a
+				// reported departure gets. Anyone who came back renewed it and is not in `expired` at all.
+				const remaining = users.filter(({ _id }) => !expired.some((lease) => lease.uid === _id));
+				if (!hasActiveParticipants(remaining)) {
+					await this.endCall(call._id);
+				}
+			} catch (err) {
+				// One unreachable provider or one malformed call must not stop the sweep for every other call.
+				logger.error({ msg: 'Failed to expire presence leases for a conference', callId: call._id, err });
+			}
+		}
+	}
+
 	/** Ends a conference only if it is still empty — a rejoin inside the grace period is what cancels it. */
 	private async endCallIfEmpty(callId: VideoConference['_id']): Promise<void> {
 		const call = await VideoConferenceModel.findOneById(callId, { projection: { users: 1, endedAt: 1 } });
@@ -1642,7 +1709,7 @@ export class VideoConfService extends ServiceClassInternal implements IVideoConf
 	 */
 	public async renameCall(uid: IUser['_id'], callId: VideoConference['_id'], title: string): Promise<void> {
 		const call = await VideoConferenceModel.findOneById(callId, { projection: { type: 1, rid: 1, createdBy: 1, endedAt: 1 } });
-		if (!call || call.endedAt || !isGroupVideoConference(call as VideoConference)) {
+		if (!call || call.endedAt || !isGroupVideoConference(call)) {
 			throw new Error('error-invalid-video-conf');
 		}
 

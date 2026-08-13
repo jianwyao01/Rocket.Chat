@@ -61,6 +61,12 @@ export type VideoConferenceType = DirectCallInstructions['type'] | ConferenceIns
  * readers must treat an absent flag as joined. Use the `hasJoinedVideoConference` helper rather than
  * testing the field directly.
  */
+/**
+ * How a departure came to be recorded. `reported` is the member's own client saying so; `timeout` is their
+ * presence lease running out, which is what covers everything that can stop a client from reporting.
+ */
+export type VideoConferenceLeaveReason = 'reported' | 'timeout';
+
 export interface IVideoConferenceUser extends Pick<Required<IUser>, '_id' | 'username' | 'name'> {
 	avatarETag: string | null;
 	/** When the user became a member of the conference. */
@@ -75,6 +81,20 @@ export interface IVideoConferenceUser extends Pick<Required<IUser>, '_id' | 'use
 	declinedAt?: Date;
 	/** When they left the call. Cleared if they rejoin, so it only ever describes the latest departure. */
 	leftAt?: Date;
+	/**
+	 * How we learned they left. Absent means they told us — which is also how every entry written before this
+	 * existed should be read, since reporting was the only way a departure was recorded then.
+	 */
+	leftReason?: VideoConferenceLeaveReason;
+	/**
+	 * When we last had evidence this member was still in the call: their own call window saying so, or the
+	 * provider confirming it.
+	 *
+	 * Presence is a lease rather than a report because the report can be lost — the workspace can be down while
+	 * the call carries on in the provider, and a crashed tab, a dead battery or a closed laptop never report at
+	 * all. What survives all of those is *the absence of renewals*, which is what this records.
+	 */
+	lastSeenAt?: Date;
 	/**
 	 * When we last rang them. A ring is one-shot and short-lived, so this is what tells "their phone is ringing
 	 * right now" from "they were rung and did nothing", which decides whether ringing again is offered.

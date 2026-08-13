@@ -24,8 +24,8 @@ What that integration provides:
 │   ┌──────────────────────────┐   ┌─────────────────────────────┐   │
 │   │ Video Conference service │   │ ee/server/lib/livekit/*     │   │
 │   │   (existing)             │   │   config / token            │   │
-│   │   + LiveKit provider     │◀──│   roomService / cleanup     │   │
-│   │     (embedded)           │   │   roomService / cleanup     │   │
+│   │   + LiveKit provider     │◀──│   roomService / presence    │   │
+│   │     (embedded)           │   │                             │   │
 │   └──────────────────────────┘   └─────────────────────────────┘   │
 │                                                                    │
 │   ┌──────────────────────────┐                                    │
@@ -137,8 +137,8 @@ Self-contained module for everything that talks to LK or AWS. Files largely unch
 
 - **`config.ts`** — `getLiveKitConfig()` reads all `VideoConf_LiveKit_*` settings; `isLiveKitFullyConfigured()` validates them. Cached per setting-change tick.
 - **`token.ts`** — `createLiveKitAccessToken({ identity, roomName, ttl })` for client participants; `createLiveKitApiToken()` for server→LK admin calls. Both use `signHS256` from `@rocket.chat/jwt`.
-- **`roomService.ts`** — `countRoomParticipants(roomName)` via LK's Twirp `ListParticipants`. Returns -1 on error (conservatively "still active") so we never aggressively clean up a real call because of a transient API blip.
-- **`cleanup.ts`** — registers a 1-minute cron that asks LK for each active call's participant count and ends calls with 0 LK participants older than 60s. Safety net for crashed-tab cases the `/leave` endpoint doesn't catch.
+- **`roomService.ts`** — `listRoomParticipantIdentities(roomName)` via LK's Twirp `ListParticipants`. Identities are Rocket.Chat user ids, because that is what tokens are minted with. Returns `undefined` on error, so a transient API blip reads as "no answer" rather than "nobody is there".
+- **`presence.ts`** — registers that call as a **presence probe** for the `livekit` provider, which the provider-agnostic presence sweep asks when judging a call. It is an accelerator, not a dependency: presence is held by leases every conference window renews, and LiveKit's answer renews the same leases from the server side — where a throttled background tab can't be. See [presence leases](../video-conference-persistent-chat/README.md#knowing-who-is-still-in-the-call).
 
 ### REST APIs
 

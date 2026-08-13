@@ -5,6 +5,7 @@ import type {
 	IUser,
 	IVideoConferenceParticipant,
 	VideoConference,
+	VideoConferenceLeaveReason,
 	VideoConferenceStatus,
 	IVoIPVideoConference,
 } from '@rocket.chat/core-typings';
@@ -65,8 +66,22 @@ export interface IVideoConferenceModel extends IBaseModel<VideoConference> {
 	setUserJoinedById(callId: string, uid: IUser['_id'], joinedAt?: Date): Promise<void>;
 
 	setUserDeclinedById(callId: string, uid: IUser['_id'], declinedAt?: Date): Promise<void>;
-	setUserLeftById(callId: string, uid: IUser['_id'], leftAt?: Date): Promise<void>;
+	setUserLeftById(callId: string, uid: IUser['_id'], leftAt?: Date, reason?: VideoConferenceLeaveReason): Promise<void>;
 	setUsersRingingById(callId: string, uids: IUser['_id'][], ringingAt?: Date): Promise<void>;
+
+	/** Renews one member's presence lease, and with it any departure that was inferred rather than reported. */
+	renewUserPresenceById(
+		callId: string,
+		uid: IUser['_id'],
+		lastSeenAt?: Date,
+		inferredReasons?: VideoConferenceLeaveReason[],
+	): Promise<void>;
+
+	/** Renews several leases at once, as a provider reporting who is in its room does. */
+	renewUsersPresenceById(callId: string, uids: IUser['_id'][], lastSeenAt?: Date): Promise<void>;
+
+	/** Every open call, with the roster and provider the presence sweep judges it by. */
+	findActiveWithMembers(): FindCursor<Pick<VideoConference, '_id' | 'rid' | 'users' | 'providerName'>>;
 
 	setMessageById(callId: string, messageType: keyof VideoConference['messages'], messageId: string): Promise<void>;
 
@@ -89,9 +104,7 @@ export interface IVideoConferenceModel extends IBaseModel<VideoConference> {
 
 	findActiveEmbeddedInRoom(rid: IRoom['_id'], providerName: string): Promise<VideoConference | null>;
 
-	findActiveExpiredEmbedded(maxAgeMs: number, providerName: string): Promise<VideoConference[]>;
-
 	addEmbeddedParticipant(callId: VideoConference['_id'], participant: IVideoConferenceParticipant): Promise<void>;
 
-	markEmbeddedParticipantLeft(callId: VideoConference['_id'], userId: IUser['_id']): Promise<void>;
+	markEmbeddedParticipantLeft(callId: VideoConference['_id'], userId: IUser['_id'], leftAt?: Date): Promise<void>;
 }

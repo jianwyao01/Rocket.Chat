@@ -341,12 +341,56 @@ it means:
 doesn't hold a call open, so an unanswered ring can't keep one alive forever.
 
 Ending is a consequence of the call being empty, never of one participant asking for it — the same rule
-declining follows. The expiry cron remains the backstop for the cases a browser can't report: a crash, a lost
-network, a killed tab.
+declining follows. What covers the cases nobody can report is **presence leases**, below.
 
 `pagehide` rather than `beforeunload`: it fires for the bfcache case too and doesn't suppress the cache. The
 request needs `keepalive`, because the document is being torn down and an ordinary `fetch` dies with it;
 `sendBeacon` would be the usual tool but can't carry the auth headers the REST API needs.
+
+### Knowing who is still in the call
+
+A reported departure is the accurate path and it usually works, but it can only be sent by a live client to a live
+server — and the call does not depend on either. The provider is a separate service, so **the workspace can be
+down while the call carries on**: people leave during the outage, nothing reaches us, and when we come back the
+call still lists them as present. The same hole swallows a crashed tab, a killed browser, a dead battery and a
+`keepalive` fetch that didn't make it out.
+
+So presence is a **lease** rather than a report. The conference window renews it every
+`PRESENCE_HEARTBEAT_MS` (30s) with `POST /v1/video-conference.heartbeat`, which stamps `lastSeenAt` on the
+member's entry. A cron sweeps every minute: anyone whose lease is older than `PRESENCE_LEASE_MS` (3min) is marked
+as having left, and a call that empties as a result **ends**, which is what settles everyone's history. Nothing has
+to arrive at the moment someone goes; what matters is that nothing arrives afterwards.
+
+Three details carry most of the weight:
+
+- **The departure is dated from the last evidence, never from the sweep.** Stamping "now" on a call recovered
+  twenty minutes after an outage would add twenty minutes to everyone's call history. `leftAt` is `lastSeenAt` —
+  which, during an outage, lands at about the moment the lights went out. `leftReason: 'timeout'` records that it
+  was inferred, so nothing has to pretend the precision of a reported leave.
+- **A restart waits out a full lease before evicting anyone** (`isPresenceSweepDue`). From the database,
+  "everyone left" and "we weren't here to be told" are the same picture — every lease is expired either way — so
+  the only honest move is to give whoever is still there a chance to renew. Their window heartbeats every 30s, so
+  three minutes is generous. In a multi-instance workspace this costs nothing: the instances that stayed up were
+  never absent and keep sweeping throughout.
+- **A renewal undoes an inferred departure, and only an inferred one.** A lease given up on while the window was
+  in fact alive was simply wrong, and the window still talking to us is the correction. A member who *reported*
+  leaving is never revived this way — the guard is in `renewUserPresenceById`'s query, so a heartbeat still in
+  flight behind someone who left matches nothing.
+
+This is deliberately **provider-agnostic**: the renewing window is ours whether the call renders inside it or is
+handed to an iframe, so it needs no cooperation from Pexip, Jitsi or anyone else. Where a provider *can* be asked
+who is in a room it may register a **presence probe** (`videoConfPresence`), whose answer renews the same leases
+from the server side — which matters because browsers throttle a background window's timers to roughly one a
+minute, and a call is usually something you listen to while looking at something else. LiveKit registers one; a
+provider reached by URL registers nothing and loses nothing but that. A probe returning `undefined` means "no
+answer", which is what an unreachable provider says, and it is never read as "nobody is there" — our own network
+trouble must not empty someone else's call.
+
+**Known limitation.** For a provider with no probe, presence means *"still has the conference window open on this
+call"*. Hang up inside the iframe and leave the tab open and you stay listed until the window closes. Closing that
+gap needs the provider to report it (the `postMessage` bridge described in [Deferred to
+follow-ups](#deferred-to-follow-ups)) or a management API to ask — both per-provider, which is why the lease is the
+floor rather than the ceiling.
 
 ### The window that opened the call watches it
 
@@ -593,6 +637,7 @@ The provider's URL is embedded in an iframe, so it must permit framing (no restr
 | POST | `/v1/video-conference.add-participants` | Register users as conference members and ring them; touches no room. Capped at 10 per call |
 | POST | `/v1/video-conference.decline` | Record that the caller dismissed the call, without ending it |
 | POST | `/v1/video-conference.leave` | Record that the caller left; ends the conference when nobody is left in it |
+| POST | `/v1/video-conference.heartbeat` | Renew the caller's presence lease on a call, so they aren't treated as gone |
 | POST | `/v1/video-conference.ring` | Ring the members who aren't in the call again |
 | GET | `/v1/video-conference.joinable` | The running calls the caller may join — the sidebar and history lists |
 | POST | `/v1/video-conference.join` | Join a conference — accepts `discussionRid` members |
@@ -874,6 +919,7 @@ could not be loaded" panel, because the detail panel is contact-call-shaped.
 | Membership rules (shared) | `apps/meteor/lib/videoConference/memberStatus.ts`, `callHistory.ts`, `chatAccess.ts`, `constants.ts` |
 | Reaching a call | `apps/meteor/client/components/OngoingCalls/` (the list, its rows and `useOngoingCalls`), `client/sidebar/sections/OngoingCallsSection.tsx`, `client/views/conference/hooks/useJoinableCalls.ts`, `hooks/useJoinCall.tsx` |
 | Leaving | `apps/meteor/client/views/conference/hooks/useLeaveConferenceOnClose.ts` |
+| Presence leases | `apps/meteor/lib/videoConference/presence.ts`, `client/views/conference/hooks/useConferencePresenceLease.ts`, `server/lib/videoConfPresence.ts`, `server/cron/videoConferences.ts` |
 | Ringing popups | `apps/meteor/client/views/room/contextualBar/VideoConference/VideoConfPopups/VideoConfPopup/` |
 | Join routing | `apps/meteor/client/providers/VideoConfProvider.tsx`, `client/views/room/contextualBar/VideoConference/hooks/useVideoConfOpenCall.tsx` |
 | Room opening | `apps/meteor/client/views/room/hooks/useOpenRoomById.tsx`, `client/lib/utils/mapRoomFromApi.ts` |

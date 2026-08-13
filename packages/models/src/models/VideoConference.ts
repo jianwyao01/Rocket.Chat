@@ -7,6 +7,7 @@ import type {
 	RocketChatRecordDeleted,
 	IVoIPVideoConference,
 	IVideoConferenceParticipant,
+	VideoConferenceLeaveReason,
 } from '@rocket.chat/core-typings';
 import { VideoConferenceStatus } from '@rocket.chat/core-typings';
 import type { FindPaginated, InsertionModel, IVideoConferenceModel } from '@rocket.chat/model-typings';
@@ -259,12 +260,58 @@ export class VideoConferenceRaw extends BaseRaw<VideoConference> implements IVid
 		await this.updateOne(
 			{ _id: callId },
 			{
-				$set: { 'users.$[user].joined': true, 'users.$[user].joinedAt': joinedAt },
+				// Joining is the first renewal of the member's presence lease: it is the strongest evidence there
+				// is that they are in the call, and stamping it here saves a second write to say so.
+				$set: { 'users.$[user].joined': true, 'users.$[user].joinedAt': joinedAt, 'users.$[user].lastSeenAt': joinedAt },
 				// Rejoining makes an earlier departure meaningless: leaving it behind would report the member as
 				// gone while they are on the call, and could end the call under them.
-				$unset: { 'users.$[user].leftAt': 1 },
+				$unset: { 'users.$[user].leftAt': 1, 'users.$[user].leftReason': 1 },
 			},
 			{ arrayFilters: [{ 'user._id': uid }] },
+		);
+	}
+
+	/**
+	 * Renews a member's presence lease — their call window reporting that it is still in the call.
+	 *
+	 * A renewal also undoes a departure that was *inferred*: a lease we gave up on while the window was in fact
+	 * alive was simply wrong, and the window saying so is the correction. A departure the member reported is
+	 * never undone this way — they left, and a heartbeat still in flight behind them must not put them back in
+	 * the call. That is the condition in the query, which is why a stale renewal matches nothing at all.
+	 */
+	public async renewUserPresenceById(
+		callId: string,
+		uid: IUser['_id'],
+		lastSeenAt = new Date(),
+		inferredReasons: VideoConferenceLeaveReason[] = ['timeout'],
+	): Promise<void> {
+		await this.updateOne(
+			{
+				_id: callId,
+				users: { $elemMatch: { _id: uid, $or: [{ leftAt: { $exists: false } }, { leftReason: { $in: inferredReasons } }] } },
+			},
+			{
+				$set: { 'users.$[user].lastSeenAt': lastSeenAt },
+				$unset: { 'users.$[user].leftAt': 1, 'users.$[user].leftReason': 1 },
+			},
+			{ arrayFilters: [{ 'user._id': uid }] },
+		);
+	}
+
+	/**
+	 * Renews several members' leases at once — what a provider that can be asked who is in its room answers
+	 * with. Unlike a client's own heartbeat this never revives an inferred departure: the provider is reporting
+	 * a room, not a member correcting us about their own window.
+	 */
+	public async renewUsersPresenceById(callId: string, uids: IUser['_id'][], lastSeenAt = new Date()): Promise<void> {
+		if (!uids.length) {
+			return;
+		}
+
+		await this.updateOne(
+			{ _id: callId },
+			{ $set: { 'users.$[user].lastSeenAt': lastSeenAt } },
+			{ arrayFilters: [{ 'user._id': { $in: uids } }] },
 		);
 	}
 
@@ -281,8 +328,16 @@ export class VideoConferenceRaw extends BaseRaw<VideoConference> implements IVid
 		);
 	}
 
-	public async setUserLeftById(callId: string, uid: IUser['_id'], leftAt = new Date()): Promise<void> {
-		await this.updateOne({ _id: callId }, { $set: { 'users.$[user].leftAt': leftAt } }, { arrayFilters: [{ 'user._id': uid }] });
+	/**
+	 * `reason` says how the departure came to be known, and is only written when there is something to say: an
+	 * absent one reads as reported, which is what every entry written before leases existed was.
+	 */
+	public async setUserLeftById(callId: string, uid: IUser['_id'], leftAt = new Date(), reason?: VideoConferenceLeaveReason): Promise<void> {
+		await this.updateOne(
+			{ _id: callId },
+			{ $set: { 'users.$[user].leftAt': leftAt, ...(reason && { 'users.$[user].leftReason': reason }) } },
+			{ arrayFilters: [{ 'user._id': uid }] },
+		);
 	}
 
 	/** Records that an existing member dismissed the call, mutating their entry in place. */
@@ -386,17 +441,21 @@ export class VideoConferenceRaw extends BaseRaw<VideoConference> implements IVid
 		});
 	}
 
-	public async findActiveExpiredEmbedded(maxAgeMs: number, providerName: string): Promise<VideoConference[]> {
-		// Used by the cron reconciler: any embedded call that's been open
-		// longer than maxAgeMs (typically 8h) and is still "active" on our
-		// side is probably zombie state from a crashed client. The
-		// reconciler hangs them up after verifying LK presence.
-		const threshold = new Date(Date.now() - maxAgeMs);
-		return this.find({
-			providerName,
-			status: { $in: [VideoConferenceStatus.CALLING, VideoConferenceStatus.STARTED] },
-			createdAt: { $lt: threshold },
-		}).toArray();
+	/**
+	 * Every call that is still open, with what the presence sweep needs to judge it: who is on the roster, and
+	 * which provider is running the media — the one that may be able to say who is in the room.
+	 *
+	 * Deliberately not scoped to a provider or to an age. Any open call has leases to check, and one whose
+	 * members all vanished ten seconds ago is exactly as stuck as one that has been that way for hours.
+	 */
+	public findActiveWithMembers(): FindCursor<Pick<VideoConference, '_id' | 'rid' | 'users' | 'providerName'>> {
+		return this.find(
+			{
+				status: { $in: [VideoConferenceStatus.CALLING, VideoConferenceStatus.STARTED] },
+				endedAt: { $exists: false },
+			},
+			{ projection: { _id: 1, rid: 1, users: 1, providerName: 1 } },
+		);
 	}
 
 	public async addEmbeddedParticipant(callId: VideoConference['_id'], participant: IVideoConferenceParticipant): Promise<void> {
@@ -408,7 +467,7 @@ export class VideoConferenceRaw extends BaseRaw<VideoConference> implements IVid
 		} as any);
 	}
 
-	public async markEmbeddedParticipantLeft(callId: VideoConference['_id'], userId: IUser['_id']): Promise<void> {
-		await this.updateOne({ '_id': callId, 'participants.id': userId }, { $set: { 'participants.$.leftAt': new Date() } } as any);
+	public async markEmbeddedParticipantLeft(callId: VideoConference['_id'], userId: IUser['_id'], leftAt = new Date()): Promise<void> {
+		await this.updateOne({ '_id': callId, 'participants.id': userId }, { $set: { 'participants.$.leftAt': leftAt } } as any);
 	}
 }
