@@ -29,10 +29,6 @@ const CallBar = ({ centre, children }: CallBarProps) => (
 		width='100%'
 		minHeight={56}
 		paddingInline={12}
-		backgroundColor='surface-light'
-		borderBlockStartWidth='default'
-		borderBlockStartStyle='solid'
-		borderBlockStartColor='stroke-extra-light'
 	>
 		{/* Equal flexible ends keep the controls centred on the bar rather than on the space left over, so they
 		    don't shift as the panel toggles gain or lose a badge. */}

@@ -33,10 +33,6 @@ const CallTopBar = ({ host, children }: CallTopBarProps) => (
 		width='100%'
 		minHeight={48}
 		paddingInline={12}
-		backgroundColor='surface-light'
-		borderBlockEndWidth='default'
-		borderBlockEndStyle='solid'
-		borderBlockEndColor='stroke-extra-light'
 		style={{ gap: 8 }}
 	>
 		{host}

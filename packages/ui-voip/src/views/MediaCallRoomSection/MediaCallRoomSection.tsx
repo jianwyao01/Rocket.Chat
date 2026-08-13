@@ -453,7 +453,6 @@ const MediaCallRoomSection = ({
 				aria-label={t('Voice_call')}
 				width='full'
 				height='full'
-				backgroundColor='surface-tint'
 				overflow='hidden'
 				display='flex'
 				flexDirection='column'
