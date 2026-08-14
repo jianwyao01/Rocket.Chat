@@ -5425,9 +5425,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@livekit/components-core@npm:0.12.15":
-  version: 0.12.15
-  resolution: "@livekit/components-core@npm:0.12.15"
+"@livekit/components-core@npm:0.12.14":
+  version: 0.12.14
+  resolution: "@livekit/components-core@npm:0.12.14"
   dependencies:
     "@floating-ui/dom": "npm:1.7.6"
     loglevel: "npm:1.9.1"
@@ -5435,15 +5435,15 @@ __metadata:
   peerDependencies:
     livekit-client: ^2.20.1
     tslib: ^2.6.2
-  checksum: 10/94a7a637b4743e69e7cc6e443e890ce49657397b11e97c8ac35c91a30ec1ebf90fcf1068234f232157933337ca56f81a4143949ce7b76c23fcaee619a3726577
+  checksum: 10/ee0dfee042ab423738b8966841fbb1e75a4c759defe3bac30abccfd4e18feea27a932462652ef4dd9d4fd88184212b1beacebe218a079ebadc5031549218bcd2
   languageName: node
   linkType: hard
 
-"@livekit/components-react@npm:^2.6.0":
-  version: 2.9.24
-  resolution: "@livekit/components-react@npm:2.9.24"
+"@livekit/components-react@npm:2.9.23":
+  version: 2.9.23
+  resolution: "@livekit/components-react@npm:2.9.23"
   dependencies:
-    "@livekit/components-core": "npm:0.12.15"
+    "@livekit/components-core": "npm:0.12.14"
     clsx: "npm:2.1.1"
     events: "npm:^3.3.0"
     jose: "npm:^6.0.12"
@@ -5457,7 +5457,7 @@ __metadata:
   peerDependenciesMeta:
     "@livekit/krisp-noise-filter":
       optional: true
-  checksum: 10/a326a520d90f147269fe0e6e147d33f0b5c15a86c96335dcd4565cd29c6e763242995375a6e0a4ba5175dc97f0490765de0c32930349974cc9758f143ba8bab3
+  checksum: 10/aa15d82b1bd6f08c8ae760185e126df120d350ef16b6b61a7954d475cbe7b607b9cd3f450705d9a9f5b1ffa290158f1007f39058a58da02b726d5a769e988074
   languageName: node
   linkType: hard
 
@@ -10174,7 +10174,7 @@ __metadata:
     "@faker-js/faker": "npm:~8.0.2"
     "@google-cloud/storage": "npm:^7.21.0"
     "@kaciras/deasync": "npm:^1.1.0"
-    "@livekit/components-react": "npm:^2.6.0"
+    "@livekit/components-react": "npm:2.9.23"
     "@livekit/krisp-noise-filter": "npm:^0.2.16"
     "@nivo/bar": "npm:0.88.0"
     "@nivo/core": "npm:0.88.0"
