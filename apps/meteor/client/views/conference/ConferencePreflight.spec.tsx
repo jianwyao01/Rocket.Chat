@@ -21,7 +21,7 @@ const renderPreflight = (props: Partial<Parameters<typeof ConferencePreflight>[0
 			onCancel={onCancel}
 			{...props}
 		/>,
-		{ wrapper: mockAppRoot().withJohnDoe().build() },
+		{ wrapper: mockAppRoot().withJohnDoe().withUserPreference('displayAvatars', true).build() },
 	);
 
 beforeEach(() => {
@@ -92,7 +92,8 @@ describe('who is already in the call', () => {
 
 		expect(await screen.findByText('Participants_in_the_call')).toBeInTheDocument();
 		expect(container.querySelectorAll('img')).toHaveLength(5);
-		expect(screen.getByText('+3')).toBeInTheDocument();
+		// Followed by how many more there are, phrased as the call's message block phrases it.
+		expect(screen.getByText('plus__usersCount__joined')).toBeInTheDocument();
 	});
 
 	// Nobody is in a call that hasn't started, so there is nothing to show and no space to leave for it.

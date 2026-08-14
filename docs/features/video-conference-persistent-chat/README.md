@@ -516,15 +516,22 @@ reading "in call" left them with something they could do nothing about. Rows are
 a *Show all N calls* toggle for the rest and a `40vh` scroll region with that toggle outside it: this is a route to
 a call, not a place to read a list.
 
-Each row says who is in the call, as **faces** under a `Participants` label: `CallParticipants` draws an avatar
-for each of the few the payload carries — capped at `CALL_FACES_SHOWN` (3), since a row has a name to fit beside
-them — and turns the rest into a `+N` shaped like one more avatar. The whole count is still the group's label, both
-for anyone who cannot see the avatars and because "+2" means nothing without a total. Faces answer the question
-the reader actually has, which is whether this is a call worth walking into; a number never did.
+Each row says who is in the call as **faces, then how many more** — `[][][] + 3 joined` — which is exactly how the
+call's own message block puts it in the room, down to the phrases (`plus__usersCount__joined`, or `joined` when
+they are all shown). A call met in the sidebar and met again in its room should read the same both times. Faces
+answer the question the reader actually has, which is whether this is a call worth walking into; a number never
+did.
 
-The same faces appear on the [preflight](#the-preflight-screen) when joining, under a *Participants in the call*
-label and five at a time — a screen has more room than a sidebar row. Those come from the call window's own copy
-of the members, so nothing extra travels for them.
+`CallParticipants` draws one avatar per person the payload carries, capped at `CALL_FACES_SHOWN` (3), since a row
+has a name to fit beside them. They overlap slightly, each stacked above the one before it, with a `drop-shadow` on
+each so a row of faces reads as several people rather than one smudge — `drop-shadow` rather than `box-shadow`
+because it follows the avatar's own rounded shape. The full count stays as the group's label, for anyone who cannot
+see the avatars and because "+3" means nothing without a total. With the `displayAvatars` preference off there is
+nobody to show, so it says the count in words instead, again as the message block does.
+
+The same component appears on the [preflight](#the-preflight-screen) when joining, under a *Participants in the
+call* label and five faces at a time, since a screen has more room than a sidebar row. Those come from the call
+window's own copy of the members, so nothing extra travels for them.
 
 Each row is named by `conferenceNameFor` (`lib/videoConference/conferenceName.ts`), shared with the call window so
 the two can't disagree: a group conference's own title; otherwise the reader's own subscription, since a DM is

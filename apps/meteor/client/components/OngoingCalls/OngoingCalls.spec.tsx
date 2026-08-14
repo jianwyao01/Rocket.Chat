@@ -21,6 +21,9 @@ const renderSection = (calls: JoinableVideoConference[]) =>
 	render(<OngoingCalls />, {
 		wrapper: mockAppRoot()
 			.withJohnDoe()
+			// Faces are a preference, and `CallParticipants` reads it the way the call's message block does: with it
+			// unset there is nothing to show and it says the count in words instead.
+			.withUserPreference('displayAvatars', true)
 			// `createdAt` is a string over REST; the fixtures carry Dates, which is what the hook hands on.
 			.withEndpoint('GET', '/v1/video-conference.joinable', () => ({ calls, success: true }) as any)
 			.withEndpoint('POST', '/v1/video-conference.decline', decline)
@@ -143,8 +146,8 @@ describe('a call that is ringing', () => {
 
 		expect(await screen.findByText('Alice')).toBeInTheDocument();
 		expect(screen.getByText('Incoming_call')).toBeInTheDocument();
-		// The ringing item says the same thing about itself as the calls below: who is in there, named and shown.
-		expect(screen.getByText('Participants')).toBeInTheDocument();
+		// The ringing item says the same thing about itself as the calls below: who is in there, as faces with the
+		// count after them — the phrasing the call's message block uses in the room.
 		expect(screen.getByTitle('__count__people_in_the_call')).toBeInTheDocument();
 	});
 
