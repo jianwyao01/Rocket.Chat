@@ -51,7 +51,14 @@ const RingingCallItem = ({ call, silenced, onAccept, onReject, onSilence }: Ring
 			actions={
 				<>
 					{audible && (
-						<IconButton mini icon='bell-off' title={t('Silence')} aria-label={t('Silence')} onClick={() => onSilence(call.callId)} />
+						<IconButton
+							mini
+							secondary
+							icon='bell-off'
+							title={t('Silence')}
+							aria-label={t('Silence')}
+							onClick={() => onSilence(call.callId)}
+						/>
 					)}
 					{/* Silenced: the same icon, with nothing left to press — it says why it went quiet. */}
 					{silenced && <Icon name='bell-off' size='x16' title={t('Incoming_call_silenced')} />}
@@ -66,7 +73,7 @@ const RingingCallItem = ({ call, silenced, onAccept, onReject, onSilence }: Ring
 						aria-label={t('Accept')}
 						onClick={() => onAccept(call.callId)}
 					/>
-					<IconButton mini icon='cross' title={t('Decline')} aria-label={t('Decline')} onClick={() => onReject(call.callId)} />
+					<IconButton mini secondary icon='cross' title={t('Decline')} aria-label={t('Decline')} onClick={() => onReject(call.callId)} />
 				</>
 			}
 		/>

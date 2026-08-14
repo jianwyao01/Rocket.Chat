@@ -10,9 +10,9 @@ export const availabilityErrors = {
  * How many of the people in a call are shown as faces in the sidebar list before the rest become a "+N".
  *
  * Shared with the server, which slices the joinable payload to it: sending more would be sending a roster nobody
- * draws. Three is what fits beside a call's name in a sidebar row without pushing it out.
+ * draws. Two is what fits beside a call's name in a sidebar row without pushing it out — the rest are a count.
  */
-export const CALL_FACES_SHOWN = 3;
+export const CALL_FACES_SHOWN = 2;
 
 /**
  * The same, on the preflight — a screen rather than a row, so it has room for more of them before the count takes

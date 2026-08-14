@@ -2,6 +2,7 @@ import type { JoinableVideoConference } from '@rocket.chat/core-typings';
 import { Icon } from '@rocket.chat/fuselage';
 import type { ReactNode } from 'react';
 
+import { CALL_FACES_SHOWN } from '../../../lib/videoConference/constants';
 import Extended from '../../sidebar/Item/Extended';
 import CallParticipants from '../CallParticipants';
 
@@ -37,7 +38,9 @@ const CallListItem = ({ call, timeLabel, actions }: CallListItemProps) => (
 		title={call.name}
 		time={call.createdAt}
 		timeLabel={timeLabel}
-		subtitle={<CallParticipants people={call.participants} total={call.usersCount} />}
+		// Sliced here as well as on the server: what a row has space for is this component's business, and a payload
+		// from an older server — or a fake one — should not be able to widen it.
+		subtitle={<CallParticipants people={call.participants.slice(0, CALL_FACES_SHOWN)} total={call.usersCount} />}
 		// Handed over bare, so they sit side by side in the item's own row. Wrapped in anything of their own
 		// they stack, since a plain box is not a flex row.
 		actions={actions}

@@ -201,7 +201,7 @@ describe('VideoConfService.listJoinableCalls', () => {
 
 			expect(call.usersCount).to.equal(4);
 			expect(call.participants).to.have.length(CALL_FACES_SHOWN);
-			expect(call.participants.map(({ _id }: { _id: string }) => _id)).to.deep.equal(['one', 'two', 'three']);
+			expect(call.participants.map(({ _id }: { _id: string }) => _id)).to.deep.equal(['one', 'two']);
 			// Enough to draw a face with, and nothing else — a payload is not a place to publish a roster.
 			expect(Object.keys(call.participants[0]).sort()).to.deep.equal(['_id', 'name', 'username']);
 		});

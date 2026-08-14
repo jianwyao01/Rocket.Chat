@@ -26,9 +26,9 @@ const OngoingCallRow = ({ call, onJoin, onDecline }: OngoingCallRowProps) => {
 			call={call}
 			actions={
 				<>
-					<IconButton mini icon='check' title={t('Join')} aria-label={t('Join')} onClick={() => onJoin(call.callId)} />
+					<IconButton mini secondary icon='check' title={t('Join')} aria-label={t('Join')} onClick={() => onJoin(call.callId)} />
 					{onDecline && (
-						<IconButton mini icon='cross' title={t('Decline')} aria-label={t('Decline')} onClick={() => onDecline(call.callId)} />
+						<IconButton mini secondary icon='cross' title={t('Decline')} aria-label={t('Decline')} onClick={() => onDecline(call.callId)} />
 					)}
 				</>
 			}
