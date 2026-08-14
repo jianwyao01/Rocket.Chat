@@ -3,8 +3,9 @@ import type { SubscriptionWithRoom } from '@rocket.chat/ui-contexts';
 import { VideoConfContext } from '@rocket.chat/ui-video-conf';
 import { renderHook } from '@testing-library/react';
 
-import { useRoomList } from './useRoomList';
+import { isJoinableCall, isRoomListRoom, useRoomList } from './useRoomList';
 import { createFakeRoom, createFakeSubscription, createFakeUser } from '../../../tests/mocks/data';
+import { buildJoinableCall } from '../../views/conference/testFixtures';
 
 const user = createFakeUser({
 	active: true,
@@ -237,7 +238,8 @@ it('should not include unread room in unread group if hideUnreadStatus is enable
 		}).build(),
 	});
 	const unreadIndex = result.current.groupsList.indexOf('Unread');
-	const roomListUnread = result.current.roomList.filter((room) => room.unread);
+	// The list can also hold calls now, which have nothing unread about them.
+	const roomListUnread = result.current.roomList.filter((item) => isRoomListRoom(item) && item.unread);
 
 	expect(result.current.groupsCount[unreadIndex]).toEqual(unreadChannels.length);
 	expect(roomListUnread.length).not.toEqual(unreadChannels.length);
@@ -271,7 +273,7 @@ it('should add to unread group when has thread unread, even if alert is false', 
 		}).build(),
 	});
 
-	const unreadGroup = result.current.roomList.splice(0, result.current.groupsCount[0]);
+	const unreadGroup = result.current.roomList.splice(0, result.current.groupsCount[0]).filter(isRoomListRoom);
 	expect(unreadGroup.find((room) => room.name === fakeRoom.name)).toBeDefined();
 });
 
@@ -288,6 +290,53 @@ it('should not add room to unread group if thread unread is an empty array', asy
 		}).build(),
 	});
 
-	const unreadGroup = result.current.roomList.splice(0, result.current.groupsCount[0]);
+	const unreadGroup = result.current.roomList.splice(0, result.current.groupsCount[0]).filter(isRoomListRoom);
 	expect(unreadGroup.find((room) => room.name === fakeRoom.name)).toBeUndefined();
+});
+
+// A call is something happening *now*, so it goes above rooms that will still be there in a minute — and it is a
+// group of this list rather than a card above it, so it collapses and scrolls with everything else.
+describe('ongoing calls', () => {
+	const calls = [buildJoinableCall({ callId: 'ringing', ringingAt: new Date() }), buildJoinableCall({ callId: 'running' })];
+
+	it('leads the list with its own group', () => {
+		const { result } = renderHook(() => useRoomList({ collapsedGroups: [], calls }), {
+			wrapper: getWrapperSettings({ sidebarGroupByType: true }).build(),
+		});
+
+		expect(result.current.groupsList[0]).toBe('Ongoing_calls');
+		expect(result.current.groupsCount[0]).toBe(calls.length);
+		expect(result.current.roomList.slice(0, calls.length).every(isJoinableCall)).toBe(true);
+	});
+
+	// Order is the caller's: it hands them over ringing first, because those are the ones asking something.
+	it('keeps the order it was given', () => {
+		const { result } = renderHook(() => useRoomList({ collapsedGroups: [], calls }), {
+			wrapper: getWrapperSettings({ sidebarGroupByType: true }).build(),
+		});
+
+		const [first, second] = result.current.roomList;
+
+		expect(isJoinableCall(first) && first.callId).toBe('ringing');
+		expect(isJoinableCall(second) && second.callId).toBe('running');
+	});
+
+	it('takes no group at all when there are no calls', () => {
+		const { result } = renderHook(() => useRoomList({ collapsedGroups: [] }), {
+			wrapper: getWrapperSettings({ sidebarGroupByType: true }).build(),
+		});
+
+		expect(result.current.groupsList).not.toContain('Ongoing_calls');
+	});
+
+	// Collapsed the way every other group collapses: the header stays, its rows go.
+	it('keeps its header when collapsed, and none of its rows', () => {
+		const { result } = renderHook(() => useRoomList({ collapsedGroups: ['Ongoing_calls'], calls }), {
+			wrapper: getWrapperSettings({ sidebarGroupByType: true }).build(),
+		});
+
+		expect(result.current.groupsList[0]).toBe('Ongoing_calls');
+		expect(result.current.groupsCount[0]).toBe(0);
+		expect(result.current.roomList.some(isJoinableCall)).toBe(false);
+	});
 });

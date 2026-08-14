@@ -1,10 +1,11 @@
-import type { ILivechatInquiryRecord } from '@rocket.chat/core-typings';
+import type { ILivechatInquiryRecord, JoinableVideoConference } from '@rocket.chat/core-typings';
 import { useDebouncedValue } from '@rocket.chat/fuselage-hooks';
 import type { SubscriptionWithRoom, TranslationKey } from '@rocket.chat/ui-contexts';
 import { useUserPreference, useUserSubscriptions, useSetting } from '@rocket.chat/ui-contexts';
-import { useVideoConfIncomingCalls } from '@rocket.chat/ui-video-conf';
 import { useMemo } from 'react';
 
+import type { CallGroupItem } from '../../components/OngoingCalls/useOngoingCalls';
+import { isDeclinedCallsToggle } from '../../components/OngoingCalls/useOngoingCalls';
 import { useSortQueryOptions } from '../../hooks/useSortQueryOptions';
 import { useOmnichannelEnabled } from '../../views/omnichannel/hooks/useOmnichannelEnabled';
 import { useQueuedInquiries } from '../../views/omnichannel/hooks/useQueuedInquiries';
@@ -14,7 +15,6 @@ const query = { open: { $ne: false } };
 const emptyQueue: ILivechatInquiryRecord[] = [];
 
 const order = [
-	'Incoming_Calls',
 	'Incoming_Livechats',
 	'Open_Livechats',
 	'On_Hold_Chats',
@@ -27,8 +27,17 @@ const order = [
 	'Conversations',
 ] as const;
 
+/** Calls sit in the room list as their own group, so a row is either one of those or a subscription. */
+export type SidebarListItem = SubscriptionWithRoom | CallGroupItem;
+
+export const isJoinableCall = (item: SidebarListItem): item is JoinableVideoConference => 'callId' in item;
+
+/** Whatever is left once the calls group is set aside: an actual room. */
+export const isRoomListRoom = (item: SidebarListItem): item is SubscriptionWithRoom =>
+	!isJoinableCall(item) && !isDeclinedCallsToggle(item);
+
 type useRoomListReturnType = {
-	roomList: Array<SubscriptionWithRoom>;
+	roomList: Array<SidebarListItem>;
 	groupsCount: number[];
 	groupsList: TranslationKey[];
 	groupedUnreadInfo: Pick<
@@ -36,7 +45,14 @@ type useRoomListReturnType = {
 		'userMentions' | 'groupMentions' | 'unread' | 'tunread' | 'tunreadUser' | 'tunreadGroup' | 'alert' | 'hideUnreadStatus'
 	>[];
 };
-export const useRoomList = ({ collapsedGroups }: { collapsedGroups?: string[] }): useRoomListReturnType => {
+export const useRoomList = ({
+	collapsedGroups,
+	calls = [],
+}: {
+	collapsedGroups?: string[];
+	/** What the calls group holds, in the order it should read: ringing first, the declined toggle last. */
+	calls?: CallGroupItem[];
+}): useRoomListReturnType => {
 	const showOmnichannel = useOmnichannelEnabled();
 	const sidebarGroupByType = useUserPreference('sidebarGroupByType');
 	const favoritesEnabled = useUserPreference('sidebarShowFavorites');
@@ -50,15 +66,12 @@ export const useRoomList = ({ collapsedGroups }: { collapsedGroups?: string[] })
 
 	const inquiries = useQueuedInquiries();
 
-	const incomingCalls = useVideoConfIncomingCalls();
-
 	const queue = inquiries.enabled ? inquiries.queue : emptyQueue;
 
 	const { groupsCount, groupsList, roomList, groupedUnreadInfo } = useDebouncedValue(
 		useMemo(() => {
 			const isCollapsed = (groupTitle: string) => collapsedGroups?.includes(groupTitle);
 
-			const incomingCall = new Set();
 			const favorite = new Set();
 			const team = new Set();
 			const omnichannel = new Set();
@@ -72,10 +85,6 @@ export const useRoomList = ({ collapsedGroups }: { collapsedGroups?: string[] })
 			rooms.forEach((room) => {
 				if (room.archived) {
 					return;
-				}
-
-				if (incomingCalls.find((call) => call.rid === room.rid)) {
-					return incomingCall.add(room);
 				}
 
 				if (sidebarShowUnread && (room.alert || room.unread || room.tunread?.length) && !room.hideUnreadStatus) {
@@ -114,7 +123,6 @@ export const useRoomList = ({ collapsedGroups }: { collapsedGroups?: string[] })
 			});
 
 			const groups = new Map<string, Set<any>>();
-			incomingCall.size && groups.set('Incoming_Calls', incomingCall);
 
 			showOmnichannel && inquiries.enabled && queue.length && groups.set('Incoming_Livechats', new Set(queue));
 			showOmnichannel && omnichannel.size && groups.set('Open_Livechats', omnichannel);
@@ -188,6 +196,22 @@ export const useRoomList = ({ collapsedGroups }: { collapsedGroups?: string[] })
 				} as useRoomListReturnType,
 			);
 
+			// Calls go first, as their own group: something happening now, above rooms that will still be there in a
+			// minute. Prepended rather than placed by `sidebarOrder`, because that order is a user preference saved
+			// before this group existed — a stored copy of it has no place for calls and would drop them.
+			if (calls.length) {
+				const collapsed = isCollapsed('Ongoing_calls');
+
+				groupsList.unshift('Ongoing_calls' as TranslationKey);
+				groupsCount.unshift(collapsed ? 0 : calls.length);
+				// A call has nothing unread about it; the group's badge is for rooms.
+				groupedUnreadInfo.unshift({ userMentions: 0, groupMentions: 0, tunread: [], tunreadUser: [], unread: 0 });
+
+				if (!collapsed) {
+					roomList.unshift(...calls);
+				}
+			}
+
 			return { groupsCount, groupsList, roomList, groupedUnreadInfo };
 		}, [
 			rooms,
@@ -200,7 +224,7 @@ export const useRoomList = ({ collapsedGroups }: { collapsedGroups?: string[] })
 			isDiscussionEnabled,
 			sidebarOrder,
 			collapsedGroups,
-			incomingCalls,
+			calls,
 		]),
 		50,
 	);

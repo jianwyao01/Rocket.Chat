@@ -37,16 +37,13 @@ it('still says how many there are, for anyone who cannot see the faces', () => {
 	expect(screen.getByTitle('__count__people_in_the_call')).toBeInTheDocument();
 });
 
-// The faces overlap, so which sits above which is stated rather than left to paint order — that is what the
-// shadow on each of them is there to make legible.
-it('stacks the faces in reading order', () => {
+// Side by side rather than overlapped, so nothing has to be stacked and no face is half hidden behind another.
+it('sets the faces beside each other', () => {
 	const people = [person('alice'), person('bob'), person('carol')];
 	const { container } = renderParticipants({ people, total: 3 });
 
-	const layers = [...container.querySelectorAll<HTMLElement>('[style*="z-index"]')].map((node) => Number(node.style.zIndex));
-
-	expect(layers).toHaveLength(people.length);
-	expect(layers).toEqual([...layers].sort((a, b) => a - b));
+	expect(container.querySelectorAll('img')).toHaveLength(people.length);
+	expect(container.querySelector('[style*="z-index"]')).toBeNull();
 });
 
 // An older server, or a call whose members did not travel with it.

@@ -510,17 +510,28 @@ now — docked at the top of the sidebar, and behind a navbar button when there 
 
 ### What the list shows
 
-Every row is something to act on: **join** it, or turn it down with the ghost **×** after it so it stops asking.
-The call the reader is *already in* is left out entirely — they are in it, there is nothing to reach, and a row
-reading "in call" left them with something they could do nothing about. Rows are newest first, three of them, with
-a *Show all N calls* toggle for the rest and a `40vh` scroll region with that toggle outside it: this is a route to
-a call, not a place to read a list.
+Every row is something to act on: **join** it with the ✓, or turn it down with the ✕ so it stops asking. The call
+the reader is *already in* is left out entirely — they are in it, there is nothing to reach, and a row reading "in
+call" left them with something they could do nothing about. Rows are newest first, and all of them: being a group of
+the sidebar's list means the list's own scrolling covers it, so there is no cap and no *show all* toggle to reach
+past.
 
-A row is **two lines**: the name on the first, the faces and the actions sharing the second. The name is what
-identifies a call and it was the thing being squeezed — with the actions beside it, `Meeting in "20 August
-planning"` had a third of a sidebar row to say itself in. There is no icon in front of it either; a row this narrow
-has nothing to spend on saying "this is a call" twice. A **ringing** call is the name in red rather than a coloured
-icon.
+The calls are **a group of the sidebar's own list**, not a card above it: *Ongoing calls*, always first, collapsing
+and scrolling exactly as Discussions or Channels do (`useRoomList` prepends it; `RoomList` renders a call row where
+a room row would go). Prepended rather than placed by `sidebarSectionsOrder`, because that order is a user
+preference saved before this group existed and a stored copy of it has no place for calls.
+
+A row **is** the room item — `sidebar/Item/Extended`, the same component every channel renders — with a call's
+things in its slots: a camera icon in front of the name, the name in the item's own title tokens, when the call
+started in the timestamp corner, and the faces on the second line where a room puts its last message. The actions
+sit at the end of that second line. The one slot it never fills is the avatar: a call has no single face to show,
+its faces are on the second line, and the avatar column would indent every call by an avatar's width to say
+nothing.
+
+A **ringing** call is the same row again, said by its buttons rather than by a colour behind it: a green phone in
+place of the tick, and a third action, since a ring can be silenced without being answered. Nothing about the row is
+clickable — what a call offers is on those buttons, and a whole row that joined a call would be a large target for
+something the reader may not have meant.
 
 Each row says who is in the call as **faces, then how many more** — `[][][] + 3 joined` — which is exactly how the
 call's own message block puts it in the room, down to the phrases (`plus__usersCount__joined`, or `joined` when
@@ -548,10 +559,9 @@ back to the room reached `getRoomName`'s last resort and showed them the raw roo
 ### A ringing call is listed, not popped
 
 An incoming call used to take over the screen with a popup that had to be answered before anything else could
-happen. It is now the first item of that same list, under an *Incoming calls* heading of its own: bigger than the
-rest, with **accept** then **decline** *below* it rather than beside it — the same order as the join and dismiss on
-the calls underneath. The ring still sounds. When it stops, the item settles into an ordinary row with a join
-button: the call is still there, it just isn't asking any more.
+happen. It is now the first row of the *Ongoing calls* group — the same row as any other call, in primary blue, with
+**accept**, **decline** and **silence** where the running calls carry join and dismiss. The ring still sounds. When
+it stops, the row settles into an ordinary one: the call is still there, it just isn't asking any more.
 
 **Silencing** is not answering. The bell button stops this client's ring and leaves the call exactly where it is,
 so the user can decide in their own time. It only appears while there is a sound to stop — a ring this client never
@@ -567,12 +577,20 @@ ringing right now would miss it entirely.
 
 ### Where the list lives
 
-`components/OngoingCalls` is the list; both places that show it render the same component, unchanged.
-`sidebar/sections/OngoingCallsSection` docks it at the top of the sidebar, asking `useOngoingCallsList` only
-whether there is anything to make room for — the decline and silence wiring belongs to whoever renders the rows.
+`components/OngoingCalls` holds the two rows and the data behind them. `useOngoingCallItems` says what the list
+*is* — ringing first, then the running ones, then the declined behind a toggle — and both places that show calls
+walk the same items so they cannot drift into different orders:
 
-A collapsed sidebar therefore hides the only place these calls appear, including one ringing right now. Standing in
-for it in the navbar is [deferred](#deferred-to-follow-ups).
+- the sidebar's `RoomList` renders them as the first group of its own list, one row at a time, because that list is
+  virtualised and this is a group of it;
+- `NavBarItemOngoingCalls` renders `OngoingCallsList` in a dropdown, which wants the whole thing at once.
+
+A collapsed sidebar hides the group, so the navbar button stands in for it whenever `sidebar.isCollapsed`: red while
+something is ringing, and it opens itself when a ring starts, because a ringing call the user has to go looking for
+is a missed call. It counts what is being offered — the declined ones stay behind their toggle rather than being
+counted at someone who already turned them down.
+
+
 
 ### What the server answers with
 
@@ -838,7 +856,6 @@ git — `git show 5ab58858d7d:<path>` restores any of them intact.
 |---|---|---|
 | **Telling the caller nobody picked up** (`CallOutcomeModal`, `useCallOutcome`) | the caller is in the call either way; this only names what already happened | the members panel shows each member still ringing, waiting, or declined |
 | **The provider → parent bridge** (`useProviderCallBridge`) | **no provider implements it** — not the bundled Jitsi app, which declares only `{ mic, cam, title }` | our own bar owns the panels; a provider showing its own toolbar shows two |
-| **The navbar stand-in** (`NavBarItemOngoingCalls`) | only reachable with the sidebar collapsed | nothing there; the sidebar card covers the rest |
 | **Handing internal links to the opener** (the desktop bridge and the `postMessage` handshake) | needs a bridge on both sides for a nicer landing | a `noopener` new tab — see [Confined Navigation](#confined-navigation) |
 | **Regrouping the room's call list** into Ongoing/Past, named after the discussion | a redesign of a list that already works, and one every workspace sees | the existing flat list, with the fix that it no longer counts members who never joined |
 | **Disabling join on message blocks inside the call window** (`videoConfJoinDisabled`, `useCurrentRouteName`) | reached across `ui-contexts` and `fuselage-ui-kit` to stop something that isn't broken | the buttons stay live; joining from inside a call opens a second call window |
@@ -943,7 +960,7 @@ could not be loaded" panel, because the detail panel is contact-call-shaped.
 | Preflight | `apps/meteor/client/views/conference/ConferencePreflight.tsx`, `ConferenceStartPage.tsx`, `hooks/useStartConference.ts`, `hooks/useCallPreferences.ts` |
 | Members panel | `apps/meteor/client/views/conference/CallMembersPanel.tsx`, `CallMemberItem.tsx`, `client/hooks/useRingingExpiry.ts` |
 | Membership rules (shared) | `apps/meteor/lib/videoConference/memberStatus.ts`, `callHistory.ts`, `chatAccess.ts`, `constants.ts` |
-| Reaching a call | `apps/meteor/client/components/OngoingCalls/` (the list, its rows and `useOngoingCalls`), `client/sidebar/sections/OngoingCallsSection.tsx`, `client/views/conference/hooks/useJoinableCalls.ts`, `hooks/useJoinCall.tsx` |
+| Reaching a call | `apps/meteor/client/components/OngoingCalls/` (`CallListItem` over the sidebar's own room item, its two rows, `OngoingCallsList` and `useOngoingCalls`), `client/sidebar/hooks/useRoomList.ts` and `RoomList/RoomList.tsx` (where the group is), `client/navbar/NavBarItemOngoingCalls.tsx` (the stand-in), `client/views/conference/hooks/useJoinableCalls.ts`, `hooks/useJoinCall.tsx` |
 | Leaving | `apps/meteor/client/views/conference/hooks/useLeaveConferenceOnClose.ts` |
 | Presence leases | `apps/meteor/lib/videoConference/presence.ts`, `client/views/conference/hooks/useConferencePresenceLease.ts`, `server/lib/videoConfPresence.ts`, `server/cron/videoConferences.ts` |
 | Ringing popups | `apps/meteor/client/views/room/contextualBar/VideoConference/VideoConfPopups/VideoConfPopup/` |

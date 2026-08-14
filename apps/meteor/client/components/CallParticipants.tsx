@@ -6,15 +6,11 @@ import { useUserPreference } from '@rocket.chat/ui-contexts';
 import { useTranslation } from 'react-i18next';
 
 /**
- * What lifts each face off the one it overlaps, so a row of them reads as several people rather than as one
- * smudge. `drop-shadow` rather than `box-shadow` because it follows the avatar's own rounded shape — the radius
- * belongs to the avatar, and guessing it here would leave a square shadow behind a rounded picture.
- *
- * `position: relative` is here only to make `z-index` apply: the faces are deliberately stacked, and which one
- * sits above which has to be said rather than left to paint order.
+ * A little definition under each face, so a row of them reads as faces rather than as a strip of colour.
+ * `drop-shadow` rather than `box-shadow` because it follows the avatar's own rounded shape — the radius belongs to
+ * the avatar, and guessing it here would leave a square shadow behind a rounded picture.
  */
-const stackedStyles = css`
-	position: relative;
+const facesStyles = css`
 	filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.24)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.32));
 `;
 
@@ -58,11 +54,11 @@ const CallParticipants = ({ people, total, size = 'x18' }: CallParticipantsProps
 
 	return (
 		<Box display='flex' alignItems='center' aria-label={label} title={label} style={{ gap: 6 }}>
-			<Box display='flex' alignItems='center'>
-				{people.map(({ _id, username }, index) => (
-					// Overlapped a little, so a row of faces reads as one group rather than a list. Each face sits
-					// above the one before it, which is the direction the row is read in.
-					<Box key={_id} className={stackedStyles} marginInlineStart={index === 0 ? 0 : -4} style={{ zIndex: index + 1 }}>
+			{/* Side by side with a little air between them, rather than overlapped: there are only ever a few, and
+			    a face half behind another face is a worse picture of who is in the call. */}
+			<Box display='flex' alignItems='center' style={{ gap: 4 }}>
+				{people.map(({ _id, username }) => (
+					<Box key={_id} className={facesStyles}>
 						<UserAvatar username={username ?? ''} size={size} />
 					</Box>
 				))}

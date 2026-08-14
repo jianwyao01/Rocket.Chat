@@ -5196,6 +5196,10 @@
     "one": "Show all {{count}} call",
     "other": "Show all {{count}} calls"
   },
+  "Show__count__declined_calls": {
+    "one": "Show {{count}} declined call",
+    "other": "Show {{count}} declined calls"
+  },
   "Show_fewer": "Show fewer",
   "Show_more": "Show more",
   "Show_name_field": "Show name field",
