@@ -516,6 +516,12 @@ reading "in call" left them with something they could do nothing about. Rows are
 a *Show all N calls* toggle for the rest and a `40vh` scroll region with that toggle outside it: this is a route to
 a call, not a place to read a list.
 
+A row is **two lines**: the name on the first, the faces and the actions sharing the second. The name is what
+identifies a call and it was the thing being squeezed — with the actions beside it, `Meeting in "20 August
+planning"` had a third of a sidebar row to say itself in. There is no icon in front of it either; a row this narrow
+has nothing to spend on saying "this is a call" twice. A **ringing** call is the name in red rather than a coloured
+icon.
+
 Each row says who is in the call as **faces, then how many more** — `[][][] + 3 joined` — which is exactly how the
 call's own message block puts it in the room, down to the phrases (`plus__usersCount__joined`, or `joined` when
 they are all shown). A call met in the sidebar and met again in its room should read the same both times. Faces

@@ -83,6 +83,19 @@ it('leaves out the call the user is already in', async () => {
 	await waitFor(() => expect(container).toBeEmptyDOMElement());
 });
 
+// The name is what identifies a call, and with the actions beside it a name like `Meeting in "20 August planning"`
+// was truncated to nothing useful. It gets the first line; the faces and the actions share the second.
+it('gives the name a line to itself, with the actions opposite the faces', async () => {
+	renderSection([call({ callId: 'one', name: 'Standup' })]);
+
+	const faces = await screen.findByTitle('__count__people_in_the_call');
+	const secondLine = faces.parentElement as HTMLElement;
+
+	expect(secondLine).toContainElement(screen.getByRole('button', { name: 'Join' }));
+	expect(secondLine).toContainElement(screen.getByRole('button', { name: 'Decline' }));
+	expect(secondLine).not.toContainElement(screen.getByText('Standup'));
+});
+
 it('gives every row it does show both actions', async () => {
 	renderSection([call({ callId: 'one' }), call({ callId: 'two' })]);
 

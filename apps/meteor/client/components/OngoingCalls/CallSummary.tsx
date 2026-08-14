@@ -1,5 +1,5 @@
 import type { JoinableVideoConference } from '@rocket.chat/core-typings';
-import { Box, Icon } from '@rocket.chat/fuselage';
+import { Box } from '@rocket.chat/fuselage';
 import type { ReactNode } from 'react';
 
 import CallParticipants from '../CallParticipants';
@@ -8,28 +8,30 @@ type CallSummaryProps = {
 	call: JoinableVideoConference;
 	/** Ringing calls say so in red; the rest are just calls. */
 	ringing?: boolean;
-	/** Anything that belongs on the same line as the name, at the inline end. */
+	/** What to offer about the call — at the end of the second line, opposite the faces. */
 	children?: ReactNode;
 };
 
 /**
- * What a call in the list says about itself: that it is a conference, what it is called, and who is in it.
+ * What a call in the list says about itself: what it is called, who is in it, and what can be done about it.
  *
- * Shared by the ringing item and the ordinary row, because that much is the same for both — what differs is what
- * they offer, and a ringing call gets its actions on a line of their own.
+ * Two lines, because the name is what identifies a call and it was the thing being squeezed: with the actions
+ * beside it, a name like "Meeting in \"20 August planning\"" had a third of the row to say itself in and was
+ * truncated to nothing useful. It now has the line to itself, and the second line carries the faces from the start
+ * and the actions from the end — neither of which needs the width the name does.
+ *
+ * Shared by the ringing item and the ordinary row, because that much is the same for both. A ringing call is red
+ * rather than iconned: it is one line of difference, and the sidebar has no room to spend on decoration.
  */
 const CallSummary = ({ call, ringing, children }: CallSummaryProps) => (
-	<Box display='flex' alignItems='center' style={{ gap: 8 }}>
-		<Icon name='video' size='x20' color={ringing ? 'status-font-on-danger' : undefined} />
-		<Box minWidth={0} flexGrow={1}>
-			<Box fontScale='p2b' color='default' withTruncatedText>
-				{call.name}
-			</Box>
-			{/* The faces say what they are themselves — they are followed by "+ 3 joined", the same way the call's
-				    message block puts it in the room. */}
-			<CallParticipants people={call.participants} total={call.usersCount} />
+	<Box display='flex' flexDirection='column' minWidth={0}>
+		<Box fontScale='p2b' color={ringing ? 'danger' : 'default'} withTruncatedText>
+			{call.name}
 		</Box>
-		{children}
+		<Box display='flex' alignItems='center' justifyContent='space-between' style={{ gap: 8 }}>
+			<CallParticipants people={call.participants} total={call.usersCount} />
+			{children}
+		</Box>
 	</Box>
 );
 

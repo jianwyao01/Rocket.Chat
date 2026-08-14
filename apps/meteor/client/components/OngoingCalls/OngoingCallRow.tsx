@@ -1,5 +1,5 @@
 import type { JoinableVideoConference } from '@rocket.chat/core-typings';
-import { Box, Button, ButtonGroup, IconButton } from '@rocket.chat/fuselage';
+import { Box, ButtonGroup, IconButton } from '@rocket.chat/fuselage';
 import { useTranslation } from 'react-i18next';
 
 import CallSummary from './CallSummary';
@@ -18,11 +18,12 @@ const OngoingCallRow = ({ call, onJoin, onDecline }: OngoingCallRowProps) => {
 			<CallSummary call={call}>
 				{/* Every row is something to act on — the section leaves out the call the reader is already in, so
 				    there is no state here that offers nothing to do. Joining is the offer; turning the call down is the
-				    way to be rid of the row, which is a smaller thing and reads as one. */}
+				    way to be rid of the row, which is a smaller thing and reads as one.
+
+				    At the end of the second line, opposite the faces, so the call's name has the first line to
+				    itself. */}
 				<ButtonGroup>
-					<Button small primary onClick={() => onJoin(call.callId)}>
-						{t('Join')}
-					</Button>
+					<IconButton tiny icon='video' primary aria-label={t('Join')} onClick={() => onJoin(call.callId)}></IconButton>
 					<IconButton tiny icon='cross' title={t('Decline')} aria-label={t('Decline')} onClick={() => onDecline(call.callId)} />
 				</ButtonGroup>
 			</CallSummary>
