@@ -61,6 +61,14 @@ type MediaCallViewContextValue = {
 	/** Whether the local user currently has their hand raised. */
 	localHandRaised?: boolean;
 	/**
+	 * Ask another participant to mute themselves.
+	 *
+	 * A request rather than an act, and deliberately so: muting someone else's microphone from here would mean
+	 * reaching into their machine, so what travels is a message their own client honours by muting itself and
+	 * saying who asked. Only offered where the transport can carry it — group calls today.
+	 */
+	onMuteParticipant?: (participantId: string) => void;
+	/**
 	 * All raised hands across the call, ordered by raise time (oldest first).
 	 * The index + 1 is the queue position rendered on the participant tile.
 	 */
@@ -126,6 +134,7 @@ export const defaultMediaCallContextValue: MediaCallViewContextValue = {
 	onSelectPeer: () => undefined,
 	onToggleScreenSharing: () => undefined,
 	onToggleCamera: () => undefined,
+	onMuteParticipant: () => undefined,
 	onOpenPopout: () => undefined,
 	onClosePopout: () => undefined,
 	streams: {},

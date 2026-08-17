@@ -40,7 +40,7 @@ export type { RemoteParticipantInfo, MediaCallStreams } from './context/MediaCal
 // Web Audio so no asset files are needed. The legacy VoIP call sounds
 // (ringer/dialer/call-ended) intentionally still go through the MP3 path
 // in CustomSoundProvider.
-export { playJoinChime } from './utils/callChimes';
+export { playHandRaiseChime, playJoinChime } from './utils/callChimes';
 // Shared with the preflight's own device menu, so a device is named the same way before a call and inside one.
 export { deviceName, isSameDevice, orderDevices, SYSTEM_DEFAULT_DEVICE_ID } from './utils/deviceLabels';
 

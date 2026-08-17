@@ -3,11 +3,12 @@ import { Box } from '@rocket.chat/fuselage';
 import { useBreakpoints } from '@rocket.chat/fuselage-hooks';
 import { useUserDisplayName } from '@rocket.chat/ui-client';
 import { useUser, useUserAvatarPath, useUserSubscription } from '@rocket.chat/ui-contexts';
-import { MediaCallRoomSection } from '@rocket.chat/ui-voip';
+import { MediaCallRoomSection, useMediaCallView } from '@rocket.chat/ui-voip';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import CallMembersPanel from './CallMembersPanel';
+import CallRaisedHands from './CallRaisedHands';
 import ChatAccessNotice from './ChatAccessNotice';
 import ConferenceChat from './ConferenceChat';
 import ConferenceIframe from './ConferenceIframe';
@@ -88,6 +89,27 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 			avatarUrl: getUserAvatarPath({ userId: user?._id || '' }),
 		}),
 		[user?._id, selfDisplayName, getUserAvatarPath],
+	);
+
+	// Who is waiting to speak, in the order they asked. The transport reports the queue by user id — that is what
+	// a participant is to it — so the call's own membership is what turns those into names. Anyone the membership
+	// cannot name is still counted and still holds their place; they are just described by what is known.
+	const { raisedHands, remoteParticipants, onMuteParticipant } = useMediaCallView();
+	const handQueue = useMemo(
+		() =>
+			(raisedHands ?? []).map(({ id }) => {
+				const member = call.members.find(({ _id }) => _id === id);
+				return { id, name: member?.name || member?.username || t('User') };
+			}),
+		[raisedHands, call.members, t],
+	);
+	const raisedHandIds = useMemo(() => new Set(handQueue.map(({ id }) => id)), [handQueue]);
+
+	// Whose microphone is already off, so nobody is asked for silence they are already keeping. The call is what
+	// knows this — a member entry records who is in the call, not what their microphone is doing.
+	const mutedMembers = useMemo(
+		() => new Set((remoteParticipants ?? []).filter(({ muted }) => muted).map(({ id }) => id)),
+		[remoteParticipants],
 	);
 
 	// Members is the one open on arrival: the useful question then is who else is here, and for the caller of a
@@ -219,6 +241,9 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 			    frame. Above the row below, so it spans the side panels the way the bottom bar does. */}
 			{embedded && (
 				<CallTopBar host={<Box ref={mountHeaderHost} display='flex' flexGrow={1} minWidth={0} alignItems='center' />}>
+					{/* Before the button rather than after it, so the queue reads as something about the people it
+					    opens — and so it grows leftwards into the bar's own space instead of pushing the button. */}
+					<CallRaisedHands hands={handQueue} />
 					{membersAction}
 				</CallTopBar>
 			)}
@@ -252,6 +277,9 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 							rid={room.rid}
 							members={call.members}
 							chatAccess={room.chatAccess}
+							raisedHands={raisedHandIds}
+							mutedMembers={mutedMembers}
+							onMute={onMuteParticipant}
 							onClose={() => togglePanel('members')}
 						/>
 					)}

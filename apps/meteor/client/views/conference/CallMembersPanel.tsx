@@ -18,6 +18,12 @@ type CallMembersPanelProps = {
 	members: ConferenceMember[];
 	/** Where the chat lives and who among the members can't read it — membership grants no room access. */
 	chatAccess?: ConferenceChatAccess;
+	/** Who currently has their hand up, so the list says it too rather than leaving it to the tiles. */
+	raisedHands?: Set<string>;
+	/** Whose microphone is already off. There is nothing to ask of them, so they are not asked. */
+	mutedMembers?: Set<string>;
+	/** Asks a member to mute themselves. Absent where the transport cannot carry the request. */
+	onMute?: (memberId: string) => void;
 	onClose: () => void;
 };
 
@@ -31,7 +37,7 @@ type CallMembersPanelProps = {
  *
  * Split in two, because the two halves answer different questions: who is here, and who still isn't.
  */
-const CallMembersPanel = ({ callId, rid, members, chatAccess, onClose }: CallMembersPanelProps) => {
+const CallMembersPanel = ({ callId, rid, members, chatAccess, raisedHands, mutedMembers, onMute, onClose }: CallMembersPanelProps) => {
 	const { t } = useTranslation();
 	const setModal = useSetModal();
 	const dispatchToastMessage = useToastMessageDispatch();
@@ -50,7 +56,15 @@ const CallMembersPanel = ({ callId, rid, members, chatAccess, onClose }: CallMem
 	});
 
 	const renderMember = (member: ConferenceMember) => (
-		<CallMemberItem key={member._id} member={member} hasChatAccess={hasConferenceChatAccess(chatAccess, member._id)} onRing={ringMember} />
+		<CallMemberItem
+			key={member._id}
+			member={member}
+			hasChatAccess={hasConferenceChatAccess(chatAccess, member._id)}
+			handRaised={raisedHands?.has(member._id)}
+			muted={mutedMembers?.has(member._id)}
+			onRing={ringMember}
+			onMute={onMute}
+		/>
 	);
 
 	return (

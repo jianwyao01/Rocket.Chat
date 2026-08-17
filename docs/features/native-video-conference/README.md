@@ -200,8 +200,45 @@ All inter-client and worker↔client comms ride the LK data channel. Current mes
 
 | Type | Direction | Reliable? | Purpose |
 |---|---|---|---|
-| `hand` | client ↔ all | yes | `{ raised, raisedAt }`. Hand-raise aggregation. |
+| `hand` | client ↔ all | yes | `{ raised, raisedAt, rebroadcast? }`. Hand-raise aggregation. |
 | `reaction` | client ↔ all | no | `{ emoji, reactionId? }`. Floating reactions. 3.5s TTL on receivers. |
+| `mute` | client ↔ all | yes | `{ target }`. Asks one participant to mute themselves. |
+
+**`hand`** carries `rebroadcast: true` when it is a hand being restated for someone who arrived after it went up.
+Only a *new* hand chimes (`playHandRaiseChime`), so joining a call where three hands are already up is silent
+rather than announcing all three; the chime is otherwise played for everyone, including the raiser, for whom it is
+confirmation that the room was told. Whose hand has already been announced is tracked in a ref rather than read
+from state, because a decision made inside a state updater is made again every time React re-runs it.
+
+**`mute` is a request, not an act.** Everyone in the call receives it and only its target acts on it, by muting its
+own microphone — the only place a microphone can actually be turned off — and telling its owner who asked
+(`You_were_muted_by__name__`). A client that ignored the message would stay unmuted, which is the honest shape of
+this without server-side moderation: nothing here reaches into anyone's machine. The asking lives in the call's
+members panel, where the people in the call are; nobody is offered it against themselves.
+
+### Where a raised hand and a reaction are shown
+
+Neither is drawn on the raiser's own tile any more, and for the same reason: a call can be larger than the tiles it
+shows, and both were invisible in exactly the calls where they matter most.
+
+- **Reactions** rise from the bottom-left of the call area (`CallReactions`), each carrying the sender's name —
+  which is what keeps them attributable now that position no longer says who sent them. The bottom *left* because
+  the controls own the middle of that edge, and rising through them would put an emoji over the hang-up button.
+- **Raised hands** are stated next to the participants button (`CallRaisedHands`): the person at the front of the
+  queue, with `+N` when others are waiting, and the whole queue in order behind a click. Nothing is rendered when
+  nobody has their hand up. The members panel marks who is waiting, without the ordering — that is the header's to
+  state.
+
+### UI surfaces (`packages/ui-voip/src/views/MediaCallRoomSection/`)
+
+- **Reactions popover** — stays open for multiple clicks; outside-click to dismiss.
+- **Hand-raise** — auto-lowers after 3s of continuous speech (driven by `useAudioLevel`).
+
+
+Camera tiles fall back to the avatar when `track.enabled && !track.muted && track.readyState === 'live'` is false (`useStreamHasLiveVideo` hook). For remote LK tracks, also check `publication.isMuted`.
+
+---
+
 ## 7. Runtime flows
 
 ### Starting a call

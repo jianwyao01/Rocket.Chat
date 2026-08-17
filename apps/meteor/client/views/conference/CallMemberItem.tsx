@@ -1,7 +1,7 @@
 import { isRingingVideoConferenceMember } from '@rocket.chat/core-typings';
 import { Box, Icon, IconButton, Option, OptionAvatar, OptionColumn, OptionContent } from '@rocket.chat/fuselage';
 import { UserAvatar } from '@rocket.chat/ui-avatar';
-import { useSetting } from '@rocket.chat/ui-contexts';
+import { useSetting, useUserId } from '@rocket.chat/ui-contexts';
 import { useTranslation } from 'react-i18next';
 
 import type { ConferenceMember } from './hooks/useConferenceEmbedded';
@@ -15,6 +15,15 @@ type CallMemberItemProps = {
 	member: ConferenceMember;
 	/** Membership grants no room access, so a member can be in the call and unable to read its chat. */
 	hasChatAccess: boolean;
+	/** Whether they are waiting to speak. The queue's order is stated by the call's own header, not here. */
+	handRaised?: boolean;
+	/** Whether their microphone is already off, in which case there is nothing to ask for. */
+	muted?: boolean;
+	/**
+	 * Asks them to mute themselves. Absent where the transport cannot carry the request; the row decides for
+	 * itself whether there is anyone here to ask.
+	 */
+	onMute?: (memberId: string) => void;
 	onRing: (memberId: string) => void;
 };
 
@@ -25,8 +34,9 @@ const statusLabel: Record<Exclude<ConferenceMemberStatus, 'joined'>, string> = {
 	invited: 'Waiting_for_answer',
 };
 
-const CallMemberItem = ({ member, hasChatAccess, onRing }: CallMemberItemProps) => {
+const CallMemberItem = ({ member, hasChatAccess, handRaised, muted, onRing, onMute }: CallMemberItemProps) => {
 	const { t } = useTranslation();
+	const ownUserId = useUserId();
 	const useRealName = useSetting('UI_Use_Real_Name', false);
 	const [nameOrUsername, displayUsername] = getUserDisplayNames(member.name, member.username, useRealName);
 	const status = getConferenceMemberStatus(member);
@@ -61,6 +71,13 @@ const CallMemberItem = ({ member, hasChatAccess, onRing }: CallMemberItemProps) 
 							<Icon name='balloon-off' size='x16' aria-label={t('No_chat_access')} />
 						</Box>
 					)}
+					{handRaised && (
+						<Box marginInlineStart={4} display='flex' title={t('Raised_hand')} aria-label={t('Raised_hand')}>
+							<Box is='span' aria-hidden>
+								✋
+							</Box>
+						</Box>
+					)}
 				</Box>
 				{status !== 'joined' && (
 					<Box fontScale='c1' color='hint'>
@@ -68,6 +85,21 @@ const CallMemberItem = ({ member, hasChatAccess, onRing }: CallMemberItemProps) 
 					</Box>
 				)}
 			</OptionContent>
+			{/* A microphone with a line through it, because what this does is ask for silence. Offered only where the
+			    ask means something: someone who is in the call, whose microphone is on, and who is not the reader —
+			    muting yourself is what the control on the call's own bar is for, and asking yourself for silence
+			    through a list of other people reads as a different, stranger act. */}
+			{status === 'joined' && !muted && member._id !== ownUserId && onMute && (
+				<OptionColumn>
+					<IconButton
+						small
+						icon='mic-off'
+						title={t('Mute__name__', { name: nameOrUsername })}
+						aria-label={t('Mute__name__', { name: nameOrUsername })}
+						onClick={() => onMute(member._id)}
+					/>
+				</OptionColumn>
+			)}
 			{canRingConferenceMember(member) && (
 				<OptionColumn>
 					<IconButton

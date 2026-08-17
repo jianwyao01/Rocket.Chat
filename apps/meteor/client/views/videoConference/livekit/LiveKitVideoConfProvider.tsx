@@ -8,12 +8,19 @@ import {
 	useToastMessageDispatch,
 	useUserAvatarPath,
 } from '@rocket.chat/ui-contexts';
-import { MediaCallViewContext, defaultMediaCallContextValue, playJoinChime, type RemoteParticipantInfo } from '@rocket.chat/ui-voip';
+import {
+	MediaCallViewContext,
+	defaultMediaCallContextValue,
+	playHandRaiseChime,
+	playJoinChime,
+	type RemoteParticipantInfo,
+} from '@rocket.chat/ui-voip';
 import type { LocalAudioTrack, RemoteParticipant, RoomOptions } from 'livekit-client';
 import { ParticipantKind, RoomEvent, Track } from 'livekit-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
 import { useLiveKitVideoConf } from './LiveKitVideoConfContext';
 
@@ -99,6 +106,8 @@ const InnerProvider = ({
 	onContextChange: (value: unknown) => void;
 }) => {
 	const room = useRoomContext();
+	const { t } = useTranslation();
+	const dispatchToastMessage = useToastMessageDispatch();
 	const setInputDevice = useSetInputMediaDevice();
 	const setOutputDevice = useSetOutputMediaDevice();
 	const availableDevices = useAvailableDevices();
@@ -242,6 +251,8 @@ const InnerProvider = ({
 	const [handsMap, setHandsMap] = useState<Record<string, number>>({});
 	const [localHandRaised, setLocalHandRaised] = useState(false);
 	const localRaisedAtRef = useRef(0);
+	/** Whose raised hand has already been announced, so the same hand is never announced twice. */
+	const announcedHandsRef = useRef<Set<string>>(new Set());
 
 	// Reactions: floating emoji broadcast from a participant to everyone in the
 	// call. The visible life of each one is the CSS animation duration; the
@@ -263,6 +274,10 @@ const InnerProvider = ({
 				participantId?: string;
 				text?: string;
 				isFinal?: boolean;
+				/** A hand we are being told about again for our benefit, not one that has just gone up. */
+				rebroadcast?: boolean;
+				/** Who a `mute` is aimed at, by identity. Everyone receives it; only its target acts on it. */
+				target?: string;
 			};
 			try {
 				msg = JSON.parse(new TextDecoder().decode(payload));
@@ -271,10 +286,45 @@ const InnerProvider = ({
 			}
 			if (msg.type === 'hand') {
 				if (!participant) return;
+
+				// Announced only on the way up, and only for a hand that was not already up. A hand held through a
+				// reconnect, or rebroadcast to us because we arrived after it went up, is not news to announce — on
+				// joining a call with several hands up it would announce each of them at once.
+				//
+				// Kept in a ref rather than read from the state below, because deciding inside a state updater
+				// means deciding again every time React chooses to re-run it.
+				if (msg.raised && !msg.rebroadcast && !announcedHandsRef.current.has(participant.identity)) {
+					announcedHandsRef.current.add(participant.identity);
+					playHandRaiseChime();
+				}
+				if (!msg.raised) {
+					announcedHandsRef.current.delete(participant.identity);
+				}
+
 				setHandsMap((prev) => ({
 					...prev,
 					[participant.identity]: msg.raised ? msg.raisedAt || Date.now() : 0,
 				}));
+				return;
+			}
+			if (msg.type === 'mute') {
+				// Everyone in the call receives this; only its target acts on it. Muting is done *here*, by the
+				// microphone's own client, because that is the only place a microphone can actually be turned off —
+				// and it is also what makes the ask honest rather than a claim to control someone's machine.
+				if (msg.target !== localParticipant.identity) {
+					return;
+				}
+
+				void localParticipant.setMicrophoneEnabled(false).catch((err: unknown) => {
+					console.warn('mute request failed', err);
+				});
+
+				// Said plainly, and with a name: a microphone that goes quiet on its own reads as a bug, and the
+				// person whose it is deserves to know it was someone's decision rather than a fault.
+				dispatchToastMessage({
+					type: 'info',
+					message: t('You_were_muted_by__name__', { name: participant?.name || participant?.identity || t('User') }),
+				});
 				return;
 			}
 			if (msg.type === 'reaction' && msg.emoji) {
@@ -296,7 +346,7 @@ const InnerProvider = ({
 		return () => {
 			room.off(RoomEvent.DataReceived, onData);
 		};
-	}, [room, localParticipant.identity]);
+	}, [room, localParticipant, dispatchToastMessage, t]);
 
 	// Sweep expired reactions out of state once a second so the lists stay
 	// bounded. Interval (not setTimeout per entry) so concurrent reactions
@@ -342,7 +392,9 @@ const InnerProvider = ({
 	useEffect(() => {
 		if (!localHandRaised) return undefined;
 		const rebroadcast = () => {
-			const data = new TextEncoder().encode(JSON.stringify({ type: 'hand', raised: true, raisedAt: localRaisedAtRef.current }));
+			const data = new TextEncoder().encode(
+				JSON.stringify({ type: 'hand', raised: true, raisedAt: localRaisedAtRef.current, rebroadcast: true }),
+			);
 			void localParticipant.publishData(data, { reliable: true });
 		};
 		room.on(RoomEvent.ParticipantConnected, rebroadcast);
@@ -356,12 +408,25 @@ const InnerProvider = ({
 		const raisedAt = raised ? Date.now() : 0;
 		localRaisedAtRef.current = raisedAt;
 		setLocalHandRaised(raised);
+		if (raised) {
+			playHandRaiseChime();
+		}
 		setHandsMap((prev) => ({ ...prev, [localParticipant.identity]: raisedAt }));
 		const data = new TextEncoder().encode(JSON.stringify({ type: 'hand', raised, raisedAt }));
 		void localParticipant.publishData(data, { reliable: true }).catch((err) => {
 			console.warn('raise-hand publish failed', err);
 		});
 	}, [localHandRaised, localParticipant]);
+
+	const onMuteParticipant = useCallback(
+		(participantId: string) => {
+			const data = new TextEncoder().encode(JSON.stringify({ type: 'mute', target: participantId }));
+			void localParticipant.publishData(data, { reliable: true }).catch((err: unknown) => {
+				console.warn('mute request publish failed', err);
+			});
+		},
+		[localParticipant],
+	);
 
 	const raisedHands = useMemo(
 		() =>
@@ -546,6 +611,7 @@ const InnerProvider = ({
 			onToggleHand,
 			localHandRaised,
 			raisedHands,
+			onMuteParticipant,
 			onSendReaction,
 			activeReactions,
 			onVideoInputChange,
@@ -569,6 +635,7 @@ const InnerProvider = ({
 			onToggleHand,
 			localHandRaised,
 			raisedHands,
+			onMuteParticipant,
 			onSendReaction,
 			activeReactions,
 			onDeviceChange,

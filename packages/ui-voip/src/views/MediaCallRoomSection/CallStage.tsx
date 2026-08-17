@@ -1,6 +1,5 @@
 import { css } from '@rocket.chat/css-in-js';
 import { Box, IconButton, Palette } from '@rocket.chat/fuselage';
-import type { Ref } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import CallTile from './CallTile';
@@ -25,8 +24,6 @@ type CallStageProps = {
 	onStopLocalScreenShare?: () => void;
 	/** Map from participantId → 1-based queue position for the raise-hand badge. */
 	handPositions?: Record<string, number>;
-	/** Map from participantId → list of active reactions to overlay on their tile. */
-	reactionsByParticipant?: Record<string, { id: string; emoji: string }[]>;
 };
 
 const stageStyles = css`
@@ -225,12 +222,7 @@ const ScreenViewer = ({ stream, label, isLocal, onStop }: ScreenViewerProps) => 
 	const [videoRef] = usePlayMediaStream(stream);
 	return (
 		<Box className={mainStreamStyles}>
-			<video
-				ref={videoRef as unknown as Ref<HTMLVideoElement>}
-				preload='metadata'
-				muted={isLocal}
-				style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-			>
+			<video ref={videoRef} preload='metadata' muted={isLocal} style={{ width: '100%', height: '100%', objectFit: 'contain' }}>
 				<track kind='captions' />
 			</video>
 			<Box className={ownBadgeStyles}>{label}</Box>
@@ -263,7 +255,7 @@ const ScreenShareThumb = ({
 	return (
 		<Box className={screenThumbStyles}>
 			<video
-				ref={videoRef as unknown as Ref<HTMLVideoElement>}
+				ref={videoRef}
 				preload='metadata'
 				muted={isLocal}
 				style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: 'black' }}
@@ -279,13 +271,7 @@ const ScreenShareThumb = ({
 };
 
 // eslint-disable-next-line react/no-multi-comp
-const CallStage = ({
-	localParticipant,
-	remoteParticipants,
-	onStopLocalScreenShare,
-	handPositions,
-	reactionsByParticipant,
-}: CallStageProps) => {
+const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShare, handPositions }: CallStageProps) => {
 	// All currently-active screen shares (local + remote), in a stable shape
 	// the rest of the component consumes. Re-derived each render from the
 	// participants list; tracking of "when did each share start" lives in a
@@ -367,7 +353,6 @@ const CallStage = ({
 				mirrored: true,
 				muteVideoAudio: true,
 				handPosition: handPositions?.[localParticipant.id],
-				reactions: reactionsByParticipant?.[localParticipant.id],
 			},
 			...remoteParticipants.map((p) => ({
 				id: p.id,
@@ -380,11 +365,10 @@ const CallStage = ({
 				mirrored: false,
 				muteVideoAudio: false,
 				handPosition: handPositions?.[p.id],
-				reactions: reactionsByParticipant?.[p.id],
 			})),
 		];
 		return all;
-	}, [localParticipant, remoteParticipants, handPositions, reactionsByParticipant]);
+	}, [localParticipant, remoteParticipants, handPositions]);
 
 	// IMPORTANT: hooks must run unconditionally on every render. Both the
 	// grid layout hook and its companion ref live above any conditional

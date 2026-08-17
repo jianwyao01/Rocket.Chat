@@ -58,3 +58,16 @@ const playTone = (frequency: number, startOffset: number, duration: number) => {
 export const playJoinChime = (): void => {
 	playTone(880, 0, 0.09);
 };
+
+/**
+ * Played when someone raises their hand, so a call knows there is a question waiting even when nobody is looking
+ * at the screen.
+ *
+ * Two rising notes rather than the join chime's single plink: it is a request, and a rise reads as one — a
+ * question rather than an announcement. It also keeps the two events apart by ear, which matters when both can
+ * happen in the same second.
+ */
+export const playHandRaiseChime = (): void => {
+	playTone(660, 0, 0.08);
+	playTone(990, 0.09, 0.11);
+};

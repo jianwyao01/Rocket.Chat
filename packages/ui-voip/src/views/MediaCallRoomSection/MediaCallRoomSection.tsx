@@ -1,9 +1,10 @@
 import { css } from '@rocket.chat/css-in-js';
-import { Box, ButtonGroup, Icon } from '@rocket.chat/fuselage';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Box, ButtonGroup } from '@rocket.chat/fuselage';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import CallReactions, { type CallReaction } from './CallReactions';
 import CallStage from './CallStage';
 import { ToggleButton, Timer, DevicePicker, CameraPicker, ActionButton, ActionStrip, ActionToggleChat } from '../../components';
 import { useMediaCallInstance } from '../../context/MediaCallInstanceContext';
@@ -100,33 +101,6 @@ const deviceControlStyles = css`
 	   rather than as a second button that happens to be the same colour. */
 	& > *:first-child button {
 		opacity: 0.7;
-	}
-`;
-
-const headerActionsRowStyles = css`
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-`;
-
-const fullscreenButtonStyles = css`
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 28px;
-	height: 28px;
-	border-radius: 14px;
-	border: 1px solid rgba(255, 255, 255, 0.2);
-	background-color: transparent;
-	color: rgba(255, 255, 255, 0.9);
-	cursor: pointer;
-	transition:
-		background-color 120ms ease,
-		color 120ms ease;
-
-	&:hover {
-		background-color: rgba(255, 255, 255, 0.08);
-		color: white;
 	}
 `;
 
@@ -249,27 +223,6 @@ const MediaCallRoomSection = ({
 	const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
 	const reactionPickerRef = useRef<HTMLDivElement>(null);
 
-	// Fullscreen target is the call section's root. We listen to
-	// `fullscreenchange` rather than tracking state purely through the
-	// toggle handler, so we react to the user pressing Esc (which the
-	// browser handles without calling our handler) and to programmatic
-	// exits from other parts of the app.
-	const rootRef = useRef<HTMLDivElement>(null);
-	const [isFullscreen, setIsFullscreen] = useState(false);
-	useEffect(() => {
-		const onChange = () => setIsFullscreen(document.fullscreenElement !== null);
-		document.addEventListener('fullscreenchange', onChange);
-		return () => document.removeEventListener('fullscreenchange', onChange);
-	}, []);
-	const onToggleFullscreen = useCallback(() => {
-		if (document.fullscreenElement) {
-			void document.exitFullscreen().catch(() => undefined);
-			return;
-		}
-		const node = rootRef.current;
-		if (!node) return;
-		void node.requestFullscreen().catch(() => undefined);
-	}, []);
 	// Click-outside dismiss for the reaction popover. Stays open while the
 	// user clicks emojis inside it (so they can send several in a row), but
 	// closes when they click anywhere else on the page.
@@ -289,20 +242,25 @@ const MediaCallRoomSection = ({
 	const connecting = connectionState === 'CONNECTING';
 	const reconnecting = connectionState === 'RECONNECTING';
 
-	const localParticipant = {
-		id: user.id || 'local',
-		displayName: user.displayName,
-		avatarUrl: user.avatarUrl,
-		muted,
-		held,
-		// Only expose the stream when the transport flagged it active. LK's
-		// setCameraEnabled(false) keeps the MediaStream reference alive but
-		// stops producing frames — without this gate the tile would render a
-		// black <video> element instead of the avatar.
-		cameraStream: localCamera?.active ? (localCamera?.stream ?? null) : null,
-		screenStream: localScreen?.active ? (localScreen?.stream ?? null) : null,
-		audioStream: localMicrophone?.stream ?? null,
-	};
+	// Held steady across renders, because what is derived from it below is: rebuilding this object every render
+	// rebuilt those too, for a call whose participants had not changed.
+	const localParticipant = useMemo(
+		() => ({
+			id: user.id || 'local',
+			displayName: user.displayName,
+			avatarUrl: user.avatarUrl,
+			muted,
+			held,
+			// Only expose the stream when the transport flagged it active. LK's
+			// setCameraEnabled(false) keeps the MediaStream reference alive but
+			// stops producing frames — without this gate the tile would render a
+			// black <video> element instead of the avatar.
+			cameraStream: localCamera?.active ? (localCamera?.stream ?? null) : null,
+			screenStream: localScreen?.active ? (localScreen?.stream ?? null) : null,
+			audioStream: localMicrophone?.stream ?? null,
+		}),
+		[user.id, user.displayName, user.avatarUrl, muted, held, localCamera, localScreen, localMicrophone],
+	);
 
 	// Map participant id → 1-based queue position for the raise-hand badge.
 	const handPositions = useMemo(() => {
@@ -313,16 +271,15 @@ const MediaCallRoomSection = ({
 		return out;
 	}, [raisedHands]);
 
-	// Group active reactions by participant so CallStage can hand each tile
-	// just its own list. The provider's auto-expiry keeps the arrays bounded.
-	const reactionsByParticipant = useMemo(() => {
-		const out: Record<string, { id: string; emoji: string }[]> = {};
-		(activeReactions ?? []).forEach((r) => {
-			if (!out[r.participantId]) out[r.participantId] = [];
-			out[r.participantId].push({ id: r.id, emoji: r.emoji });
-		});
-		return out;
-	}, [activeReactions]);
+	// One list for the whole call rather than a list per tile, because a reaction is no longer shown in the
+	// sender's tile — see `CallReactions` for why. The name is looked up from everyone in the call, not from
+	// whoever happens to be on screen, so a sender without a tile still arrives named. The provider's auto-expiry
+	// keeps the list bounded.
+	const reactions = useMemo((): CallReaction[] => {
+		const names = new Map([localParticipant, ...remoteParticipants].map(({ id, displayName }) => [id, displayName]));
+
+		return (activeReactions ?? []).map(({ id, emoji, participantId }) => ({ id, emoji, name: names.get(participantId) }));
+	}, [activeReactions, localParticipant, remoteParticipants]);
 
 	// Auto-lower the local hand after AUTO_LOWER_AFTER_MS of (mostly continuous)
 	// speech — once the user has "the floor", they don't need the hand up any
@@ -362,25 +319,11 @@ const MediaCallRoomSection = ({
 		}
 	}, [liveLevel, localHandRaised, onToggleHand]);
 
-	// Ends apart: how long the call has been running on one side, what this view offers on the other.
+	// How long the call has been running. The surface hosting this header owns whatever sits beside it.
 	const callHeader = (
-		<>
-			<Box className={callHeaderTimerStyles}>
-				<Timer startAt={startedAt} />
-			</Box>
-			<Box className={headerActionsRowStyles}>
-				<Box
-					is='button'
-					type='button'
-					className={fullscreenButtonStyles}
-					onClick={onToggleFullscreen}
-					title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-					aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-				>
-					<Icon name={isFullscreen ? 'arrow-collapse' : 'arrow-expand'} size='x16' />
-				</Box>
-			</Box>
-		</>
+		<Box className={callHeaderTimerStyles}>
+			<Timer startAt={startedAt} />
+		</Box>
 	);
 
 	const callControls = (
@@ -479,7 +422,6 @@ const MediaCallRoomSection = ({
 	if (isPopout) {
 		return (
 			<Box
-				ref={rootRef}
 				is='section'
 				aria-label={t('Voice_call')}
 				width='full'
@@ -496,7 +438,6 @@ const MediaCallRoomSection = ({
 
 	return (
 		<Box
-			ref={rootRef}
 			is='section'
 			aria-label={t('Voice_call')}
 			width='full'
@@ -510,13 +451,16 @@ const MediaCallRoomSection = ({
 			{/* The window may own a bar for this — when it does, the header goes up there, spanning above the side
 			    panels rather than stopping at the call area's edge. */}
 			{headerContainer ? createPortal(callHeader, headerContainer) : <Box className={callHeaderStyles}>{callHeader}</Box>}
-			<CallStage
-				localParticipant={localParticipant}
-				remoteParticipants={remoteParticipants}
-				onStopLocalScreenShare={onToggleScreenSharing}
-				handPositions={handPositions}
-				reactionsByParticipant={reactionsByParticipant}
-			/>
+			{/* Positioned so the reactions rising over the call have something to be positioned against. */}
+			<Box position='relative' display='flex' flexDirection='column' flexGrow={1} minHeight={0}>
+				<CallStage
+					localParticipant={localParticipant}
+					remoteParticipants={remoteParticipants}
+					onStopLocalScreenShare={onToggleScreenSharing}
+					handPositions={handPositions}
+				/>
+				<CallReactions reactions={reactions} />
+			</Box>
 			{/* The same controls either way: a surface with a bar of its own is handed them to place, and
 			    otherwise they sit in the call's own strip below the stage. */}
 			{actionsContainer ? (
