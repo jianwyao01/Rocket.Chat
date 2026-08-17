@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import CallStage from './CallStage';
 import { ToggleButton, Timer, DevicePicker, CameraPicker, ActionButton, ActionStrip, ActionToggleChat } from '../../components';
 import { useMediaCallInstance } from '../../context/MediaCallInstanceContext';
+import type { RemoteParticipantInfo } from '../../context/MediaCallViewContext';
 import { useMediaCallView } from '../../context/MediaCallViewContext';
 import useRegisterView from '../../context/useRegisterView';
 import { useAudioLevel } from '../../providers/useAudioLevel';
@@ -191,7 +192,7 @@ const MediaCallRoomSection = ({
 		raisedHands,
 		onSendReaction,
 		activeReactions,
-		streams: { localScreen, localCamera, localMicrophone },
+		streams: { localScreen, localCamera, localMicrophone, remoteScreen, remoteCamera, remoteMicrophone },
 		remoteParticipants: remoteParticipantsRaw,
 	} = useMediaCallView();
 	const { currentViews } = useMediaCallInstance();
@@ -200,12 +201,42 @@ const MediaCallRoomSection = ({
 
 	useRegisterView('room');
 
-	// Optional on the context — only the VC LiveKit bridge populates it. The
-	// 1:1 VoIP path doesn't render this component so the fallback to [] is
-	// purely defensive.
-	const remoteParticipants = remoteParticipantsRaw ?? [];
+	const { muted, held, remoteMuted, remoteHeld, peerInfo, connectionState, startedAt } = sessionState;
 
-	const { muted, held, connectionState, startedAt } = sessionState;
+	/**
+	 * Who else is in the call, however this call describes them.
+	 *
+	 * A group call is a list of participants and says so. A 1:1 call has only ever had the one other side, and
+	 * describes it as `peerInfo` with its media under the `remote*` streams — so it is turned into a list of one
+	 * here, and the stage above stays a stage of tiles rather than growing a second way to lay a call out.
+	 *
+	 * An external number is not shown as a tile: it has no name, no avatar and no video, and the call's own header
+	 * is what names it.
+	 */
+	const remoteParticipants = useMemo((): RemoteParticipantInfo[] => {
+		if (remoteParticipantsRaw) {
+			return remoteParticipantsRaw;
+		}
+
+		if (!peerInfo || 'number' in peerInfo) {
+			return [];
+		}
+
+		return [
+			{
+				id: peerInfo.userId,
+				displayName: peerInfo.displayName,
+				avatarUrl: peerInfo.avatarUrl,
+				muted: remoteMuted,
+				held: remoteHeld,
+				// Gated on `active` for the same reason the local tile is: a stream that has stopped producing frames
+				// would render as a black rectangle where the avatar belongs.
+				cameraStream: remoteCamera?.active ? remoteCamera.stream : undefined,
+				screenStream: remoteScreen?.active ? remoteScreen.stream : undefined,
+				audioStream: remoteMicrophone?.stream,
+			},
+		];
+	}, [remoteParticipantsRaw, peerInfo, remoteMuted, remoteHeld, remoteCamera, remoteScreen, remoteMicrophone]);
 	const isOneOnOne = remoteParticipants.length === 1;
 	// A one-to-one call is left *with* someone, so it can name them. A group call has no single other side —
 	// "End call with Call" is what naming one anyway produced — so it just says what the button does.
