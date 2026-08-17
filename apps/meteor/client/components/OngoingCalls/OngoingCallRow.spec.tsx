@@ -26,10 +26,10 @@ it('says what the call is and who is in it', () => {
 });
 
 // A row in the sidebar is a route to a call: joining is the offer, and turning it down is how to be rid of the row.
-it('joins the call', async () => {
+it('opens the call window on its preflight', async () => {
 	renderRow();
 
-	await userEvent.click(screen.getByRole('button', { name: 'Join' }));
+	await userEvent.click(screen.getByRole('button', { name: 'See_call_details' }));
 
 	expect(onJoin).toHaveBeenCalledWith('call-1');
 	expect(onDecline).not.toHaveBeenCalled();
@@ -77,7 +77,7 @@ it('keeps the actions with the faces rather than with the name', () => {
 
 	const secondRow = screen.getByTitle('__count__people_in_the_call').closest('.rcx-sidebar-v2-item__row') as HTMLElement;
 
-	expect(secondRow).toContainElement(screen.getByRole('button', { name: 'Join' }));
+	expect(secondRow).toContainElement(screen.getByRole('button', { name: 'See_call_details' }));
 	expect(secondRow).toContainElement(screen.getByRole('button', { name: 'Decline' }));
 	expect(secondRow).not.toContainElement(screen.getByText('Standup'));
 });

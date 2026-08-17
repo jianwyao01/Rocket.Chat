@@ -15,8 +15,9 @@ type OngoingCallRowProps = {
  * A call that is simply running, as a row of the sidebar's list.
  *
  * Every row is something to act on — the group leaves out the call the reader is already in, so there is no state
- * here that offers nothing to do. Joining is the offer; turning the call down is the way to be rid of the row,
- * which is a smaller thing and reads as one.
+ * here that offers nothing to do. Opening it is the offer, and it opens the call *window*, on the preflight where
+ * the call is described and the devices are chosen; turning the call down is the way to be rid of the row, which is
+ * a smaller thing and reads as one.
  */
 const OngoingCallRow = ({ call, onJoin, onDecline }: OngoingCallRowProps) => {
 	const { t } = useTranslation();
@@ -26,7 +27,17 @@ const OngoingCallRow = ({ call, onJoin, onDecline }: OngoingCallRowProps) => {
 			call={call}
 			actions={
 				<>
-					<IconButton mini secondary icon='check' title={t('Join')} aria-label={t('Join')} onClick={() => onJoin(call.callId)} />
+					{/* A window rather than a tick, and *details* rather than *join*: this opens the call window on its
+					    preflight, where the call is described and the devices are chosen. Nothing about pressing it puts
+					    the reader in the call. */}
+					<IconButton
+						mini
+						secondary
+						icon='new-window'
+						title={t('See_call_details')}
+						aria-label={t('See_call_details')}
+						onClick={() => onJoin(call.callId)}
+					/>
 					{onDecline && (
 						<IconButton mini secondary icon='cross' title={t('Decline')} aria-label={t('Decline')} onClick={() => onDecline(call.callId)} />
 					)}

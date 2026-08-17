@@ -22,8 +22,10 @@ type RingingCallItemProps = {
  * anything else could happen; a row in a list can be answered, turned down, or left ringing while the user finishes
  * a sentence — and it is in the same place as every other call, so there is one place to look.
  *
- * The same row as a running call, with a green phone in place of the tick and a third action: a ring can be stopped
- * without being answered, which is the one thing a running call has no need for.
+ * The same row as a running call, with a green phone in place of the window and, where every row keeps its
+ * dismissal, one slot for making it stop. Turning a ringing call down takes two presses — silence, then decline —
+ * because while it is sounding the press a user reaches for is the one that stops the noise, and that is a reflex
+ * rather than a decision to end the call. A silenced call keeps a bell at the head of the row to say so.
  */
 const RingingCallItem = ({ call, silenced, onAccept, onReject, onSilence }: RingingCallItemProps) => {
 	const { t } = useTranslation();
@@ -47,23 +49,13 @@ const RingingCallItem = ({ call, silenced, onAccept, onReject, onSilence }: Ring
 					{t('Ringing')}…
 				</Box>
 			}
-			// The way to make it stop asking comes first, then the answer to it, then the way out of it.
 			actions={
 				<>
-					{audible && (
-						<IconButton
-							mini
-							secondary
-							icon='bell-off'
-							title={t('Silence')}
-							aria-label={t('Silence')}
-							onClick={() => onSilence(call.callId)}
-						/>
-					)}
-					{/* Silenced: the same icon, with nothing left to press — it says why it went quiet. */}
-					{silenced && <Icon name='bell-off' size='x16' title={t('Incoming_call_silenced')} />}
-					{/* A phone rather than a tick, and green: answering a ringing call is a different act from walking
-					    into one that is simply running. */}
+					{/* Silenced: the same bell with nothing to press, at the head of the row — it says why the call went
+					    quiet, which the button that replaced it no longer can. */}
+					{silenced && <Icon name='bell-off' size='x16' color='hint' title={t('Incoming_call_silenced')} />}
+					{/* A phone rather than a window, and green: answering a ringing call is a different act from
+					    opening one that is simply running. */}
 					<IconButton
 						mini
 						secondary
@@ -73,7 +65,22 @@ const RingingCallItem = ({ call, silenced, onAccept, onReject, onSilence }: Ring
 						aria-label={t('Accept')}
 						onClick={() => onAccept(call.callId)}
 					/>
-					<IconButton mini secondary icon='cross' title={t('Decline')} aria-label={t('Decline')} onClick={() => onReject(call.callId)} />
+					{/* Last, where every other row keeps its dismissal — and one slot for two presses: silence, then
+					    decline. While a call is audibly ringing the press a user reaches for is the one that stops the
+					    noise, and having that press also end the call turned a reflex into a decision they never made.
+					    With nothing sounding there is nothing to silence, so it is the decline straight away. */}
+					{audible ? (
+						<IconButton
+							mini
+							secondary
+							icon='bell-off'
+							title={t('Silence')}
+							aria-label={t('Silence')}
+							onClick={() => onSilence(call.callId)}
+						/>
+					) : (
+						<IconButton mini secondary icon='cross' title={t('Decline')} aria-label={t('Decline')} onClick={() => onReject(call.callId)} />
+					)}
 				</>
 			}
 		/>

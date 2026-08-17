@@ -62,6 +62,20 @@ const CallParticipants = ({ people, total, size = 'x18' }: CallParticipantsProps
 						<UserAvatar username={username ?? ''} size={size} />
 					</Box>
 				))}
+				{/* One face alone reads as a mistake rather than as a call — an empty second place, dashed and unfilled,
+				    says the call has room in it. Decorative only: the count beside it is what states the number, and a
+				    screen reader has no use for a space where nobody is. */}
+				{people.length === 1 && (
+					<Box
+						aria-hidden
+						width={size}
+						height={size}
+						borderWidth='default'
+						borderStyle='dashed'
+						borderColor='stroke-light'
+						borderRadius='x4'
+					/>
+				)}
 			</Box>
 			<Box fontScale='micro' color='hint' flexShrink={0}>
 				{remaining > 0 ? t('plus__usersCount__joined', { count: remaining }) : t('joined')}

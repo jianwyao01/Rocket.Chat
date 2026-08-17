@@ -37,6 +37,21 @@ it('still says how many there are, for anyone who cannot see the faces', () => {
 	expect(screen.getByTitle('__count__people_in_the_call')).toBeInTheDocument();
 });
 
+// A single face reads as a mistake rather than as a call, so an empty second place stands beside it — decorative,
+// which is why it is hidden from anyone listening rather than looking.
+it('gives a lone face an empty place beside it', () => {
+	const { container } = renderParticipants({ people: [person('alice')], total: 1 });
+
+	expect(container.querySelectorAll('img')).toHaveLength(1);
+	expect(container.querySelectorAll('div[aria-hidden="true"]')).toHaveLength(1);
+});
+
+it('leaves the empty place out once there are two', () => {
+	const { container } = renderParticipants({ people: [person('alice'), person('bob')], total: 2 });
+
+	expect(container.querySelectorAll('div[aria-hidden="true"]')).toHaveLength(0);
+});
+
 // Side by side rather than overlapped, so nothing has to be stacked and no face is half hidden behind another.
 it('sets the faces beside each other', () => {
 	const people = [person('alice'), person('bob'), person('carol')];

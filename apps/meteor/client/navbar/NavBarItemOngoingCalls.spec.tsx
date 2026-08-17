@@ -61,7 +61,7 @@ it('opens the same list the sidebar docks', async () => {
 	await userEvent.click(await screen.findByRole('button', { name: /__count__ongoing/ }));
 
 	expect(await screen.findByText('Standup')).toBeInTheDocument();
-	expect(screen.getByRole('button', { name: 'Join' })).toBeInTheDocument();
+	expect(screen.getByRole('button', { name: 'See_call_details' })).toBeInTheDocument();
 });
 
 // A ringing call the user has to go looking for is a missed call.
