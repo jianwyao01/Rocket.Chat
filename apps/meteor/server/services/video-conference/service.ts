@@ -2,7 +2,7 @@ import { Apps } from '@rocket.chat/apps';
 import type { AppVideoConfProviderManager } from '@rocket.chat/apps/dist/server/managers/AppVideoConfProviderManager';
 import type { VideoConfData, VideoConfDataExtended } from '@rocket.chat/apps-engine/definition/videoConfProviders';
 import type { IVideoConfService, VideoConferenceJoinOptions } from '@rocket.chat/core-services';
-import { api, ServiceClassInternal, Message, Room } from '@rocket.chat/core-services';
+import { api, ServiceClassInternal, Message, Presence, Room } from '@rocket.chat/core-services';
 import type {
 	IDirectVideoConference,
 	ILivechatVideoConference,
@@ -28,6 +28,7 @@ import type {
 	IVoIPVideoConference,
 } from '@rocket.chat/core-typings';
 import {
+	UserStatus,
 	VideoConferenceStatus,
 	hasJoinedVideoConference,
 	isDirectVideoConference,
@@ -536,6 +537,10 @@ export class VideoConfService extends ServiceClassInternal implements IVideoConf
 		// The members' rows have said `ongoing` since the call started; this is where each one's own outcome — who
 		// was there, and who never answered — is finally written.
 		await this.recordConferenceInHistory(call._id, { ended: true });
+
+		// Ending the call ends it for whoever was still in it, and each of them is owed their status back. Nobody
+		// else reports their departure: the call is over, so there is no leave left to arrive.
+		await Promise.all(call.users.filter(isInVideoConference).map(({ _id }) => this.releaseBusyForCall(_id)));
 
 		if (call.type === 'direct') {
 			return this.endDirectCall(call);
@@ -1214,6 +1219,9 @@ export class VideoConfService extends ServiceClassInternal implements IVideoConf
 		await VideoConferenceModel.setUserJoinedById(call._id, _id, ts);
 		this.notifyConferenceUpdate(call._id);
 
+		// In a call is busy, for as long as it lasts.
+		await this.claimBusyForCall(_id);
+
 		// Someone new is in the call: they need a row of their own, and everyone else's count has changed.
 		await this.recordConferenceInHistory(call._id, { ended: false });
 
@@ -1520,6 +1528,9 @@ export class VideoConfService extends ServiceClassInternal implements IVideoConf
 		this.notifyVideoConfUpdate(call.rid, callId);
 		this.notifyConferenceUpdate(callId);
 
+		// Out of the call, so back to whatever status they had before it.
+		await this.releaseBusyForCall(uid);
+
 		// Decide on the state we just wrote rather than the one we read, so the member who is leaving is counted
 		// as gone. Reading again would be a second round trip for the same answer.
 		const remaining = call.users.map((member) => (member._id === uid ? { ...member, leftAt } : member));
@@ -1530,6 +1541,45 @@ export class VideoConfService extends ServiceClassInternal implements IVideoConf
 		setTimeout(() => {
 			void this.endCallIfEmpty(callId).catch((err) => logger.error({ msg: 'Failed to end an empty conference', callId, err }));
 		}, EMPTY_CALL_GRACE_MS);
+	}
+
+	/**
+	 * Says the user is busy for as long as they are in a call, without overwriting the status they chose.
+	 *
+	 * A *claim* rather than a status. `internal` is the strongest source there is, so busy is what shows for as long
+	 * as the call lasts; the status it displaced is stashed and handed back when the claim ends, which is how someone
+	 * who set themselves away before the call is away again after it. A status the user sets *during* the call is
+	 * queued the same way rather than displayed — the call is not overruled while it is happening, and their latest
+	 * intent is what they are left with once it ends.
+	 *
+	 * Ended by id, so it can end in any order relative to a voice call's own claim: two `internal` claims stash for
+	 * each other rather than one clobbering the other.
+	 *
+	 * Nothing here is allowed to break a call. Presence is a courtesy; joining is not.
+	 */
+	private async claimBusyForCall(uid: IUser['_id']): Promise<void> {
+		try {
+			const user = await Users.findOneById<Pick<IUser, '_id' | 'language'>>(uid, { projection: { language: 1 } });
+			const lng = user?.language || settings.get<string>('Language') || 'en';
+
+			await Presence.setActiveState(uid, {
+				statusDefault: UserStatus.BUSY,
+				statusText: i18n.t('Presence_status_on_a_call', { lng }),
+				statusSource: 'internal',
+				statusId: this.name,
+			});
+		} catch (err) {
+			logger.warn({ msg: 'Failed to mark a user busy for a call', uid, err });
+		}
+	}
+
+	/** Gives the user their own status back. A no-op if something with a stronger claim has taken over since. */
+	private async releaseBusyForCall(uid: IUser['_id']): Promise<void> {
+		try {
+			await Presence.endActiveState(uid, this.name);
+		} catch (err) {
+			logger.warn({ msg: 'Failed to restore a user status after a call', uid, err });
+		}
 	}
 
 	/**
@@ -1576,6 +1626,9 @@ export class VideoConfService extends ServiceClassInternal implements IVideoConf
 				for (const { uid, leftAt } of expired) {
 					logger.info({ msg: 'Presence lease expired', callId: call._id, uid, leftAt });
 					await VideoConferenceModel.setUserLeftById(call._id, uid, leftAt, 'timeout');
+					// Whoever stopped renewing is not in a call any more, whatever their client failed to say — and a
+					// status left on busy by a crashed tab is exactly the kind of thing nobody thinks to fix by hand.
+					await this.releaseBusyForCall(uid);
 					// Embedded providers keep a second per-participant record, and the two disagreeing is how a
 					// call ends up counted as occupied by one half of the code and empty by the other.
 					await VideoConferenceModel.markEmbeddedParticipantLeft(call._id, uid, leftAt);

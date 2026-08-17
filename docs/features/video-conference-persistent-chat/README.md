@@ -323,6 +323,31 @@ Nothing about the conference's rooms changes, so `discussionRid` is untouched an
 | Misses the ring | The conference is in their call history, joinable from there. The ring itself doesn't repeat. |
 | Opens the chat panel without room access | An explanation, not an error — see [A member who can't read the chat](#a-member-who-cant-read-the-chat-is-told-so-not-shown-an-error). |
 
+## Busy While In A Call
+
+Being in a call is being busy, and saying so is what stops someone ringing a person mid-conversation. Joining sets a
+presence **claim** — `Presence.setActiveState` with `statusDefault: busy`, the *On a call* status text, and
+`statusId: 'video-conference'` — and every way out of a call ends it by that id.
+
+A claim rather than a status, because the point is getting the old one back. `internal` is the strongest source the
+presence engine has, so busy is what shows for as long as the call lasts; whatever it displaced is stashed in
+`previousState` and handed back when the claim ends. Someone who set themselves away before the call is away again
+after it. Someone who sets a status *during* the call has it queued the same way rather than displayed — the call is
+not overruled while it is happening, and their latest intent is what they are left with once it ends. Ending by id
+is what lets a voice call's claim and this one end in either order: two `internal` claims stash for each other.
+
+All three departures release it, which is the same list as everywhere else in this feature:
+
+| Departure | Where |
+|---|---|
+| reported | `leaveCall` |
+| inferred, when renewals stop | the [presence-lease sweep](#knowing-who-is-still-in-the-call) |
+| the call itself ending | `endCall`, for everyone still in it — no leave is coming for them |
+
+Nothing here is allowed to break a call. Both calls are wrapped: a presence service that is down, slow, or
+unlicensed logs a warning and the join carries on. Presence is a courtesy; joining is not.
+
+
 ## Leaving a Call
 
 A conference has no natural end when the provider doesn't report one, so closing the call window is the signal.
@@ -944,6 +969,7 @@ could not be loaded" panel, because the detail panel is contact-call-shaped.
 | Layer | File |
 |-------|------|
 | Conference service | `apps/meteor/server/services/video-conference/service.ts` |
+| Busy while in a call | `claimBusyForCall` / `releaseBusyForCall` in the conference service, over `Presence` claims (`ee/packages/presence`) |
 | API routes | `apps/meteor/server/api/v1/videoConference.ts` |
 | Stream wiring | `apps/meteor/server/modules/notifications/notifications.module.ts`, `modules/listeners/listeners.module.ts` |
 | Event signature | `packages/core-services/src/events/Events.ts` |
