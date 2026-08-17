@@ -38,6 +38,9 @@ const renderPanel = (
 
 const rowFor = (username: string) => screen.getByText(username).closest('[role="listitem"], li') as HTMLElement;
 
+// Each voice indicator is three bars inside an `aria-hidden` row — see `VoiceActivity`.
+const voiceIndicatorCount = (container: HTMLElement) => container.querySelectorAll('div[aria-hidden="true"] > div').length / 3;
+
 beforeEach(() => {
 	ring.mockClear();
 	onMute.mockClear();
@@ -168,10 +171,31 @@ describe('asking a member to mute', () => {
 		expect(screen.queryByRole('button', { name: 'Mute__name__' })).not.toBeInTheDocument();
 	});
 
-	// Asking for silence somebody is already keeping says nothing, and the button would never turn off.
-	it('offers nothing for a member who is already muted', () => {
-		renderPanel([buildConferenceMember({ _id: 'quiet', joined: true })], [], { mutedMembers: new Set(['quiet']) });
+	// A muted member's row says nothing about their microphone. Everyone in the call already hears the silence, so
+	// stating it once per row would repeat it for exactly the rows there is least to say about.
+	it('says nothing at all about a muted member', () => {
+		const { container } = renderPanel([buildConferenceMember({ _id: 'quiet', joined: true })], [], {
+			mutedMembers: new Set(['quiet']),
+		});
 
+		expect(screen.queryByRole('button', { name: 'Mute__name__' })).not.toBeInTheDocument();
+		expect(voiceIndicatorCount(container)).toBe(0);
+	});
+
+	// The useful case: a mic that is on, where whether it is picking anything up is worth seeing and asking for
+	// silence is a thing someone might want to do.
+	it('shows a live mic, with the way to quiet it beside it', () => {
+		const { container } = renderPanel([buildConferenceMember({ _id: 'talker', joined: true })]);
+
+		expect(voiceIndicatorCount(container)).toBe(1);
+		expect(screen.getByRole('button', { name: 'Mute__name__' })).toBeInTheDocument();
+	});
+
+	// The reader gets the level and no button: muting yourself is what the call's own bar is for.
+	it('shows the reader their own level without offering to mute them', () => {
+		const { container } = renderPanel([buildConferenceMember({ _id: 'john.doe', joined: true })]);
+
+		expect(voiceIndicatorCount(container)).toBe(1);
 		expect(screen.queryByRole('button', { name: 'Mute__name__' })).not.toBeInTheDocument();
 	});
 

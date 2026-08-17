@@ -8,15 +8,21 @@ import { forwardRef, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ActionButton } from '.';
+import VoiceActivity from './VoiceActivity';
 import { useMediaCallView } from '../context/MediaCallViewContext';
 import { useDeviceGroups } from '../hooks/useDeviceGroups';
 import { useDevicePermissionPrompt2, stopTracks } from '../hooks/useDevicePermissionPrompt';
+import { useAudioLevel } from '../providers/useAudioLevel';
 import { SYSTEM_DEFAULT_DEVICE_ID, deviceName, isSameDevice, orderAudioDevices } from '../utils/deviceLabels';
 
 export type DevicePickerButtonProps = {
 	secondary?: boolean;
 	small?: boolean;
 	chevron?: boolean;
+	/** How loud the microphone this picker belongs to is hearing, from 0 to 1. Shown in place of the chevron. */
+	level?: number;
+	/** Whether that microphone is off, in which case there is no activity to show and the chevron stays. */
+	micMuted?: boolean;
 } & Omit<ComponentProps<typeof ActionButton>, 'label' | 'icon'>;
 
 // GenericMenu for some reason passes `small: true` when the button is disabled (??).
@@ -25,9 +31,16 @@ export type DevicePickerButtonProps = {
 // when the picker sits inline next to its associated control (mic / camera);
 // without it we keep the original "customize" cog icon.
 const DevicePickerButton = forwardRef<HTMLButtonElement, DevicePickerButtonProps>(function DevicePickerButton(
-	{ secondary = false, chevron = false, small: _small, ...props },
+	{ secondary = false, chevron = false, small: _small, level = 0, micMuted = false, ...props },
 	ref,
 ) {
+	// A live microphone shows what it is hearing rather than a chevron: three dots waiting, rising as someone
+	// talks. The button still opens the same menu — nothing is lost — and the strip gains the one thing a caller
+	// wondering whether they are being heard actually wants to know, without costing any room to say it. A muted
+	// mic has nothing to show, so there the chevron stays.
+	const showActivity = chevron && !micMuted;
+	const restingIcon = chevron ? 'chevron-up' : 'customize';
+
 	return (
 		<ActionButton
 			secondary={secondary}
@@ -35,7 +48,7 @@ const DevicePickerButton = forwardRef<HTMLButtonElement, DevicePickerButtonProps
 			flexGrow={0}
 			{...props}
 			label={chevron ? 'Device options' : 'customize'}
-			icon={chevron ? 'chevron-up' : 'customize'}
+			icon={showActivity ? <VoiceActivity level={level} size={16} /> : restingIcon}
 			ref={ref}
 		/>
 	);
@@ -66,7 +79,11 @@ export type DevicePickerProps = {
 const DevicePicker = ({ secondary = false, chevron = false, danger = false, className }: DevicePickerProps) => {
 	const { t } = useTranslation();
 
-	const { onDeviceChange } = useMediaCallView();
+	const { onDeviceChange, sessionState, streams } = useMediaCallView();
+
+	// Measured here rather than passed in: this is the picker for the local microphone, so the level it shows is
+	// the one thing it can always work out for itself. A muted mic never moves, whatever it is still hearing.
+	const micLevel = useAudioLevel(sessionState?.muted ? null : (streams?.localMicrophone?.stream ?? null));
 
 	const availableDevices = useAvailableDevices();
 	const selectedAudioDevices = useSelectedDevices();
@@ -211,7 +228,16 @@ const DevicePicker = ({ secondary = false, chevron = false, danger = false, clas
 
 				console.warn('Device Picker - Failed to select device: Invalid deviceId', deviceId);
 			}}
-			button={<DevicePickerButton secondary={secondary || chevron} danger={danger} chevron={chevron} tiny={!chevron && !secondary} />}
+			button={
+				<DevicePickerButton
+					secondary={secondary || chevron}
+					danger={danger}
+					chevron={chevron}
+					tiny={!chevron && !secondary}
+					level={micLevel}
+					micMuted={Boolean(sessionState?.muted)}
+				/>
+			}
 		/>
 	);
 };

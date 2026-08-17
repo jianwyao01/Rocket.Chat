@@ -2,6 +2,7 @@ import { isRingingVideoConferenceMember } from '@rocket.chat/core-typings';
 import { Box, Icon, IconButton, Option, OptionAvatar, OptionColumn, OptionContent } from '@rocket.chat/fuselage';
 import { UserAvatar } from '@rocket.chat/ui-avatar';
 import { useSetting, useUserId } from '@rocket.chat/ui-contexts';
+import { VoiceActivity } from '@rocket.chat/ui-voip';
 import { useTranslation } from 'react-i18next';
 
 import type { ConferenceMember } from './hooks/useConferenceEmbedded';
@@ -19,6 +20,8 @@ type CallMemberItemProps = {
 	handRaised?: boolean;
 	/** Whether their microphone is already off, in which case there is nothing to ask for. */
 	muted?: boolean;
+	/** Their microphone, so the row can show it moving. Absent for anyone the call has no audio from. */
+	audioStream?: MediaStream | null;
 	/**
 	 * Asks them to mute themselves. Absent where the transport cannot carry the request; the row decides for
 	 * itself whether there is anyone here to ask.
@@ -34,7 +37,7 @@ const statusLabel: Record<Exclude<ConferenceMemberStatus, 'joined'>, string> = {
 	invited: 'Waiting_for_answer',
 };
 
-const CallMemberItem = ({ member, hasChatAccess, handRaised, muted, onRing, onMute }: CallMemberItemProps) => {
+const CallMemberItem = ({ member, hasChatAccess, handRaised, muted, audioStream, onRing, onMute }: CallMemberItemProps) => {
 	const { t } = useTranslation();
 	const ownUserId = useUserId();
 	const useRealName = useSetting('UI_Use_Real_Name', false);
@@ -85,20 +88,33 @@ const CallMemberItem = ({ member, hasChatAccess, handRaised, muted, onRing, onMu
 					</Box>
 				)}
 			</OptionContent>
-			{/* A microphone with a line through it, because what this does is ask for silence. Offered only where the
-			    ask means something: someone who is in the call, whose microphone is on, and who is not the reader —
-			    muting yourself is what the control on the call's own bar is for, and asking yourself for silence
-			    through a list of other people reads as a different, stranger act. */}
-			{status === 'joined' && !muted && member._id !== ownUserId && onMute && (
-				<OptionColumn>
-					<IconButton
-						small
-						icon='mic-off'
-						title={t('Mute__name__', { name: nameOrUsername })}
-						aria-label={t('Mute__name__', { name: nameOrUsername })}
-						onClick={() => onMute(member._id)}
-					/>
-				</OptionColumn>
+			{/* A live microphone, and — for anyone but the reader — the way to ask it for silence.
+			    A muted one says nothing at all. There is no state to report: silence is what everyone else in the call
+			    already hears, so a crossed-out mic in this column would only be repeating it, once per row, for the
+			    rows there is least to say about. What the column is for is the opposite case — a mic that is on, where
+			    the useful question is whether it is picking anything up, and where asking for silence is a thing
+			    someone might actually want to do.
+			    Muting yourself is what the control on the call's own bar is for, so the reader gets the level alone;
+			    asking yourself for silence through a list of other people reads as a stranger act. */}
+			{status === 'joined' && !muted && (
+				<>
+					<OptionColumn>
+						<Box display='flex'>
+							<VoiceActivity stream={audioStream} size={14} badge />
+						</Box>
+					</OptionColumn>
+					{member._id !== ownUserId && onMute && (
+						<OptionColumn>
+							<IconButton
+								small
+								icon='mic-off'
+								title={t('Mute__name__', { name: nameOrUsername })}
+								aria-label={t('Mute__name__', { name: nameOrUsername })}
+								onClick={() => onMute(member._id)}
+							/>
+						</OptionColumn>
+					)}
+				</>
 			)}
 			{canRingConferenceMember(member) && (
 				<OptionColumn>

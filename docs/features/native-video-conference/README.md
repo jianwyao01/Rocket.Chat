@@ -194,6 +194,36 @@ Matching a recorded device against a menu entry goes through `isSameDevice` (`pa
 because browsers list the system default twice — as the `default` alias and under its own id — and the two halves of that
 pair are held by different parts of the app.
 
+### What a microphone looks like
+
+`VoiceActivity` (`packages/ui-voip/src/components/VoiceActivity.tsx`) is three bars that rise with how loudly
+someone is talking. At rest the three are equal, which reads as a row of dots — a mic that is on and hearing
+nothing. Unequal bars at rest would claim a voice that isn't there; nothing at all would read as broken.
+
+It replaces the mic icon wherever the mic is live, rather than sitting next to one, and answers what a static icon
+cannot: whether a mic that is *on* is picking anything up.
+
+| Where | Mic on | Mic off |
+|---|---|---|
+| Tile corner | blue disc, bars | dark disc, crossed mic |
+| Members panel | blue disc, bars, and — for anyone but the reader — a button to ask them to mute | *nothing* |
+| Mic button in the strip | bars in place of the chevron | the chevron |
+
+The blue is `Palette.stroke['stroke-highlight']`, the same blue the tile's speaking ring uses, so the two agree
+about what "someone is talking" looks like.
+
+A muted member's row says nothing on purpose. Everyone in the call already hears the silence, so a crossed-out mic
+there would repeat it once per row, for the rows there is least to say about. The reader's own row shows the level
+and no button: muting yourself is what the strip's own control is for.
+
+Give the component a level if you already measure one — a tile lighting its speaking ring does — and it uses that;
+give it a stream and it measures for itself. That is what keeps two analysers off the same microphone.
+
+The name over a tile is plain text with a shadow rather than text on a plate. A dark pill under every name put a
+permanent rectangle over the bottom of everyone's camera, and the shadow keeps the name legible over whatever the
+camera is showing without covering any of it. A raised hand is the one thing that gives a name a plate — the green
+one — which is what makes that green mean something.
+
 ### Data-channel messages
 
 All inter-client and worker↔client comms ride the LK data channel. Current message types:

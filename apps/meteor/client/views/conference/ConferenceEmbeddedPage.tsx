@@ -94,7 +94,7 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 	// Who is waiting to speak, in the order they asked. The transport reports the queue by user id — that is what
 	// a participant is to it — so the call's own membership is what turns those into names. Anyone the membership
 	// cannot name is still counted and still holds their place; they are just described by what is known.
-	const { raisedHands, remoteParticipants, onMuteParticipant } = useMediaCallView();
+	const { raisedHands, remoteParticipants, streams, sessionState, onMuteParticipant } = useMediaCallView();
 	const handQueue = useMemo(
 		() =>
 			(raisedHands ?? []).map(({ id }) => {
@@ -106,11 +106,24 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 	const raisedHandIds = useMemo(() => new Set(handQueue.map(({ id }) => id)), [handQueue]);
 
 	// Whose microphone is already off, so nobody is asked for silence they are already keeping. The call is what
-	// knows this — a member entry records who is in the call, not what their microphone is doing.
-	const mutedMembers = useMemo(
-		() => new Set((remoteParticipants ?? []).filter(({ muted }) => muted).map(({ id }) => id)),
-		[remoteParticipants],
-	);
+	// knows this — a member entry records who is in the call, not what their microphone is doing. The reader's own
+	// mic comes from the session, since they are not one of the *remote* participants.
+	const mutedMembers = useMemo(() => {
+		const ids = new Set((remoteParticipants ?? []).filter(({ muted }) => muted).map(({ id }) => id));
+		if (sessionState?.muted && user?._id) {
+			ids.add(user._id);
+		}
+		return ids;
+	}, [remoteParticipants, sessionState?.muted, user?._id]);
+
+	// The same list, as microphones, so a row can show one moving. Again the reader's own comes from the session.
+	const audioStreams = useMemo(() => {
+		const streamsById = new Map((remoteParticipants ?? []).map(({ id, audioStream }) => [id, audioStream]));
+		if (user?._id) {
+			streamsById.set(user._id, streams?.localMicrophone?.stream);
+		}
+		return streamsById;
+	}, [remoteParticipants, streams?.localMicrophone, user?._id]);
 
 	// Members is the one open on arrival: the useful question then is who else is here, and for the caller of a
 	// call still ringing it is the only place that answers it. Toggling the open one closes it.
@@ -279,6 +292,7 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 							chatAccess={room.chatAccess}
 							raisedHands={raisedHandIds}
 							mutedMembers={mutedMembers}
+							audioStreams={audioStreams}
 							onMute={onMuteParticipant}
 							onClose={() => togglePanel('members')}
 						/>

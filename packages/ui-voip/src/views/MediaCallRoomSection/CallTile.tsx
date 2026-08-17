@@ -3,6 +3,7 @@ import { css } from '@rocket.chat/css-in-js';
 import { Avatar, Box, Icon, Palette } from '@rocket.chat/fuselage';
 import { useEffect, useRef, useState } from 'react';
 
+import VoiceActivity from '../../components/VoiceActivity';
 import { useAudioLevel } from '../../providers/useAudioLevel';
 import { usePlayMediaStream } from '../../providers/usePlayMediaStream';
 import { useStreamHasLiveVideo } from '../../providers/useStreamHasLiveVideo';
@@ -35,16 +36,26 @@ const tileStyles = css`
 	transition: box-shadow 80ms linear;
 `;
 
+/**
+ * The name over the tile: plain text on the picture, with a shadow to hold it there.
+ *
+ * No plate behind it. A dark pill under every name put a permanent rectangle over the bottom of everyone's camera,
+ * and the shadow does the one job the plate was there for — keeping the name legible over whatever the camera
+ * happens to be showing, light or dark — without covering any of it. The padding stays even with nothing to pad,
+ * so the name holds its position when a raised hand gives it a plate again rather than shifting under the reader.
+ */
 const labelStyles = css`
 	position: absolute;
 	left: 8px;
 	bottom: 6px;
 	padding: 2px 8px;
 	border-radius: 4px;
-	background-color: rgba(0, 0, 0, 0.55);
 	color: white;
-	font-size: 12px;
-	line-height: 16px;
+	font-size: 16px;
+	line-height: 20px;
+	text-shadow:
+		0 1px 2px rgba(0, 0, 0, 0.6),
+		0 0 2px rgba(0, 0, 0, 0.3);
 	max-width: calc(100% - 16px);
 	white-space: nowrap;
 	overflow: hidden;
@@ -65,16 +76,15 @@ const indicatorBadgeStyles = css`
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 22px;
-	height: 22px;
+	width: 28px;
+	height: 28px;
 	border-radius: 50%;
 	background-color: rgba(0, 0, 0, 0.55);
 	color: white;
 `;
 
-// When the participant has their hand raised, the tile background tints
-// green so the queue is visible at a glance, while the name label keeps
-// its original dark-pill styling unchanged.
+// A raised hand is the one thing that gives the name a plate to sit on, which is what makes the green mean
+// something now that no other name has one. Same green as the pill in the call's header, for the same reason.
 const handRaisedLabelStyles = css`
 	background-color: rgb(54 135 58 / 95%);
 `;
@@ -188,20 +198,28 @@ const CallTile = ({
 				)}
 				{displayName}
 			</Box>
-			{(muted || held) && (
-				<Box className={indicatorRowStyles}>
-					{muted && (
-						<Box className={indicatorBadgeStyles}>
-							<Icon name='mic-off' size='x16' />
-						</Box>
-					)}
-					{held && (
-						<Box className={indicatorBadgeStyles}>
-							<Icon name='pause-shape-unfilled' size='x16' />
-						</Box>
-					)}
-				</Box>
-			)}
+			{/* The corner always says something about the microphone: crossed through when it is off, and moving with
+			    the voice when it is on. A crossed mic that simply disappears when someone unmutes leaves the two
+			    states told by an absence, and an absence is not something a reader notices — where a mic that moves
+			    when they talk also answers the question a static icon never could, which is whether it is picking
+			    anything up. */}
+			<Box className={indicatorRowStyles}>
+				{muted ? (
+					<Box className={indicatorBadgeStyles}>
+						<Icon name='mic-off' size='x20' />
+					</Box>
+				) : (
+					// Blue, like the ring this tile lights when they speak and like every other call product's own
+					// version of this: it is the one thing in the corner that means "live", and the dark disc a muted
+					// mic wears would say the opposite.
+					<VoiceActivity level={rawLevel} size={18} badge />
+				)}
+				{held && (
+					<Box className={indicatorBadgeStyles}>
+						<Icon name='pause-shape-unfilled' size='x20' />
+					</Box>
+				)}
+			</Box>
 		</Box>
 	);
 };

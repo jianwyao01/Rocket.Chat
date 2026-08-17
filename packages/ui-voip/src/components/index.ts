@@ -6,6 +6,7 @@ export * from './Actions';
 
 export { default as ToggleButton } from './ToggleButton';
 export { default as ActionButton } from './ActionButton';
+export { default as VoiceActivity } from './VoiceActivity';
 export { default as Keypad } from './Keypad/Keypad';
 export { useInfoSlots } from './PeerInfo/useInfoSlots';
 export { default as PeerAutocomplete } from './PeerAutocomplete';

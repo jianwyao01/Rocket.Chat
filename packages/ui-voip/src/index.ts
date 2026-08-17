@@ -27,6 +27,7 @@ export { PeerCard, StreamCard, CardListContainer, CardListSection, CARD_LIST_SEC
 export { ActionStrip, ActionToggleChat } from './components/Actions';
 export { default as ToggleButton } from './components/ToggleButton';
 export { default as ActionButton } from './components/ActionButton';
+export { default as VoiceActivity } from './components/VoiceActivity';
 export { default as Timer } from './components/Timer';
 
 // Shared call section used by both 1:1 (driven by MediaCallViewProvider) and

@@ -22,6 +22,8 @@ type CallMembersPanelProps = {
 	raisedHands?: Set<string>;
 	/** Whose microphone is already off. There is nothing to ask of them, so they are not asked. */
 	mutedMembers?: Set<string>;
+	/** Each member's microphone, by id, so a row can show it moving. */
+	audioStreams?: Map<string, MediaStream | undefined>;
 	/** Asks a member to mute themselves. Absent where the transport cannot carry the request. */
 	onMute?: (memberId: string) => void;
 	onClose: () => void;
@@ -37,7 +39,17 @@ type CallMembersPanelProps = {
  *
  * Split in two, because the two halves answer different questions: who is here, and who still isn't.
  */
-const CallMembersPanel = ({ callId, rid, members, chatAccess, raisedHands, mutedMembers, onMute, onClose }: CallMembersPanelProps) => {
+const CallMembersPanel = ({
+	callId,
+	rid,
+	members,
+	chatAccess,
+	raisedHands,
+	mutedMembers,
+	audioStreams,
+	onMute,
+	onClose,
+}: CallMembersPanelProps) => {
 	const { t } = useTranslation();
 	const setModal = useSetModal();
 	const dispatchToastMessage = useToastMessageDispatch();
@@ -62,6 +74,7 @@ const CallMembersPanel = ({ callId, rid, members, chatAccess, raisedHands, muted
 			hasChatAccess={hasConferenceChatAccess(chatAccess, member._id)}
 			handRaised={raisedHands?.has(member._id)}
 			muted={mutedMembers?.has(member._id)}
+			audioStream={audioStreams?.get(member._id)}
 			onRing={ringMember}
 			onMute={onMute}
 		/>
