@@ -183,9 +183,15 @@ The conference route is the only consumer of `AuthenticationCheck` outside `Main
 `AuthenticationCheck` also had to learn the difference between "not logged in" and "not logged in *yet*": it
 decided from `useUser()` alone, which is null while a stored session is still being resumed, so a window opening
 with a session already in hand — a call popout above all — flashed a login form for as long as that took. It now
-waits on either signal that a resume is under way (`isLoggingIn`, or a stored login token for the instant before
-that); a stale token is cleared when the resume fails, landing as an ordinary logged-out visitor, and a forced
-login still goes straight to the form.
+waits when a stored login token says a resume is coming; a stale token is cleared when the resume fails, landing as
+an ordinary logged-out visitor, and a forced login still goes straight to the form.
+
+The stored token is deliberately the whole of that test. `isLoggingIn` reads as the more direct question and was
+asked alongside it at first, but it is true of *any* login in flight — including one someone is making at the form
+right now. That unmounted the form mid-attempt, so a rejected password came back to a blank form with neither field
+marked invalid, and iframe login could never show its own form at all, since the flow that fetches its URL runs
+from inside `LoginPage`. The token covers the resume from end to end on its own: it is written before the window
+loads and removed only on an explicit logout or a failed resume.
 
 The chain's *loading placeholder* needed the same treatment. `UsernameCheck` shows `HomeSkeleton` — a whole fake
 app shell — while it resolves the user, so `AuthenticationCheck` and `UsernameCheck` take an optional `loading`
