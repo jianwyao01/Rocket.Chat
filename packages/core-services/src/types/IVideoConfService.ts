@@ -46,7 +46,12 @@ export interface IVideoConfService {
 		params: { callId: VideoConference['_id']; uid: IUser['_id']; rid: IRoom['_id'] },
 	): Promise<boolean>;
 	assignDiscussionToConference(callId: VideoConference['_id'], rid: IRoom['_id'] | undefined): Promise<void>;
-	addMembers(uid: IUser['_id'], callId: VideoConference['_id'], usernames: NonNullable<IUser['username']>[]): Promise<IUser['_id'][]>;
+	addMembers(
+		uid: IUser['_id'],
+		callId: VideoConference['_id'],
+		usernames: NonNullable<IUser['username']>[],
+		options?: { ring?: boolean },
+	): Promise<IUser['_id'][]>;
 	declineCall(uid: IUser['_id'], callId: VideoConference['_id']): Promise<void>;
 	leaveCall(uid: IUser['_id'], callId: VideoConference['_id']): Promise<void>;
 	/** Renews the caller's presence lease on a call, which is what stops them being treated as gone. */

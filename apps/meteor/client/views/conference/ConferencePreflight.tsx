@@ -1,5 +1,5 @@
 import type { VideoConferenceCapabilities } from '@rocket.chat/core-typings';
-import { Box, Button, ButtonGroup, Field, FieldRow, Icon, TextInput } from '@rocket.chat/fuselage';
+import { Box, Button, ButtonGroup, CheckBox, Field, FieldRow, Icon, TextInput } from '@rocket.chat/fuselage';
 import { useBreakpoints } from '@rocket.chat/fuselage-hooks';
 import type { ComponentProps } from 'react';
 import { useCallback, useState } from 'react';
@@ -9,7 +9,7 @@ import CallDeviceMenu from './CallDeviceMenu';
 import CallDeviceToggle from './CallDeviceToggle';
 import { useCallDevicePreview } from './hooks/useCallDevicePreview';
 import type { CallPreferences } from './hooks/useCallPreferences';
-import { useCallPreferences } from './hooks/useCallPreferences';
+import { useCallPreferences, useCallRingPreference } from './hooks/useCallPreferences';
 import CallParticipants from '../../components/CallParticipants';
 
 type ConferencePreflightProps = {
@@ -32,7 +32,13 @@ type ConferencePreflightProps = {
 	 */
 	participants?: ComponentProps<typeof CallParticipants>;
 	capabilities: VideoConferenceCapabilities;
-	onConfirm: (preferences: CallPreferences, name: string) => void;
+	/**
+	 * Whether confirming is what decides if the others are rung — which is only true where confirming *creates*
+	 * the call. A call that already exists has been created with its answer, and offering the choice again would
+	 * be offering a switch wired to nothing.
+	 */
+	canChooseRinging?: boolean;
+	onConfirm: (preferences: CallPreferences, name: string, ring: boolean) => void;
 	onCancel: () => void;
 };
 
@@ -61,11 +67,15 @@ const ConferencePreflight = ({
 	defaultName,
 	participants,
 	capabilities,
+	canChooseRinging = false,
 	onConfirm,
 	onCancel,
 }: ConferencePreflightProps) => {
 	const { t } = useTranslation();
 	const { preferences, devices, toggle, selectDevice } = useCallPreferences(capabilities);
+	// Remembered across calls, like everything else on this screen: whoever always rings should not have to say so
+	// every time. What it is *allowed* to do is the room's business, not this preference's — see `canChooseRinging`.
+	const { ring, toggleRing } = useCallRingPreference();
 
 	// Only a provider that runs the call in here can be told which devices to use. Offering the choice to one
 	// that can't would be a promise this screen has no way to keep.
@@ -92,7 +102,7 @@ const ConferencePreflight = ({
 
 	const handleConfirm = () => {
 		setConfirming(true);
-		onConfirm(preferences, title.trim() || name);
+		onConfirm(preferences, title.trim() || name, ring);
 	};
 
 	// A call with a person is named after them; a call in a room is just the conference that is about to happen —
@@ -271,9 +281,25 @@ const ConferencePreflight = ({
 				</Box>
 			)}
 
+			{/* Whether to ring them at all. A ring is an interruption asked of someone else, so it is offered where
+			    the decision is made rather than assumed — and a call started without it is still a call: it is
+			    announced in the room and listed for everyone who could join. */}
+			{action === 'start' && canChooseRinging && (
+				<Box marginBlockStart={16} width='100%'>
+					<Field>
+						<FieldRow justifyContent='center'>
+							<CheckBox id='conference-preflight-ring' checked={ring} onChange={toggleRing} />
+							<Box is='label' htmlFor='conference-preflight-ring' fontScale='p2' color='default' marginInlineStart={8}>
+								{t('Ring_participants')}
+							</Box>
+						</FieldRow>
+					</Field>
+				</Box>
+			)}
+
 			{/* Nobody's phone is ringing yet — going in is what rings it, and saying so is what makes the wait
-			    afterwards make sense. */}
-			{action === 'start' && isDirect && (
+			    afterwards make sense. Only said when it is true: with ringing turned off, nobody is notified. */}
+			{action === 'start' && isDirect && (!canChooseRinging || ring) && (
 				<Box fontScale='p2' color='hint' marginBlockStart={16} textAlign='center' withTruncatedText>
 					{t('__name__will_be_notified_when_you_start_the_call', { name })}
 				</Box>

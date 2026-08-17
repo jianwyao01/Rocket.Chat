@@ -449,7 +449,7 @@ API.v1.post(
 		},
 	},
 	async function action() {
-		const { callId, users } = this.bodyParams;
+		const { callId, users, ring } = this.bodyParams;
 
 		const conference = await loadAccessibleConference(callId, this.userId);
 		if (!conference) {
@@ -458,7 +458,7 @@ API.v1.post(
 
 		// Registers the users as conference members — it deliberately does not put them in any room. Being a
 		// member authorizes joining the call; whether they can read the chat is surfaced separately.
-		const added = await VideoConf.addMembers(conference.userId, callId, users);
+		const added = await VideoConf.addMembers(conference.userId, callId, users, { ring: ring ?? true });
 
 		return API.v1.success({ added });
 	},

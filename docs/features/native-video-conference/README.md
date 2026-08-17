@@ -202,17 +202,6 @@ All inter-client and worker↔client comms ride the LK data channel. Current mes
 |---|---|---|---|
 | `hand` | client ↔ all | yes | `{ raised, raisedAt }`. Hand-raise aggregation. |
 | `reaction` | client ↔ all | no | `{ emoji, reactionId? }`. Floating reactions. 3.5s TTL on receivers. |
-
-### UI surfaces (`packages/ui-voip/src/views/MediaCallRoomSection/`)
-
-- **Reactions popover** — stays open for multiple clicks; outside-click to dismiss.
-- **Hand-raise** — auto-lowers after 3s of continuous speech (driven by `useAudioLevel`).
-
-
-Camera tiles fall back to the avatar when `track.enabled && !track.muted && track.readyState === 'live'` is false (`useStreamHasLiveVideo` hook). For remote LK tracks, also check `publication.isMuted`.
-
----
-
 ## 7. Runtime flows
 
 ### Starting a call
@@ -224,7 +213,28 @@ Camera tiles fall back to the avatar when `track.enabled && !track.muted && trac
 5. `LiveKitVideoConfContext` fetches `/transport.config` and mounts `<LiveKitRoom>` in the portal: `audio`/`video` say whether to publish each track, and the chosen devices go in the room's `audioCaptureDefaults` / `videoCaptureDefaults` — see below.
 6. LK connects.
 
-## 8. Known limitations
+## 8. Who gets rung
+
+Ringing is for the people a call is actually aimed at:
+
+| Room | Rings | Why |
+|---|---|---|
+| Direct message (2 people) | yes | `direct` type; rung when the caller arrives, not when the call is created. |
+| Multi-person direct message | yes | Exactly the set of people meant, which is what makes ringing them right. |
+| Channel, team | **no** | A call there is an invitation to whoever is around, not a summons. |
+| Added to a call in progress | yes | They are being called *now*. Capped at `VIDEO_CONF_RINGING_LIMIT`. |
+
+A channel call is not silent, it is *announced*: a message in the room, and a row in the ongoing-calls list for
+every member who could join it. Ringing a roomful of people who were not being called is the thing being avoided —
+the more so because a channel is somewhere someone joined once, not a group they assembled to talk to.
+
+The room decides whether ringing is possible; the caller decides whether it happens. The preflight carries a
+**Ring participants** switch (default on, remembered in `videoconf-call-preferences` — see `useCallRingPreference`),
+and it is shown only on the screen where confirming *creates* the call, since a call that already exists was created
+with its answer and a switch wired to nothing is worse than no switch. Adding people to a call in progress asks the
+same question, and remembers the same answer: it is one habit, not two.
+
+## 9. Known limitations
 
 - **Single-process worker**. Supervisor only respawns one. No horizontal scaling story yet — for many concurrent rooms in a single workspace, you'd want multiple worker processes or external workers.
 

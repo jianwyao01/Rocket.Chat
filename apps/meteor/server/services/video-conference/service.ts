@@ -1242,6 +1242,7 @@ export class VideoConfService extends ServiceClassInternal implements IVideoConf
 		uid: IUser['_id'],
 		callId: VideoConference['_id'],
 		usernames: NonNullable<IUser['username']>[],
+		{ ring = true }: { ring?: boolean } = {},
 	): Promise<IUser['_id'][]> {
 		const call = await VideoConferenceModel.findOneById(callId, { projection: { rid: 1, users: 1 } });
 		if (!call) {
@@ -1273,9 +1274,10 @@ export class VideoConfService extends ServiceClassInternal implements IVideoConf
 			await this.recordConferenceInHistory(callId, { ended: false });
 		}
 
-		// The list being rung is just the people added, and the endpoint caps a single add at the ringing
-		// limit — so unlike starting a call in a large room, an add always rings.
-		if (shouldRingVideoConference(added.length)) {
+		// The list being rung is just the people added, and the endpoint caps a single add at the ringing limit —
+		// so unlike starting a call in a large room, an add can always ring. Whether it does is the adder's to
+		// say: someone added to carry on later is not someone to interrupt now.
+		if (ring && shouldRingVideoConference(added.length)) {
 			await this.ringUsers(callId, call.rid, uid, added);
 		}
 

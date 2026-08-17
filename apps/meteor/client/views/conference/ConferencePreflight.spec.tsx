@@ -45,7 +45,7 @@ it('confirms with the devices as they were left', async () => {
 	await userEvent.click(screen.getByRole('button', { name: 'Cam_off' }));
 	await userEvent.click(screen.getByRole('button', { name: 'Join_call' }));
 
-	expect(onConfirm).toHaveBeenCalledWith({ mic: false, cam: true }, 'general');
+	expect(onConfirm).toHaveBeenCalledWith({ mic: false, cam: true }, 'general', true);
 });
 
 it('arrives muted and unseen unless told otherwise', async () => {
@@ -53,7 +53,7 @@ it('arrives muted and unseen unless told otherwise', async () => {
 
 	await userEvent.click(await screen.findByRole('button', { name: 'Join_call' }));
 
-	expect(onConfirm).toHaveBeenCalledWith({ mic: true, cam: false }, 'general');
+	expect(onConfirm).toHaveBeenCalledWith({ mic: true, cam: false }, 'general', true);
 });
 
 // A device the provider can't be told about is not something to offer a switch for.
@@ -69,7 +69,7 @@ it('reports a device the provider cannot be told about as off', async () => {
 
 	await userEvent.click(await screen.findByRole('button', { name: 'Join_call' }));
 
-	expect(onConfirm).toHaveBeenCalledWith({ mic: true, cam: false }, 'general');
+	expect(onConfirm).toHaveBeenCalledWith({ mic: true, cam: false }, 'general', true);
 });
 
 // This screen exists precisely because the user may not want the call after all, so leaving is a click away
@@ -134,7 +134,7 @@ describe('naming the call', () => {
 		await userEvent.type(screen.getByLabelText('Call_name'), 'Release planning');
 		await userEvent.click(screen.getByRole('button', { name: 'Join_call' }));
 
-		expect(onConfirm).toHaveBeenCalledWith({ mic: true, cam: false }, 'Release planning');
+		expect(onConfirm).toHaveBeenCalledWith({ mic: true, cam: false }, 'Release planning', true);
 	});
 
 	// Emptying the field is not asking for a nameless call — it falls back to what the call is called already.
@@ -144,7 +144,7 @@ describe('naming the call', () => {
 		await userEvent.clear(await screen.findByLabelText('Call_name'));
 		await userEvent.click(screen.getByRole('button', { name: 'Join_call' }));
 
-		expect(onConfirm).toHaveBeenCalledWith(expect.anything(), 'general');
+		expect(onConfirm).toHaveBeenCalledWith(expect.anything(), 'general', true);
 	});
 });
 
@@ -258,7 +258,7 @@ describe('when the provider runs the call inside Rocket.Chat', () => {
 
 		await userEvent.click(await screen.findByRole('button', { name: 'Join_call' }));
 
-		expect(onConfirm).toHaveBeenCalledWith({ mic: true, cam: false }, 'general');
+		expect(onConfirm).toHaveBeenCalledWith({ mic: true, cam: false }, 'general', true);
 	});
 });
 
@@ -268,4 +268,46 @@ it('offers no device to choose when the provider could not be told which', async
 	expect(await screen.findByRole('button', { name: 'Join_call' })).toBeInTheDocument();
 	expect(screen.queryByRole('button', { name: 'Camera' })).not.toBeInTheDocument();
 	expect(screen.queryByRole('button', { name: 'Microphone' })).not.toBeInTheDocument();
+});
+
+// Ringing is an interruption asked of someone else, so it is offered where the decision is made — but only where
+// confirming is what creates the call, since a call that already exists was created with its answer.
+describe('whether to ring the others', () => {
+	it('rings by default, and says who will be told', async () => {
+		renderPreflight({ action: 'start', isDirect: true, canChooseRinging: true });
+
+		expect(await screen.findByRole('checkbox', { name: 'Ring_participants' })).toBeChecked();
+		expect(screen.getByText('__name__will_be_notified_when_you_start_the_call')).toBeInTheDocument();
+	});
+
+	it('confirms without ringing when it is turned off, and stops promising a notification', async () => {
+		renderPreflight({ action: 'start', isDirect: true, canChooseRinging: true });
+
+		await userEvent.click(await screen.findByRole('checkbox', { name: 'Ring_participants' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Call__name__' }));
+
+		expect(onConfirm).toHaveBeenCalledWith(expect.anything(), 'general', false);
+		expect(screen.queryByText('__name__will_be_notified_when_you_start_the_call')).not.toBeInTheDocument();
+	});
+
+	// It is a habit rather than a per-call decision, so the next call starts where the last one left off.
+	it('remembers the answer for the next call', async () => {
+		const first = renderPreflight({ action: 'start', isDirect: true, canChooseRinging: true });
+
+		await userEvent.click(await screen.findByRole('checkbox', { name: 'Ring_participants' }));
+		first.unmount();
+
+		renderPreflight({ action: 'start', isDirect: true, canChooseRinging: true });
+
+		expect(await screen.findByRole('checkbox', { name: 'Ring_participants' })).not.toBeChecked();
+	});
+
+	// A switch wired to nothing is worse than no switch: a call in a channel is announced rather than rung, and a
+	// call that already exists cannot change its mind here.
+	it('offers nothing where ringing is not this screen to decide', async () => {
+		renderPreflight({ action: 'start', isDirect: true });
+
+		expect(await screen.findByText('__name__will_be_notified_when_you_start_the_call')).toBeInTheDocument();
+		expect(screen.queryByRole('checkbox', { name: 'Ring_participants' })).not.toBeInTheDocument();
+	});
 });
