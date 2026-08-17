@@ -172,6 +172,28 @@ LiveKitVideoConfProvider
 
 Inside `<LiveKitRoom>`, an inner provider reads LK hooks (`useParticipants`, `useTracks`, `useLocalParticipant`) and pushes the computed value into `MediaCallViewContext` (shared with the legacy P2P UI). `MediaCallRoomSection` consumes that context unchanged.
 
+### Which devices a call uses
+
+The preflight is the only place devices are chosen, and it remembers the choice in `localStorage`
+(`videoconf-call-preferences`, via `useCallPreferences`). Two rules keep that choice and the call in agreement:
+
+- **Applied as capture *defaults*, not capture options.** `audio` and `video` on `<LiveKitRoom>` describe the track
+  published on the way in, so a call joined muted — the normal way to join — used to throw the chosen microphone away
+  along with the `false`, and unmuting later opened whichever device the browser preferred. `audioCaptureDefaults` /
+  `videoCaptureDefaults` are read every time a track is created, including that one. LiveKit merges them over its own
+  audio defaults (echo cancellation and friends survive) and seeds the room's active-device map from them.
+- **The room is asked which device is in use — nothing else is trusted to know.** The app's own device store
+  (`DeviceProvider`) is only ever written from inside a call, so on arrival it answers with its own fallback, the first
+  device the browser happened to enumerate, and the device chosen in the preflight reads as unselected in the in-call
+  menu. `LiveKitVideoConfProvider` instead listens for `RoomEvent.ActiveDeviceChanged`, reads
+  `room.getActiveDevice(kind)`, and corrects the store from it. That value is the device *obtained* rather than the one
+  requested, so a device that cannot actually capture shows the one the browser fell back to.
+
+Picking a device in the in-call menu therefore only calls `room.switchActiveDevice`; the record follows from the event.
+Matching a recorded device against a menu entry goes through `isSameDevice` (`packages/ui-voip/src/utils/deviceLabels.ts`),
+because browsers list the system default twice — as the `default` alias and under its own id — and the two halves of that
+pair are held by different parts of the app.
+
 ### Data-channel messages
 
 All inter-client and worker↔client comms ride the LK data channel. Current message types:
@@ -197,9 +219,9 @@ Camera tiles fall back to the avatar when `track.enabled && !track.muted && trac
 
 1. User clicks the camera button on the room sidebar.
 2. `VideoConfButton` → `VideoConfManager.startCall(rid)` — mints a `VideoConference` doc with `providerName: 'livekit'` and returns `{ url: '', callId, rid }`. Empty `url` signals embedded.
-3. `VideoConfManager` emits `'call/joinEmbedded'` with `{ callId, rid, providerName, preferences }` (preferences = mic/cam state from preflight).
+3. `VideoConfManager` emits `'call/joinEmbedded'` with `{ callId, rid, providerName, preferences }` (preferences = whether to arrive with mic/cam on, plus which mic, camera and speaker, all from the preflight).
 4. `VideoConfProvider` routes to `useLiveKitVideoConf().joinCall(...)`.
-5. `LiveKitVideoConfContext` fetches `/transport.config`, mounts `<LiveKitRoom>` in the portal with `initialAudioEnabled` / `initialVideoEnabled` from preferences.
+5. `LiveKitVideoConfContext` fetches `/transport.config` and mounts `<LiveKitRoom>` in the portal: `audio`/`video` say whether to publish each track, and the chosen devices go in the room's `audioCaptureDefaults` / `videoCaptureDefaults` — see below.
 6. LK connects.
 
 ## 8. Known limitations

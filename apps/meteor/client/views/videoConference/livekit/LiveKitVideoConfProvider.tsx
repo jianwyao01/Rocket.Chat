@@ -1,8 +1,15 @@
 /* eslint-disable react/no-multi-comp */
 import { LiveKitRoom, RoomAudioRenderer, useLocalParticipant, useParticipants, useRoomContext, useTracks } from '@livekit/components-react';
-import { useToastMessageDispatch, useUserAvatarPath } from '@rocket.chat/ui-contexts';
+import type { Device } from '@rocket.chat/ui-contexts';
+import {
+	useAvailableDevices,
+	useSetInputMediaDevice,
+	useSetOutputMediaDevice,
+	useToastMessageDispatch,
+	useUserAvatarPath,
+} from '@rocket.chat/ui-contexts';
 import { MediaCallViewContext, defaultMediaCallContextValue, playJoinChime, type RemoteParticipantInfo } from '@rocket.chat/ui-voip';
-import type { LocalAudioTrack, RemoteParticipant } from 'livekit-client';
+import type { LocalAudioTrack, RemoteParticipant, RoomOptions } from 'livekit-client';
 import { ParticipantKind, RoomEvent, Track } from 'livekit-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -11,15 +18,21 @@ import { createPortal } from 'react-dom';
 import { useLiveKitVideoConf } from './LiveKitVideoConfContext';
 
 /**
- * Turns the preflight's choice into what `LiveKitRoom` takes for a track: `false` to not publish it at all,
- * a device id when the user picked one, and otherwise `true` for whatever the browser prefers.
+ * The devices the preflight chose, as the room's *capture defaults*.
+ *
+ * They used to be passed as the `audio`/`video` capture options instead, which describe only the track published
+ * on the way in — so a call joined muted, which is the normal way to join, threw the chosen microphone away along
+ * with the `false`, and unmuting later opened whichever device the browser prefers. Capture defaults are read
+ * every time a track is created, including that one.
+ *
+ * LiveKit merges these over its own audio defaults, so echo cancellation and the rest survive, and it seeds the
+ * room's active-device map from them — which is what makes the room, rather than this preference, the thing to ask
+ * later about which device is in use.
  */
-const captureOptions = (on: boolean, deviceId?: string): boolean | { deviceId: string } => {
-	if (!on) {
-		return false;
-	}
-	return deviceId ? { deviceId } : true;
-};
+const captureDefaults = ({ micId, camId }: { micId?: string; camId?: string } = {}): RoomOptions => ({
+	...(micId && { audioCaptureDefaults: { deviceId: micId } }),
+	...(camId && { videoCaptureDefaults: { deviceId: camId } }),
+});
 
 const headersOf = () => ({
 	'X-Auth-Token': localStorage.getItem('Meteor.loginToken') || '',
@@ -86,6 +99,11 @@ const InnerProvider = ({
 	onContextChange: (value: unknown) => void;
 }) => {
 	const room = useRoomContext();
+	const setInputDevice = useSetInputMediaDevice();
+	const setOutputDevice = useSetOutputMediaDevice();
+	const availableDevices = useAvailableDevices();
+	// What has already been written, so re-running on a new device list can't turn into a write-and-rerender loop.
+	const recorded = useRef<Partial<Record<'audioinput' | 'audiooutput', string>>>({});
 	const { localParticipant } = useLocalParticipant();
 	const allParticipants = useParticipants();
 	const startedAt = useRef(new Date()).current;
@@ -201,7 +219,7 @@ const InnerProvider = ({
 				console.debug('[Krisp] supported?', supported);
 				if (!supported) return;
 				console.debug('[Krisp] attaching processor to track', audioTrack.sid);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-call, new-cap
+				// eslint-disable-next-line new-cap
 				await audioTrack.setProcessor(mod.KrispNoiseFilter());
 				console.info('[Krisp] processor attached');
 			} catch (err) {
@@ -379,7 +397,7 @@ const InnerProvider = ({
 	const JOIN_CHIME_MAX_PARTICIPANTS = 6;
 	useEffect(() => {
 		const onConnect = (participant: RemoteParticipant) => {
-			if (isAgentParticipant(participant as { identity: string; kind?: ParticipantKind })) return;
+			if (isAgentParticipant(participant)) return;
 			if (room.numParticipants <= JOIN_CHIME_MAX_PARTICIPANTS) {
 				playJoinChime();
 			}
@@ -403,6 +421,62 @@ const InnerProvider = ({
 		});
 	}, [room, speakerId]);
 
+	// What the app records as the selected devices, made to agree with the devices the call is actually on.
+	//
+	// That record is only ever written from inside a call, so on the way in it answers with its own fallback — the
+	// first device the browser happened to enumerate — and the microphone chosen in the preflight reads as
+	// unselected in the menu, for a device that is very much in use. The room is the one that knows: its capture
+	// defaults seed the active device, every switch updates it, and what it reports is the device obtained rather
+	// than the one requested. So it is asked, and the record is corrected from it.
+	useEffect(() => {
+		const record = (kind: 'audioinput' | 'audiooutput') => {
+			const deviceId = room.getActiveDevice(kind);
+			if (!deviceId || recorded.current[kind] === deviceId) {
+				return;
+			}
+
+			const device = (kind === 'audioinput' ? availableDevices?.audioInput : availableDevices?.audioOutput)?.find(
+				({ id }) => id === deviceId,
+			);
+			if (!device) {
+				return;
+			}
+
+			recorded.current[kind] = deviceId;
+
+			if (kind === 'audioinput') {
+				setInputDevice(device);
+				return;
+			}
+
+			// The output setter insists on an element to put the sink on, and LiveKit has already set it on the ones
+			// it renders — so this is only for the record. It throws where `setSinkId` does not exist (Firefox), and
+			// a tick is not worth an exception.
+			const audioElement = document.querySelector('audio');
+			if (!audioElement) {
+				delete recorded.current[kind];
+				return;
+			}
+
+			try {
+				setOutputDevice({ outputDevice: device, HTMLAudioElement: audioElement });
+			} catch (err) {
+				console.warn('speaker selection not recorded', err);
+			}
+		};
+
+		const sync = () => {
+			record('audioinput');
+			record('audiooutput');
+		};
+
+		sync();
+		room.on(RoomEvent.ActiveDeviceChanged, sync);
+		return () => {
+			room.off(RoomEvent.ActiveDeviceChanged, sync);
+		};
+	}, [room, availableDevices, setInputDevice, setOutputDevice]);
+
 	// Switch the active camera (videoinput) through the LK Room — LK's
 	// switchActiveDevice republishes the track on the chosen device so no
 	// renegotiation is needed at our level. The method lives on Room (not
@@ -411,6 +485,24 @@ const InnerProvider = ({
 		(deviceId: string) => {
 			void room.switchActiveDevice('videoinput', deviceId).catch((err: unknown) => {
 				console.warn('camera switch failed', err);
+			});
+		},
+		[room],
+	);
+
+	// The same for a microphone or a speaker picked *during* the call, which the in-call menu asks for through one
+	// callback for both. Which kind it is comes from the device's own `type`, since that is all the menu knows about
+	// it and `switchActiveDevice` has to be told which side it is switching.
+	//
+	// This was a no-op until now: the menu has always listed the devices, and picking one did nothing at all.
+	const onDeviceChange = useCallback(
+		(device: Device) => {
+			const kind = device.type === 'audiooutput' ? 'audiooutput' : 'audioinput';
+
+			// Only the switch: the room announces the device it ends up on, and the effect above records it. Writing
+			// the app's record from here as well would report the device *asked for* rather than the one obtained.
+			void room.switchActiveDevice(kind, device.id).catch((err: unknown) => {
+				console.warn(`${kind} switch failed`, err);
 			});
 		},
 		[room],
@@ -442,7 +534,7 @@ const InnerProvider = ({
 			},
 			onMute: onToggleMic,
 			onHold: () => undefined,
-			onDeviceChange: () => undefined,
+			onDeviceChange,
 			onForward: () => undefined,
 			onTone: () => undefined,
 			onEndCall: onLeave,
@@ -479,6 +571,7 @@ const InnerProvider = ({
 			raisedHands,
 			onSendReaction,
 			activeReactions,
+			onDeviceChange,
 			onVideoInputChange,
 			currentCameraDeviceId,
 			remoteParticipants,
@@ -593,8 +686,10 @@ const LiveKitVideoConfBridge = ({ children }: { children: ReactNode }) => {
 							token={creds.token}
 							serverUrl={creds.serverUrl}
 							connect={true}
-							audio={captureOptions(activeCall?.preferences?.mic ?? true, activeCall?.preferences?.micId)}
-							video={captureOptions(activeCall?.preferences?.cam ?? false, activeCall?.preferences?.camId)}
+							// Whether to arrive with each track published; *which* device it opens is a capture default below.
+							audio={activeCall?.preferences?.mic ?? true}
+							video={activeCall?.preferences?.cam ?? false}
+							options={captureDefaults(activeCall?.preferences)}
 							onDisconnected={onLeave}
 						>
 							<InnerProvider

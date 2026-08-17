@@ -41,6 +41,8 @@ export type { RemoteParticipantInfo, MediaCallStreams } from './context/MediaCal
 // (ringer/dialer/call-ended) intentionally still go through the MP3 path
 // in CustomSoundProvider.
 export { playJoinChime } from './utils/callChimes';
+// Shared with the preflight's own device menu, so a device is named the same way before a call and inside one.
+export { deviceName, isSameDevice, orderDevices, SYSTEM_DEFAULT_DEVICE_ID } from './utils/deviceLabels';
 
 // Per-call language selection — shared list of choices + helpers used by
 // both the picker UI and the LK provider that synchronises the state.

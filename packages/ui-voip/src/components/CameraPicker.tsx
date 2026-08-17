@@ -3,11 +3,12 @@ import { useSafely } from '@rocket.chat/fuselage-hooks';
 import { GenericMenu } from '@rocket.chat/ui-client';
 import type { GenericMenuItemProps } from '@rocket.chat/ui-client';
 import type { ComponentProps } from 'react';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ActionButton } from '.';
 import { useMediaCallView } from '../context/MediaCallViewContext';
+import { SYSTEM_DEFAULT_DEVICE_ID, deviceName, orderDevices } from '../utils/deviceLabels';
 
 type CameraPickerButtonProps = {
 	secondary?: boolean;
@@ -60,15 +61,34 @@ const CameraPicker = ({ secondary = true, danger = false, className }: { seconda
 	const { onVideoInputChange, currentCameraDeviceId } = useMediaCallView();
 	const devices = useAvailableVideoInputs();
 
-	const items: GenericMenuItemProps[] = devices.map((device) => ({
-		id: `${device.deviceId}-videoinput`,
-		content: (
-			<Box is='span' title={device.label || t('Default')} fontSize={14}>
-				{device.label || t('Default')}
-			</Box>
-		),
-		addon: <RadioButton checked={device.deviceId === currentCameraDeviceId} />,
-	}));
+	// The system default first, its duplicate dropped, and every name without the USB id the browser tacks on.
+	const ordered = useMemo(() => orderDevices(devices), [devices]);
+
+	// What is in use when nothing has been picked is the first on offer, which is what makes clicking it a no-op
+	// below rather than a switch to the camera already running.
+	const currentId = currentCameraDeviceId ?? ordered[0]?.deviceId;
+
+	const items: GenericMenuItemProps[] = ordered.map((device) => {
+		const name = deviceName(device.label) || t('Default');
+
+		return {
+			id: `${device.deviceId}-videoinput`,
+			content: (
+				<Box title={name} fontSize={14} display='flex' flexDirection='column' minWidth={0}>
+					<Box is='span' withTruncatedText>
+						{name}
+					</Box>
+					{/* Said on its own line, as a fact about the device rather than part of its name. */}
+					{device.deviceId === SYSTEM_DEFAULT_DEVICE_ID && (
+						<Box is='span' fontScale='c1' color='hint'>
+							{t('System')} {t('Default').toLowerCase()}
+						</Box>
+					)}
+				</Box>
+			),
+			addon: <RadioButton checked={device.deviceId === currentId} />,
+		};
+	});
 
 	const sections = [{ title: t('Camera'), items }];
 
@@ -92,6 +112,9 @@ const CameraPicker = ({ secondary = true, danger = false, className }: { seconda
 				if (typeof deviceId !== 'string') return;
 				if (!deviceId.endsWith('-videoinput')) return;
 				const id = deviceId.slice(0, -'-videoinput'.length);
+				// Picking the camera already in use is not a change, and putting it through the switch anyway tore the
+				// running track down and came back with a black frame. Nothing to do is nothing to do.
+				if (id === currentId) return;
 				onVideoInputChange?.(id);
 			}}
 			button={<CameraPickerButton secondary={secondary} danger={danger} />}

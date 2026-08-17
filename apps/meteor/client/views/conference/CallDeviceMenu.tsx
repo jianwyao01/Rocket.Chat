@@ -1,6 +1,7 @@
 import { css } from '@rocket.chat/css-in-js';
 import { Box, Button, Dropdown, Icon, Option, OptionColumn, OptionContent } from '@rocket.chat/fuselage';
 import type { Keys as IconName } from '@rocket.chat/icons';
+import { SYSTEM_DEFAULT_DEVICE_ID, deviceName, orderDevices } from '@rocket.chat/ui-voip';
 import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,20 +14,6 @@ type CallDeviceMenuProps = {
 	selectedId?: string;
 	onSelect: (deviceId: string) => void;
 };
-
-/**
- * Browsers dress a device's name up twice over: the USB vendor:product pair identifies the hardware to the
- * machine rather than to the person choosing it — "Display Audio (05ac:1107)" — and the one the system prefers
- * is prefixed "Default - ". Both are dropped from the name, and the prefix is said properly instead, on its own
- * line where it reads as a fact about the device rather than part of what it is called.
- *
- * A parenthetical like "(Built-in)" stays: that is part of the name.
- */
-const deviceName = (label: string): string =>
-	label
-		.replace(/\s*\([0-9a-f]{4}:[0-9a-f]{4}\)\s*$/i, '')
-		.replace(/^Default\s+-\s+/i, '')
-		.trim();
 
 /**
  * The device on the left, its name beside it, the chevron pushed to the far right — a control that says what it
@@ -71,25 +58,8 @@ const CallDeviceMenu = ({ icon, label, devices, selectedId, onSelect }: CallDevi
 	const target = useRef<HTMLElement>(null);
 	const { isVisible, toggle } = useDropdownVisibility({ reference, target });
 
-	/**
-	 * Browsers list the system default *twice*: once as the `default` alias, and again under its own id. Both
-	 * name the same hardware, so offering both is offering the same choice twice. The alias is the one kept —
-	 * it is what "leave it to the system" means, and it follows the system if that changes — and its twin is
-	 * found by `groupId`, which the two share. Matching on the name instead would collapse genuinely different
-	 * devices that happen to be called the same thing, which two displays generally are.
-	 *
-	 * The default then goes first: it is the one that will be used if nothing is picked, so it is the one that
-	 * should already be under the cursor.
-	 */
-	const ordered = useMemo(() => {
-		const systemDefault = devices.find(({ deviceId }) => deviceId === 'default');
-
-		const rest = devices.filter(
-			(device) => device !== systemDefault && !(systemDefault && device.groupId && device.groupId === systemDefault.groupId),
-		);
-
-		return systemDefault ? [systemDefault, ...rest] : rest;
-	}, [devices]);
+	// Shared with the in-call pickers, so a device is named and ordered the same way before a call and inside one.
+	const ordered = useMemo(() => orderDevices(devices), [devices]);
 
 	const currentId = selectedId ?? ordered[0]?.deviceId;
 	const current = ordered.find(({ deviceId }) => deviceId === currentId);
@@ -126,7 +96,7 @@ const CallDeviceMenu = ({ icon, label, devices, selectedId, onSelect }: CallDevi
 							<OptionContent>
 								{/* A device the browser hasn't named yet — permission was granted after it was enumerated. */}
 								<Box withTruncatedText>{deviceName(device.label) || t('Default')}</Box>
-								{device.deviceId === 'default' && (
+								{device.deviceId === SYSTEM_DEFAULT_DEVICE_ID && (
 									<Box fontScale='c1' color='hint'>
 										{t('System')} {t('Default').toLowerCase()}
 									</Box>
