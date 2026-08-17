@@ -27,22 +27,24 @@ export const useOngoingCallsList = () => {
 	// meant to be deleted along with these two lines.
 	const calls = useMemo(() => (fakeOngoingCallsEnabled() ? [...fakeOngoingCalls(), ...realCalls] : realCalls), [realCalls]);
 
-	// A call the reader is already in is not something to reach — they are in it.
-	const reachable = useMemo(() => calls.filter((call) => !call.joined), [calls]);
-
 	const { ringing, ongoing, declined } = useMemo(() => {
 		const isRinging = (call: JoinableVideoConference) => isRingingVideoConferenceMember({ ringingAt: call.ringingAt });
 
 		// Declining quiets a call rather than losing it: it drops out of the list proper and waits under it, so
-		// turning one down by accident is not the end of the road back to it.
-		const asked = reachable.filter((call) => !call.declined);
+		// turning one down by accident is not the end of the road back to it. A call the reader is *in* is never
+		// one of those, whatever it was before they joined.
+		const asked = calls.filter((call) => call.joined || !call.declined);
 
 		return {
-			ringing: asked.filter(isRinging),
-			ongoing: asked.filter((call) => !isRinging(call)),
-			declined: reachable.filter((call) => call.declined),
+			// A call the reader has joined has stopped asking them anything, so it is listed as simply running even
+			// while the record of the ring is still on it. It stays listed at all — rather than dropping out as it
+			// used to on joining — because leaving is easy to do by accident, or on purpose and then regretted, and
+			// a call that vanished from the list the moment it was joined left no way back into it.
+			ringing: asked.filter((call) => !call.joined && isRinging(call)),
+			ongoing: asked.filter((call) => call.joined || !isRinging(call)),
+			declined: calls.filter((call) => !call.joined && call.declined),
 		};
-	}, [reachable]);
+	}, [calls]);
 
 	// So a call whose ring lapses settles into an ordinary one without waiting for something else to move.
 	useRingingExpiry(ringing.map(({ ringingAt }) => ringingAt));
@@ -85,6 +87,12 @@ export const useOngoingCalls = () => {
 
 	return { ringing, ongoing, declined, joinCall, decline, silence, silencedCalls };
 };
+
+/**
+ * Whether there is anything left to turn down. Nothing is, for a call already turned down — or for one the reader
+ * is in, where the way out is to leave the call rather than to decline an invitation they already accepted.
+ */
+export const canDeclineCall = (call: JoinableVideoConference): boolean => !call.declined && !call.joined;
 
 /** The foot of the list: how many declined calls are waiting under it. Not a call, and not a room. */
 export type DeclinedCallsToggleItem = { declinedCount: number };

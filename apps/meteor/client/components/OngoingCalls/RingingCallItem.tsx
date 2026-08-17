@@ -13,6 +13,8 @@ type RingingCallItemProps = {
 	onAccept: (callId: string) => void;
 	onReject: (callId: string) => void;
 	onSilence: (callId: string) => void;
+	/** Opening it, which shows the call rather than answering it. */
+	onOpen: (callId: string) => void;
 };
 
 /**
@@ -27,7 +29,7 @@ type RingingCallItemProps = {
  * because while it is sounding the press a user reaches for is the one that stops the noise, and that is a reflex
  * rather than a decision to end the call. A silenced call keeps a bell at the head of the row to say so.
  */
-const RingingCallItem = ({ call, silenced, onAccept, onReject, onSilence }: RingingCallItemProps) => {
+const RingingCallItem = ({ call, silenced, onAccept, onReject, onSilence, onOpen }: RingingCallItemProps) => {
 	const { t } = useTranslation();
 
 	// Only offer to stop a sound that is playing: a ring this client never heard — a reload, or a call rung before
@@ -42,6 +44,9 @@ const RingingCallItem = ({ call, silenced, onAccept, onReject, onSilence }: Ring
 	return (
 		<CallListItem
 			call={call}
+			// Opening a ringing call is not answering it: the preflight describes it and offers the devices, and the
+			// green phone is still what puts the reader in the call.
+			onOpen={() => onOpen(call.callId)}
 			// When it started is no use while it is still asking: what the corner has to say is that it is ringing
 			// *now*, in the blue that marks it as live rather than as history.
 			timeLabel={

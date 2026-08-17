@@ -8,6 +8,7 @@ import { buildJoinableCall } from '../../views/conference/testFixtures';
 const onAccept = jest.fn();
 const onReject = jest.fn();
 const onSilence = jest.fn();
+const onOpen = jest.fn();
 
 /** What the manager remembers about rings this client actually heard — the only thing there is to silence. */
 let incomingCalls: { callId: string; dismissed: boolean }[] = [];
@@ -25,6 +26,7 @@ const renderItem = (silenced = false) =>
 			onAccept={onAccept}
 			onReject={onReject}
 			onSilence={onSilence}
+			onOpen={onOpen}
 		/>,
 		{ wrapper: mockAppRoot().withJohnDoe().withUserPreference('displayAvatars', true).build() },
 	);
@@ -33,6 +35,7 @@ beforeEach(() => {
 	onAccept.mockClear();
 	onReject.mockClear();
 	onSilence.mockClear();
+	onOpen.mockClear();
 	incomingCalls = [{ callId: 'ringing', dismissed: false }];
 });
 
@@ -100,4 +103,15 @@ it('offers the decline straight away for a ring it never heard', () => {
 
 	expect(screen.queryByRole('button', { name: 'Silence' })).not.toBeInTheDocument();
 	expect(screen.getByRole('button', { name: 'Decline' })).toBeInTheDocument();
+});
+
+// Clicking the row shows the call rather than answering it: the same bargain the rooms under it offer, and the
+// reason a mis-click there costs a window rather than putting someone into a call.
+it('opens the call without answering it when the row is clicked', async () => {
+	renderItem();
+
+	await userEvent.click(screen.getByText('Alice'));
+
+	expect(onOpen).toHaveBeenCalledWith('ringing');
+	expect(onAccept).not.toHaveBeenCalled();
 });

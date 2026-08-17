@@ -560,9 +560,21 @@ its faces are on the second line, and the avatar column would indent every call 
 nothing.
 
 A **ringing** call is the same row again, said by its buttons rather than by a colour behind it: a green phone in
-place of the tick, and a third action, since a ring can be silenced without being answered. Nothing about the row is
-clickable — what a call offers is on those buttons, and a whole row that joined a call would be a large target for
-something the reader may not have meant.
+place of the window, and a third action, since a ring can be silenced without being answered.
+
+**Clicking the row opens the call window on its preflight** — the same thing the row's own button does, and the same
+bargain the rooms under it offer, where clicking a row opens what it describes. It is deliberately not a join: the
+preflight describes the call and chooses the devices, so a mis-click costs a window rather than putting someone into
+a call with their camera on. A press on one of the row's *buttons* is not a press on the row; the buttons sit inside
+it, so their clicks arrive there too, and without asking the event where it came from, declining a call also opened
+it. The row also has to `preventDefault`: the item renders as an anchor with nowhere to go, and an unhandled click
+reloaded the page out from under the call list.
+
+**A call the reader has joined stays listed**, as one simply running. It used to drop out of the list on being
+joined, on the grounds that there was nothing left to offer — but leaving a call is easy to do by accident, and a
+call that vanished the moment it was joined left no way back into it. Joining also stops the row asking anything:
+it is listed as running even while the record of the ring is still on the call, and it offers no decline, because
+the way out of a call you are in is to leave it (`canDeclineCall`).
 
 Each row says who is in the call as **faces, then how many more** — `[][][] + 3 joined` — which is exactly how the
 call's own message block puts it in the room, down to the phrases (`plus__usersCount__joined`, or `joined` when

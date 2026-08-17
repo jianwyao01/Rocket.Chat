@@ -14,10 +14,10 @@ type OngoingCallRowProps = {
 /**
  * A call that is simply running, as a row of the sidebar's list.
  *
- * Every row is something to act on — the group leaves out the call the reader is already in, so there is no state
- * here that offers nothing to do. Opening it is the offer, and it opens the call *window*, on the preflight where
- * the call is described and the devices are chosen; turning the call down is the way to be rid of the row, which is
- * a smaller thing and reads as one.
+ * Opening it is the offer — the row itself, or the button on it — and it opens the call *window*, on the preflight
+ * where the call is described and the devices are chosen. Turning the call down is the way to be rid of the row,
+ * which is a smaller thing and reads as one; a call the reader is already in has nothing to turn down, and keeps
+ * only the way back into it.
  */
 const OngoingCallRow = ({ call, onJoin, onDecline }: OngoingCallRowProps) => {
 	const { t } = useTranslation();
@@ -25,6 +25,7 @@ const OngoingCallRow = ({ call, onJoin, onDecline }: OngoingCallRowProps) => {
 	return (
 		<CallListItem
 			call={call}
+			onOpen={() => onJoin(call.callId)}
 			actions={
 				<>
 					{/* A window rather than a tick, and *details* rather than *join*: this opens the call window on its

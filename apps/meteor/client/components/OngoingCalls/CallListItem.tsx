@@ -12,6 +12,8 @@ type CallListItemProps = {
 	timeLabel?: ReactNode;
 	/** What to offer about it, as icon buttons on the second line. */
 	actions: ReactNode;
+	/** What clicking the row does: open the call window on its preflight, the same as the row's own button. */
+	onOpen: () => void;
 };
 
 /**
@@ -25,15 +27,29 @@ type CallListItemProps = {
  * **No avatar, ever.** A call has no one face to show — its faces are on the second line, all of them — and the
  * avatar column would indent every call by an avatar's width to say nothing.
  *
- * The row itself does nothing when clicked: what a call offers is on the buttons, and a whole row that joins a call
- * is a large target for something the reader may not have meant. A ringing call is this same row — what says it is
- * ringing is the green phone on it, not a colour behind it.
+ * Clicking the row opens the call window on its preflight — the same thing the row's own button does, and the same
+ * bargain the rooms under it offer, where clicking a row opens what it describes. It is deliberately *not* a join:
+ * the preflight describes the call and chooses the devices, so a mis-click costs a window rather than putting
+ * someone into a call with their camera on. A ringing call is this same row — what says it is ringing is the green
+ * phone on it, not a colour behind it.
  */
-const CallListItem = ({ call, timeLabel, actions }: CallListItemProps) => (
+const CallListItem = ({ call, timeLabel, actions, onOpen }: CallListItemProps) => (
 	<Extended
-		// The item renders as an anchor, so a click on it is a navigation waiting to happen. Nothing here navigates:
-		// what a call offers is on the buttons, and the row itself is only a description.
-		onClick={(event) => event.preventDefault()}
+		// The item renders as an anchor, and there is no href to navigate to: the call window is opened by hand.
+		//
+		// A press on one of the row's own buttons is not a press on the row. The buttons sit inside it, so their
+		// clicks arrive here too, and without this declining a call also opened it. Asked of the event rather than
+		// stopped at each button, so a button added later cannot forget to do it — and without a wrapper element,
+		// which is what last broke the buttons' own layout.
+		onClick={(event) => {
+			event.preventDefault();
+
+			if ((event.target as HTMLElement).closest('button')) {
+				return;
+			}
+
+			onOpen();
+		}}
 		icon={<Icon name='video' size='x16' />}
 		title={call.name}
 		time={call.createdAt}

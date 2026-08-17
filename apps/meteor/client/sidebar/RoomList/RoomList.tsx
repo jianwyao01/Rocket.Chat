@@ -13,7 +13,7 @@ import RoomListWrapper from './RoomListWrapper';
 import DeclinedCallsToggle from '../../components/OngoingCalls/DeclinedCallsToggle';
 import OngoingCallRow from '../../components/OngoingCalls/OngoingCallRow';
 import RingingCallItem from '../../components/OngoingCalls/RingingCallItem';
-import { isDeclinedCallsToggle, useOngoingCallItems } from '../../components/OngoingCalls/useOngoingCalls';
+import { canDeclineCall, isDeclinedCallsToggle, useOngoingCallItems } from '../../components/OngoingCalls/useOngoingCalls';
 import { useOpenedRoom } from '../../lib/RoomManager';
 import { useAvatarTemplate } from '../hooks/useAvatarTemplate';
 import { useCollapsedGroups } from '../hooks/useCollapsedGroups';
@@ -93,9 +93,10 @@ const RoomList = () => {
 										onAccept={joinCall}
 										onReject={decline}
 										onSilence={silence}
+										onOpen={joinCall}
 									/>
 								) : (
-									<OngoingCallRow call={item} onJoin={joinCall} {...(!item.declined && { onDecline: decline })} />
+									<OngoingCallRow call={item} onJoin={joinCall} {...(canDeclineCall(item) && { onDecline: decline })} />
 								);
 							}
 

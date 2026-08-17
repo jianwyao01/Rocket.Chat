@@ -37,20 +37,23 @@ it('opens the call window on its preflight', async () => {
 
 // Clicking the row itself does nothing: what the call offers is on the buttons, and a whole row that joined a call
 // would be a large target for something the reader may not have meant.
-it('does nothing when the row itself is clicked', async () => {
+// Clicking the row opens the call, the same as the button on it and the same as the rooms under it. What it must
+// never do is navigate: the item is an anchor with nowhere to go, and an unhandled click on it reloaded the page
+// out from under the call list.
+it('opens the call, without navigating, when the row itself is clicked', async () => {
 	const { container } = renderRow();
 	const row = container.querySelector('.rcx-sidebar-v2-item') as HTMLElement;
 
-	// The item is an anchor, so "nothing" has to include not navigating: an unhandled click on it would reload the
-	// page out from under the call list.
 	const click = new MouseEvent('click', { bubbles: true, cancelable: true });
 	row.dispatchEvent(click);
 
 	expect(click.defaultPrevented).toBe(true);
-	expect(onJoin).not.toHaveBeenCalled();
+	expect(onJoin).toHaveBeenCalledWith('call-1');
 	expect(onDecline).not.toHaveBeenCalled();
 });
 
+// The buttons sit inside a row that is itself clickable, so their clicks arrive there too. Turning a call down must
+// not also open it, which is what happened before the row learned to tell the two apart.
 it('turns the call down', async () => {
 	renderRow();
 

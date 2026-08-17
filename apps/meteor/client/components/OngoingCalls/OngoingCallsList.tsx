@@ -4,7 +4,7 @@ import { Box } from '@rocket.chat/fuselage';
 import DeclinedCallsToggle from './DeclinedCallsToggle';
 import OngoingCallRow from './OngoingCallRow';
 import RingingCallItem from './RingingCallItem';
-import { isDeclinedCallsToggle, useOngoingCallItems } from './useOngoingCalls';
+import { canDeclineCall, isDeclinedCallsToggle, useOngoingCallItems } from './useOngoingCalls';
 
 /**
  * The calls as a plain list, for somewhere that isn't the sidebar's own.
@@ -32,11 +32,12 @@ const OngoingCallsList = () => {
 							onAccept={joinCall}
 							onReject={decline}
 							onSilence={silence}
+							onOpen={joinCall}
 						/>
 					);
 				}
 
-				return <OngoingCallRow key={item.callId} call={item} onJoin={joinCall} {...(!item.declined && { onDecline: decline })} />;
+				return <OngoingCallRow key={item.callId} call={item} onJoin={joinCall} {...(canDeclineCall(item) && { onDecline: decline })} />;
 			})}
 		</Box>
 	);

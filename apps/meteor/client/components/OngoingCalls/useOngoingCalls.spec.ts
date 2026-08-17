@@ -2,7 +2,7 @@ import type { JoinableVideoConference } from '@rocket.chat/core-typings';
 import { mockAppRoot } from '@rocket.chat/mock-providers';
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { useOngoingCallsList } from './useOngoingCalls';
+import { canDeclineCall, useOngoingCallsList } from './useOngoingCalls';
 import { buildJoinableCall } from '../../views/conference/testFixtures';
 
 const renderList = (calls: JoinableVideoConference[]) =>
@@ -40,12 +40,39 @@ it('keeps a declined call out of the list proper', async () => {
 	expect(result.current.ongoing).toHaveLength(0);
 });
 
-// A call the reader is already in is not something to reach — they are in it, and there is nothing to offer.
-it('leaves out the call the reader is already in', async () => {
+// The call the reader is in stays listed, because leaving one is easy to do by accident and a call that vanished on
+// being joined left no way back into it.
+it('keeps the call the reader is already in, as one simply running', async () => {
 	const { result } = renderList([buildJoinableCall({ callId: 'here', joined: true }), buildJoinableCall({ callId: 'elsewhere' })]);
+
+	await waitFor(() => expect(result.current.ongoing).toHaveLength(2));
+
+	expect(result.current.ongoing.map(({ callId }) => callId)).toEqual(['here', 'elsewhere']);
+	expect(result.current.declined).toHaveLength(0);
+});
+
+// Joining answers the ring, so the row stops asking — it is listed as running even while the record of the ring is
+// still on the call.
+it('does not treat a call it has joined as ringing', async () => {
+	const { result } = renderList([buildJoinableCall({ callId: 'answered', joined: true, ringingAt: new Date() })]);
 
 	await waitFor(() => expect(result.current.ongoing).toHaveLength(1));
 
-	expect(result.current.ongoing.map(({ callId }) => callId)).toEqual(['elsewhere']);
+	expect(result.current.ringing).toHaveLength(0);
+});
+
+// A call turned down and then joined anyway is a call the reader is in, not one waiting under the list.
+it('lists a call it has joined even if it was declined first', async () => {
+	const { result } = renderList([buildJoinableCall({ callId: 'rejoined', joined: true, declined: true })]);
+
+	await waitFor(() => expect(result.current.ongoing).toHaveLength(1));
+
 	expect(result.current.declined).toHaveLength(0);
+});
+
+// Nothing to turn down for a call the reader is in: the way out is to leave it.
+it('offers no decline for a call the reader is in', () => {
+	expect(canDeclineCall(buildJoinableCall({ callId: 'here', joined: true }))).toBe(false);
+	expect(canDeclineCall(buildJoinableCall({ callId: 'gone', declined: true }))).toBe(false);
+	expect(canDeclineCall(buildJoinableCall({ callId: 'fresh' }))).toBe(true);
 });
