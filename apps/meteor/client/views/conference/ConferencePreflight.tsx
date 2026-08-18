@@ -1,6 +1,7 @@
 import type { VideoConferenceCapabilities } from '@rocket.chat/core-typings';
 import { Box, Button, ButtonGroup, CheckBox, Field, FieldRow, Icon, TextInput } from '@rocket.chat/fuselage';
 import { useBreakpoints } from '@rocket.chat/fuselage-hooks';
+import { VoiceActivity } from '@rocket.chat/ui-voip';
 import type { ComponentProps } from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,8 +9,15 @@ import { useTranslation } from 'react-i18next';
 import CallDeviceMenu from './CallDeviceMenu';
 import CallDeviceToggle from './CallDeviceToggle';
 import { useCallDevicePreview } from './hooks/useCallDevicePreview';
-import type { CallPreferences } from './hooks/useCallPreferences';
-import { useCallPreferences, useCallRingPreference } from './hooks/useCallPreferences';
+import type { BlurLevel, CallPreferences, NoiseMethod, VideoQuality } from './hooks/useCallPreferences';
+import {
+	useBackgroundBlurPreference,
+	useCallPreferences,
+	useCallRingPreference,
+	useNoiseSuppressionPreference,
+	useVideoQualityPreference,
+} from './hooks/useCallPreferences';
+import { usePreviewVideoTrack } from './hooks/usePreviewVideoTrack';
 import CallParticipants from '../../components/CallParticipants';
 
 type ConferencePreflightProps = {
@@ -59,6 +67,34 @@ type ConferencePreflightProps = {
  * itself on the other. They are separate questions, and putting the decision under a column of controls made it
  * read as the last of them rather than the point of the screen. Narrow viewports stack, preview first.
  */
+/**
+ * The methods offered before a call, weakest first.
+ *
+ * Krisp is deliberately absent: whether a workspace may use it is only known by attaching it to a published track
+ * and seeing whether it turns on, which cannot happen until the call exists. Choosing "best available" is what
+ * leaving this alone does, and the call's own menu shows Krisp once it has proven itself.
+ */
+const NOISE_CHOICES: { id: NoiseMethod; label: string; note?: string }[] = [
+	{ id: 'none', label: 'Noise_cancellation_off' },
+	{ id: 'browser', label: 'Noise_cancellation_standard' },
+	{ id: 'rnnoise', label: 'Noise_cancellation_rnnoise', note: 'Noise_cancellation_on_this_device' },
+];
+
+const BLUR_CHOICES: { id: BlurLevel; label: string }[] = [
+	{ id: 'none', label: 'Background_blur_none' },
+	{ id: 'light', label: 'Background_blur_light' },
+	{ id: 'medium', label: 'Background_blur_medium' },
+	{ id: 'strong', label: 'Background_blur_strong' },
+];
+
+const QUALITY_CHOICES: { id: VideoQuality; label: string }[] = [
+	{ id: 'auto', label: 'Video_quality_auto' },
+	{ id: 'h1080', label: 'Video_quality_1080p' },
+	{ id: 'h720', label: 'Video_quality_720p' },
+	{ id: 'h360', label: 'Video_quality_360p' },
+	{ id: 'h180', label: 'Video_quality_180p' },
+];
+
 const ConferencePreflight = ({
 	name,
 	action,
@@ -77,21 +113,49 @@ const ConferencePreflight = ({
 	// every time. What it is *allowed* to do is the room's business, not this preference's — see `canChooseRinging`.
 	const { ring, toggleRing } = useCallRingPreference();
 
+	// Chosen here, applied when the call starts. Both are settings about how this person makes calls, and this is the
+	// screen where those are set — the same two lists appear in the call itself, reading from the same store.
+	//
+	// Blur is deliberately *not* offered here. It is the one setting that would have to be shown to be chosen
+	// honestly, and the preview is a plain camera stream with no segmenter on it: a level picked here would leave this
+	// screen sharp and the call blurred, which is the sort of quiet lie the rest of this work has been removing.
+	const { noiseMethod, selectNoiseMethod } = useNoiseSuppressionPreference();
+	const { videoQuality, selectVideoQuality } = useVideoQualityPreference();
+	const { blurLevel, selectBlurLevel } = useBackgroundBlurPreference();
+
 	// Only a provider that runs the call in here can be told which devices to use. Offering the choice to one
 	// that can't would be a promise this screen has no way to keep.
 	const canChooseDevices = Boolean(capabilities.embedded);
 
 	const preview = useCallDevicePreview(canChooseDevices, preferences, devices);
-	const selfView = canChooseDevices && preferences.cam && !!preview.stream;
 
-	// Assigned rather than passed as a prop: `srcObject` is not an attribute, so React cannot set it.
+	// The camera as a LiveKit track, so the blur chosen below is the blur the call will send — see
+	// `usePreviewVideoTrack`. The rest of the preview (device lists, the microphone behind the level indicator) still
+	// comes from the hook above.
+	const previewVideo = usePreviewVideoTrack(canChooseDevices && preferences.cam, {
+		deviceId: devices.camId,
+		quality: videoQuality,
+		blurLevel,
+	});
+
+	const selfView = canChooseDevices && preferences.cam && !!previewVideo.track;
+
+	// Attached by the track rather than by assigning `srcObject`: `attach` is what knows to hand over the *processed*
+	// track when a processor is running, which is the whole reason the preview is a LiveKit track.
 	const videoRef = useCallback(
 		(node: HTMLVideoElement | null) => {
-			if (node) {
-				node.srcObject = preview.stream;
+			const { track } = previewVideo;
+			if (!node || !track) {
+				return;
 			}
+
+			track.attach(node);
+
+			return () => {
+				track.detach(node);
+			};
 		},
-		[preview.stream],
+		[previewVideo.track],
 	);
 
 	// Side by side once there is room for both; stacked below that, with the preview still first.
@@ -164,12 +228,21 @@ const ConferencePreflight = ({
 								{t('Which_devices_are_used_is_chosen_in_the_call')}
 							</Box>
 						)}
-						{preferences.cam && canChooseDevices && preview.error && (
+						{preferences.cam && canChooseDevices && (preview.error || previewVideo.error) && (
 							<Box fontScale='c1' color='hint' marginBlockStart={4} textAlign='center' paddingInline={24}>
 								{t('Could_not_access_your_camera')}
 							</Box>
 						)}
 					</>
+				)}
+
+				{/* In the corner of the preview, the way every call product shows it: proof before you join that the
+				    microphone is picked up and working, which is the one thing this screen cannot otherwise tell you.
+				    Only while the mic is on — there is nothing to show from a microphone that will not be sent. */}
+				{canChooseDevices && preferences.mic && preview.stream && (
+					<Box position='absolute' style={{ bottom: 12, left: 12 }} display='flex'>
+						<VoiceActivity stream={preview.stream} size={16} badge />
+					</Box>
 				)}
 
 				{/* Over the preview, where they belong to the thing they change — and where every call UI puts them. */}
@@ -219,6 +292,14 @@ const ConferencePreflight = ({
 							devices={preview.audioInputs}
 							selectedId={devices.micId}
 							onSelect={(deviceId) => selectDevice('mic', deviceId)}
+							sections={[
+								{
+									title: t('Noise_cancellation'),
+									choices: NOISE_CHOICES.map(({ id, label: name, note }) => ({ id, name: t(name), note })),
+									selectedId: noiseMethod,
+									onSelect: (method) => selectNoiseMethod(method as NoiseMethod),
+								},
+							]}
 						/>
 					)}
 					<CallDeviceMenu
@@ -235,6 +316,20 @@ const ConferencePreflight = ({
 							devices={preview.videoInputs}
 							selectedId={devices.camId}
 							onSelect={(deviceId) => selectDevice('cam', deviceId)}
+							sections={[
+								{
+									title: t('Video_quality'),
+									choices: QUALITY_CHOICES.map(({ id, label: name }) => ({ id, name: t(name) })),
+									selectedId: videoQuality,
+									onSelect: (quality) => selectVideoQuality(quality as VideoQuality),
+								},
+								{
+									title: t('Background_blur'),
+									choices: BLUR_CHOICES.map(({ id, label: name }) => ({ id, name: t(name) })),
+									selectedId: blurLevel,
+									onSelect: (level) => selectBlurLevel(level as BlurLevel),
+								},
+							]}
 						/>
 					)}
 				</Box>

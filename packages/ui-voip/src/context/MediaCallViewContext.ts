@@ -96,6 +96,15 @@ type MediaCallViewContextValue = {
 		select: (level: string) => void;
 	};
 	/**
+	 * The most detail to send. `height` is what the camera actually gave, which is not always what was asked for.
+	 */
+	videoQuality?: { quality: string; qualities: string[]; height?: number; pending?: boolean; select: (quality: string) => void };
+	/**
+	 * The resolution the encoder is actually sending, which is not the camera's: bandwidth, CPU and how large the far
+	 * side displays you all decide which simulcast layer goes out. Undefined until the encoder has produced a frame.
+	 */
+	sendResolution?: { width: number; height: number };
+	/**
 	 * All raised hands across the call, ordered by raise time (oldest first).
 	 * The index + 1 is the queue position rendered on the participant tile.
 	 */

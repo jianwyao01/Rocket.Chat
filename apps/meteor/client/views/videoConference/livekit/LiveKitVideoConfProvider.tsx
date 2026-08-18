@@ -25,6 +25,8 @@ import { useTranslation } from 'react-i18next';
 import { useLiveKitVideoConf } from './LiveKitVideoConfContext';
 import { useBackgroundBlur } from './useBackgroundBlur';
 import { useNoiseSuppression } from './useNoiseSuppression';
+import { useSendResolution } from './useSendResolution';
+import { useVideoQuality } from './useVideoQuality';
 
 /**
  * The devices the preflight chose, as the room's *capture defaults*.
@@ -231,7 +233,10 @@ const InnerProvider = ({
 
 		localProcessedStream.current = null;
 		return track?.mediaStream ? { active: camEnabled, stream: track.mediaStream } : undefined;
-	}, [localCameraPub?.track, localCameraPub?.track?.mediaStream, localCameraPub?.track?.getProcessor()?.processedTrack, camEnabled]);
+		// Keyed below on the publication's *sid* rather than the publication object: that object is re-derived
+		// whenever any local track changes — the microphone included — which used to rebuild this for no reason and
+		// made the camera blink every time the mic was touched.
+	}, [localCameraPub?.trackSid, localCameraPub?.track?.mediaStream, localCameraPub?.track?.getProcessor()?.processedTrack, camEnabled]);
 	const localScreenStream = useMemo(
 		() => (localScreenPub?.track?.mediaStream ? { active: screenEnabled, stream: localScreenPub.track.mediaStream } : undefined),
 		[localScreenPub?.track?.mediaStream, screenEnabled],
@@ -247,6 +252,12 @@ const InnerProvider = ({
 
 	// The same arrangement for the camera: whatever can blur its background, and the switch for it.
 	const backgroundBlur = useBackgroundBlur(localCameraPub?.track as LocalVideoTrack | undefined);
+
+	// The most detail to send, which is the other thing about the camera worth choosing.
+	const videoQuality = useVideoQuality(localCameraPub?.track as LocalVideoTrack | undefined);
+
+	// What the encoder is actually sending, which is not what the camera is capturing.
+	const sendResolution = useSendResolution(localCameraPub?.track as LocalVideoTrack | undefined);
 
 	const onToggleMic = useCallback(() => void localParticipant.setMicrophoneEnabled(!micEnabled), [localParticipant, micEnabled]);
 	const onToggleCamera = useCallback(() => void localParticipant.setCameraEnabled(!camEnabled), [localParticipant, camEnabled]);
@@ -627,6 +638,8 @@ const InnerProvider = ({
 			onMuteParticipant,
 			noiseSuppression,
 			backgroundBlur,
+			videoQuality,
+			sendResolution,
 			onSendReaction,
 			activeReactions,
 			onVideoInputChange,
@@ -653,6 +666,8 @@ const InnerProvider = ({
 			onMuteParticipant,
 			noiseSuppression,
 			backgroundBlur,
+			videoQuality,
+			sendResolution,
 			onSendReaction,
 			activeReactions,
 			onDeviceChange,

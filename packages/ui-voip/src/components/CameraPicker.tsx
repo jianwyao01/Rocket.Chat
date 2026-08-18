@@ -57,6 +57,15 @@ const useAvailableVideoInputs = () => {
 
 /** Prefixed ids, so the rows in the menu that are not cameras are not mistaken for cameras. */
 const BLUR_LEVEL_PREFIX = 'blur-level:';
+const VIDEO_QUALITY_PREFIX = 'video-quality:';
+
+const VIDEO_QUALITY_LABELS: Record<string, string> = {
+	auto: 'Video_quality_auto',
+	h1080: 'Video_quality_1080p',
+	h720: 'Video_quality_720p',
+	h360: 'Video_quality_360p',
+	h180: 'Video_quality_180p',
+};
 
 const BLUR_LEVEL_LABELS: Record<string, string> = {
 	none: 'Background_blur_none',
@@ -68,7 +77,7 @@ const BLUR_LEVEL_LABELS: Record<string, string> = {
 // eslint-disable-next-line react/no-multi-comp
 const CameraPicker = ({ secondary = true, danger = false, className }: { secondary?: boolean; danger?: boolean; className?: string }) => {
 	const { t } = useTranslation();
-	const { onVideoInputChange, currentCameraDeviceId, backgroundBlur } = useMediaCallView();
+	const { onVideoInputChange, currentCameraDeviceId, backgroundBlur, videoQuality } = useMediaCallView();
 	const devices = useAvailableVideoInputs();
 
 	// The system default first, its duplicate dropped, and every name without the USB id the browser tacks on.
@@ -126,8 +135,34 @@ const CameraPicker = ({ secondary = true, danger = false, className }: { seconda
 
 	const blurSection = { title: t('Background_blur'), items: blurItems };
 
+	// The most detail to send: a ceiling rather than a promise, which is why each row says the size it asks for and
+	// the one in use says what the camera actually gave — they are not always the same number.
+	const qualityItems: GenericMenuItemProps[] = (videoQuality?.qualities ?? []).map((quality) => ({
+		id: `${VIDEO_QUALITY_PREFIX}${quality}`,
+		textValue: t(VIDEO_QUALITY_LABELS[quality] ?? 'Video_quality'),
+		content: (
+			<Box display='flex' flexDirection='column' fontSize={14} minWidth={0}>
+				<Box is='span' withTruncatedText>
+					{t(VIDEO_QUALITY_LABELS[quality] ?? 'Video_quality')}
+				</Box>
+				{videoQuality?.quality === quality && videoQuality.height && (
+					<Box is='span' fontScale='c1' color='hint'>
+						{t('Video_quality_sending__height__p', { height: videoQuality.height })}
+					</Box>
+				)}
+			</Box>
+		),
+		addon: <RadioButton checked={videoQuality?.quality === quality} disabled={videoQuality?.pending} readOnly />,
+	}));
+
+	const qualitySection = { title: t('Video_quality'), items: qualityItems };
+
 	const cameraSection = { title: t('Camera'), items };
-	const sections = backgroundBlur?.available && blurItems.length ? [cameraSection, blurSection] : [cameraSection];
+	const sections = [
+		cameraSection,
+		...(qualityItems.length ? [qualitySection] : []),
+		...(backgroundBlur?.available && blurItems.length ? [blurSection] : []),
+	];
 
 	// Hide entirely if the transport doesn't expose camera switching (P2P
 	// today) — rendering a chevron that does nothing is worse than no chevron.
@@ -147,6 +182,10 @@ const CameraPicker = ({ secondary = true, danger = false, className }: { seconda
 			className={className}
 			onAction={(deviceId) => {
 				if (typeof deviceId !== 'string') return;
+				if (deviceId.startsWith(VIDEO_QUALITY_PREFIX)) {
+					videoQuality?.select(deviceId.slice(VIDEO_QUALITY_PREFIX.length));
+					return;
+				}
 				if (deviceId.startsWith(BLUR_LEVEL_PREFIX)) {
 					backgroundBlur?.select(deviceId.slice(BLUR_LEVEL_PREFIX.length));
 					return;

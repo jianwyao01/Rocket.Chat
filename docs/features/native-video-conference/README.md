@@ -194,28 +194,118 @@ Matching a recorded device against a menu entry goes through `isSameDevice` (`pa
 because browsers list the system default twice — as the `default` alias and under its own id — and the two halves of that
 pair are held by different parts of the app.
 
+### What the preflight and the call agree on
+
+Noise cancelling, send resolution and background blur are chosen in the same two menus in both places — the mic menu
+and the camera menu — with the device rows above them and a header per group. Both screens read and write the same
+`localStorage` bucket, so a choice made before a call is the choice the call arrives with.
+
+For that to be honest the preflight camera has to be a **LiveKit track**, not a bare `getUserMedia` stream
+(`usePreviewVideoTrack`): blur is a `TrackProcessor`, a processor needs a `LocalTrack` to attach to, and nothing about
+MediaPipe blur needs a room. Built this way the preview runs the same processor at the same strength the call will,
+and the resolution choice is real here rather than notional, because the track is created with it. A raw stream could
+only ever have shown an unblurred picture beside a blurred promise.
+
+Handing that track to the room on join — `publishTrack` takes a pre-created one — is the next step, and would remove
+both the re-acquire on entry and the reason a remembered blur level is not applied on arrival.
+
+### Send resolution
+
+The camera menu offers **Auto / 1080p / 720p / 360p / 180p**, and the local tile carries a badge saying what is
+actually going out, read from `getRTCStatsReport()`'s tallest `outbound-rtp` layer every three seconds
+(`useSendResolution`). The two are worth separating: the encoder picks simulcast layers for the bandwidth it has, so
+what leaves the machine is frequently not what the camera captured.
+
+**Known defect:** `useVideoQuality` restarts the camera with a `resolution` preset, which is a capture constraint —
+an `ideal` hint to the camera, not a cap on the encoder. It should be publish options (`videoEncoding`, simulcast
+layer config, `setPublishingLayers`) instead. As it stands the picker asks the camera nicely and the badge tells the
+truth about the result, which is why the two can disagree.
+
 ### Background blur
 
 Two ways of doing it, and which one runs is whichever can — the same arrangement as noise cancelling:
 
 - **The camera's own**, via the `backgroundBlur` constraint. Free: the platform does it before the frames reach us.
   It exists on ChromeOS and on Windows where the hardware provides it, and nowhere else — macOS does not.
-- **Ours**, via `@livekit/track-processors`: MediaPipe selfie segmentation over every frame, replacing the published
-  track. Works anywhere with the modern APIs, and it is not free — it segments each frame and fetches its WASM and
-  model from a CDN (`cdn.jsdelivr.net`, `storage.googleapis.com`) the first time. A workspace with no way out to the
-  internet gets the caught failure and blur stays off.
+- **Ours**, `BackgroundBlurProcessor` in `apps/meteor/client/views/videoConference/livekit/`: MediaPipe segmentation
+  and a 2D canvas, as a LiveKit `TrackProcessor`. Works anywhere with the modern APIs, and it is not free — it fetches
+  MediaPipe's WASM and a model from a CDN (`cdn.jsdelivr.net`, `storage.googleapis.com`) the first time a level is
+  picked. A workspace with no way out to the internet gets the caught failure and blur stays off.
 
 **Ask `getCapabilities()`, never `applyConstraints`.** `applyConstraints({ backgroundBlur: true })` *resolves
 happily* on a browser that has never heard of the constraint — an unrecognised non-required constraint is dropped
 per spec — and `getSettings().backgroundBlur` stays `undefined`. Trying it and believing the result ships a switch
 that reports success and blurs nothing.
 
-The camera menu offers it as **one row per strength** — No blur / Light / Medium / Strong (radii 5, 12, 25) — the
-same shape as the camera rows above it, because "how much" is a choice and a switch could only ever say "on". Where
-the *camera* is doing the blurring the list is No blur / Medium only: that effect has no strengths to choose from.
-`none` by default (it is a deliberate look, and ours costs CPU), remembered, and the row in use says who is doing the
-work: *By your camera* or *Processed on this device*. Changing strength reuses the loaded segmenter via `switchTo`,
-so only the first choice is slow.
+The camera menu offers it as **one row per strength** — No blur / Light / Medium / Strong — the same shape as the
+camera rows above it, because "how much" is a choice and a switch could only ever say "on". Where the *camera* is
+doing the blurring the list is No blur / Medium only: that effect has no strengths to choose from. `none` by default
+(it is a deliberate look, and ours costs CPU), remembered, and the row in use says who is doing the work: *By your
+camera* or *Processed on this device*. Changing strength is a number on the running processor, so only the first
+choice in a call is slow — and turning blur off leaves the processor attached, passing frames through untouched,
+because detaching one re-publishes the camera.
+
+#### Why this is ours and not `@livekit/track-processors`
+
+The library shipped this feature first and was replaced, for one reason: it composites the background into a texture
+at **a quarter of the frame's size** and stretches it back, and the factor is a constant.
+
+```js
+const downsampleFactor = 4;
+blurRadius = radius ? Math.max(1, Math.floor(radius / downsampleFactor)) : null;
+const bgBlurTextureWidth  = Math.floor(canvas.width  / downsampleFactor);
+```
+
+At 1080p that is a 480×270 background on a 1920×1080 frame. That upscale — not the radius — is the blockiness that
+read as "low quality", and no value we passed could change it. It is also why the levels were once indistinguishable:
+they were 0.1 / 1 / 2, and everything under 4 floors to the same clamped 1. Setting blur to 0.1 and *still* seeing a
+heavy, coarse background is what found it.
+
+Ours composites at full frame size, in three draws, with the browser doing the expensive part:
+
+1. the frame, sharp;
+2. the mask over it as `destination-in`, so only the subject is left, feathered along the edge;
+3. the frame again as `destination-over`, blurred, filling in everything behind — drawn a radius oversized on each
+   side, because a canvas blur samples past its own border and would otherwise fade the frame's own edges.
+
+`ctx.filter = blur(Npx)` is a real Gaussian at full resolution and Skia runs it on the GPU, which is the whole reason
+this is short enough to be worth owning. It is also why support is *asked* rather than assumed: a browser that does
+not know canvas filters accepts the assignment, drops it, and every later draw succeeds — publishing a sharp
+background under a menu that says "strong". `supportsBackgroundBlur()` sets `ctx.filter` and reads it back, and lives
+in its own file so the menu can ask without loading MediaPipe for a call that may never blur.
+
+Strengths are **fractions of frame height** (0.012 / 0.024 / 0.048), not pixels. The same track is watched at whatever
+size the other end's tile happens to be, so what has to hold across resolutions is the blur relative to the picture;
+pixels would make every level three times lighter as the camera got better.
+
+#### Two things about the mask that are not what they look like
+
+**Segment a scaled-down copy of the frame, never the frame.** MediaPipe returns a mask the size of the image it was
+given, and reading a 1920×1080 mask back off the GPU costs about 60ms a frame. The model resizes its input to its own
+size regardless, so a frame-sized mask was only ever its own output stretched back up — we hand it a copy at exactly
+`SEGMENTER.input` and stretch the mask ourselves when compositing. Measured on an M2 Max, per blurred frame at 1080p:
+
+| | 720p | 1080p |
+|---|---|---|
+| mask read at frame size | 50ms | 94ms |
+| mask read at model size, two-class model | 12ms | 9ms |
+| mask read at model size, multiclass model | 35ms | 20ms |
+
+Segmentation is what remains, so it runs on its own clock — `SEGMENT_INTERVAL`, 20Hz — and the last mask is reused
+between. That is invisible on a talking head and shows as a soft edge trailing a fast wave. `0` segments every frame.
+
+**Which category is the person comes from the model, not from us.** The two answers are opposites:
+
+| model | labels | the person is |
+|---|---|---|
+| `selfie_segmenter_landscape`, 256×144, 244 KB | `selfie` | category **0**; the room is the unnamed 255 |
+| `selfie_multiclass_256x256`, 256×256, 15.6 MB | `background`, `hair`, `body-skin`, `face-skin`, `clothes`, `others` | categories **1–5** |
+
+One rule covers both — everything not called `background` — as a 256-entry lookup table built from
+`segmenter.getLabels()`. Read the other way round it blurs the person and leaves the room sharp, which is what it did
+the first time it ran. The multiclass model is the default: its separate `hair` class holds an edge far better, and it
+is worth being 65× the download and about twice the work per frame. `SEGMENTER` in the processor is the one line that
+changes that.
 
 #### Two things a processor changes about a track
 
@@ -225,17 +315,13 @@ no device. Both of these followed from that, and both are fixed:
 - **The local tile showed the raw camera**, so blur went out to the call while the person who switched it on saw
   themselves unblurred. It now renders the processor's `processedTrack`, in a `MediaStream` held in a ref keyed by
   the track so re-renders don't hand the video element a new object.
-- **`useStreamHasLiveVideo` reported it as not producing frames.** It gates on `!track.muted`, and a
-  generator-backed track reports `muted` until its first frame and does not reliably announce it — so the tile fell
-  back to the avatar and looked black. A track with no device behind it is now treated as synthetic, where `live`
+- **`useStreamHasLiveVideo` reported it as not producing frames.** It gates on `!track.muted`, and a track that comes
+  out of a canvas rather than a camera reports `muted` until its first frame and does not reliably announce it — so
+  the tile fell back to the avatar and looked black. A track with no device behind it is now treated as synthetic, where `live`
   and `enabled` are enough; a real camera track still needs `!muted`, so a paused camera still shows the avatar.
 - **The camera stopped being selected in its own menu**, because `currentCameraDeviceId` read the processed track's
   empty `deviceId` — which also made choosing the camera already in use look like a change, restarting the track
   into a black frame. It reads the id from the track's constraints now.
-
-Not yet done: a remembered "blur on" is not applied on join. Starting blur republishes the camera track, which
-re-runs the setup effect whose cleanup stops the processor it just started, leaving the switch on with a sharp
-background. Applying it on arrival needs that effect keyed off the publication's sid rather than the track object.
 
 ### Noise cancelling
 
@@ -380,6 +466,15 @@ same question, and remembers the same answer: it is one habit, not two.
 ## 9. Known limitations
 
 - **Single-process worker**. Supervisor only respawns one. No horizontal scaling story yet — for many concurrent rooms in a single workspace, you'd want multiple worker processes or external workers.
+
+- **The send-resolution picker aims at the camera, not the encoder.** See *Send resolution* above.
+
+- **A remembered blur level is not applied on join.** Starting blur republishes the camera track, which re-runs the
+  setup effect whose cleanup stops the processor it just started. Applying it on arrival needs that effect keyed off
+  the publication's sid rather than the track object — or the preflight's own track handed to the room.
+
+- **MediaPipe's WASM and model come from a CDN.** A workspace with no way out to the internet gets no blur. Serving
+  them from `public/`, as the RNNoise assets already are, is what would fix it.
 
 ---
 

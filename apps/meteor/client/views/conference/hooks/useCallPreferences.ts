@@ -35,6 +35,16 @@ export type NoiseMethod = 'none' | 'browser' | 'rnnoise' | 'krisp';
 
 export type CallNoiseSuppressionPreference = { noiseMethod?: NoiseMethod };
 
+/**
+ * The most detail to send: `auto` leaves it to the camera and the connection, and the rest are ceilings.
+ *
+ * `auto` by default, because the cost of asking for more is not only bandwidth: where background blur is done by
+ * segmenting every frame, four times the pixels is four times the work per frame, on every call.
+ */
+export type VideoQuality = 'auto' | 'h1080' | 'h720' | 'h360' | 'h180';
+
+export type CallVideoQualityPreference = { videoQuality: VideoQuality };
+
 /** How much to blur the camera's background: `none`, or one of three strengths. */
 export type BlurLevel = 'none' | 'light' | 'medium' | 'strong';
 
@@ -44,7 +54,8 @@ type StoredCallPreferences = CallPreferences &
 	CallDevices &
 	CallRingPreference &
 	CallNoiseSuppressionPreference &
-	CallBackgroundBlurPreference;
+	CallBackgroundBlurPreference &
+	CallVideoQualityPreference;
 
 /**
  * Joining muted and unseen is the safe way into a call: it can only be a surprise in the harmless direction.
@@ -52,7 +63,7 @@ type StoredCallPreferences = CallPreferences &
  * Ringing defaults on, because a call nobody is told about is a call nobody answers — and where ringing would be
  * an interruption rather than an invitation, it is the room type that decides, not this.
  */
-const DEFAULTS: StoredCallPreferences = { mic: true, cam: false, ring: true, blurLevel: 'none' };
+const DEFAULTS: StoredCallPreferences = { mic: true, cam: false, ring: true, blurLevel: 'none', videoQuality: 'auto' };
 
 /**
  * Whether to ring the people being called — the same answer wherever it is asked.
@@ -87,13 +98,26 @@ export const useNoiseSuppressionPreference = () => {
 
 	// Undefined rather than a default: nothing chosen means "the best you can do", which is a better answer than any
 	// particular method — and it is what someone who has never opened this menu wants.
-	const noiseMethod = stored.noiseMethod;
+	const { noiseMethod } = stored;
 	const selectNoiseMethod = useCallback(
 		(method: NoiseMethod) => setStored((current) => ({ ...current, noiseMethod: method })),
 		[setStored],
 	);
 
 	return { noiseMethod, selectNoiseMethod };
+};
+
+/** Which resolution to ask the camera for, remembered like the rest of it. */
+export const useVideoQualityPreference = () => {
+	const [stored, setStored] = useLocalStorage<StoredCallPreferences>('videoconf-call-preferences', DEFAULTS);
+
+	const videoQuality = stored.videoQuality ?? 'auto';
+	const selectVideoQuality = useCallback(
+		(quality: VideoQuality) => setStored((current) => ({ ...current, videoQuality: quality })),
+		[setStored],
+	);
+
+	return { videoQuality, selectVideoQuality };
 };
 
 /**

@@ -63,6 +63,20 @@ const labelStyles = css`
 	pointer-events: none;
 `;
 
+const sendBadgeStyles = css`
+	position: absolute;
+	top: 6px;
+	left: 6px;
+	padding: 2px 6px;
+	border-radius: 4px;
+	background-color: rgba(0, 0, 0, 0.55);
+	color: white;
+	font-size: 11px;
+	line-height: 16px;
+	font-variant-numeric: tabular-nums;
+	pointer-events: none;
+`;
+
 const indicatorRowStyles = css`
 	position: absolute;
 	top: 6px;
@@ -105,6 +119,11 @@ type CallTileProps = {
 	compact?: boolean;
 	/** When defined, render the raise-hand badge with this queue position (1-based). */
 	handPosition?: number;
+	/**
+	 * The height of the picture actually being sent, shown as a badge. Only ever set on the reader's own tile: what
+	 * someone else's encoder is doing is not something this client can honestly claim.
+	 */
+	sendHeight?: number;
 };
 
 const CallTile = ({
@@ -118,6 +137,7 @@ const CallTile = ({
 	muteVideoAudio,
 	compact,
 	handPosition,
+	sendHeight,
 }: CallTileProps) => {
 	const [videoRef] = usePlayMediaStream(cameraStream ?? null);
 	// Camera is "active" only while a video track is actually producing frames
@@ -203,6 +223,10 @@ const CallTile = ({
 			    states told by an absence, and an absence is not something a reader notices — where a mic that moves
 			    when they talk also answers the question a static icon never could, which is whether it is picking
 			    anything up. */}
+			{/* Opposite corner from the microphone, so the two facts about this tile do not stack. What is *sent* rather
+			    than what is captured: the encoder drops to a smaller layer when bandwidth or CPU says so, and a badge
+			    built from the camera's setting would keep saying 1080p right through it. */}
+			{sendHeight && <Box className={sendBadgeStyles}>{sendHeight}p</Box>}
 			<Box className={indicatorRowStyles}>
 				{muted ? (
 					<Box className={indicatorBadgeStyles}>

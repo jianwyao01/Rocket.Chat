@@ -10,6 +10,8 @@ import { useTileGridLayout } from '../../providers/useTileGridLayout';
 type LocalParticipant = {
 	id: string;
 	displayName: string;
+	/** How tall the picture actually going out is, for the reader's own tile to say so. */
+	sendHeight?: number;
 	avatarUrl?: string;
 	muted: boolean;
 	held: boolean;
@@ -353,6 +355,7 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 				mirrored: true,
 				muteVideoAudio: true,
 				handPosition: handPositions?.[localParticipant.id],
+				sendHeight: localParticipant.sendHeight,
 			},
 			...remoteParticipants.map((p) => ({
 				id: p.id,

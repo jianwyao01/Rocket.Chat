@@ -19,6 +19,13 @@ export const useAudioLevel = (stream?: MediaStream | null): number => {
 			setLevel(0);
 			return;
 		}
+		// Guarded because callers hand over whatever they have: a preview stream, a stub in a test, an object that is
+		// stream-shaped but not a MediaStream. A level indicator is not worth throwing over.
+		if (typeof stream.getAudioTracks !== 'function') {
+			setLevel(0);
+			return;
+		}
+
 		const audioTracks = stream.getAudioTracks();
 		if (!audioTracks.length) {
 			setLevel(0);

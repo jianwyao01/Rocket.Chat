@@ -32,8 +32,8 @@ export const useCallDevicePreview = (enabled: boolean, { mic, cam }: CallPrefere
 	const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
 	const [error, setError] = useState(false);
 
-	// Nothing is asked of the browser unless something is actually on: opening the camera to preview a camera the
-	// user turned off would light their webcam for no reason.
+	// Nothing is asked of the browser unless the microphone is actually on. The camera is not this hook's concern any
+	// more, but `cam` still matters to the *labels*: permission for either is what puts names on the device lists.
 	const wanted = enabled && (mic || cam);
 
 	// The lists, kept current on their own. `devicechange` covers a headset arriving or leaving mid-decision.
@@ -77,7 +77,9 @@ export const useCallDevicePreview = (enabled: boolean, { mic, cam }: CallPrefere
 			return deviceId ? { deviceId: { exact: deviceId } } : true;
 		};
 
-		const constraints: MediaStreamConstraints = { audio: wantDevice(mic, micId), video: wantDevice(cam, camId) };
+		// Audio only. The camera is opened by `usePreviewVideoTrack` as a LiveKit track, because a track is what a blur
+		// processor can attach to — opening it here as well would light the camera twice for one preview.
+		const constraints: MediaStreamConstraints = { audio: wantDevice(mic, micId), video: false };
 
 		navigator.mediaDevices
 			.getUserMedia(constraints)

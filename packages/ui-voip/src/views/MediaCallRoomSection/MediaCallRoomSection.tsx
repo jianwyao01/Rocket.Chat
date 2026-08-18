@@ -167,6 +167,7 @@ const MediaCallRoomSection = ({
 		onSendReaction,
 		activeReactions,
 		streams: { localScreen, localCamera, localMicrophone, remoteScreen, remoteCamera, remoteMicrophone },
+		sendResolution,
 		remoteParticipants: remoteParticipantsRaw,
 	} = useMediaCallView();
 	const { currentViews } = useMediaCallInstance();
@@ -258,8 +259,11 @@ const MediaCallRoomSection = ({
 			cameraStream: localCamera?.active ? (localCamera?.stream ?? null) : null,
 			screenStream: localScreen?.active ? (localScreen?.stream ?? null) : null,
 			audioStream: localMicrophone?.stream ?? null,
+			// Said on the reader's own tile only: it is a fact about what *they* are sending, and the same badge on a
+			// remote tile would be a claim about someone else's encoder that this client cannot make.
+			sendHeight: sendResolution?.height,
 		}),
-		[user.id, user.displayName, user.avatarUrl, muted, held, localCamera, localScreen, localMicrophone],
+		[user.id, user.displayName, user.avatarUrl, muted, held, localCamera, localScreen, localMicrophone, sendResolution?.height],
 	);
 
 	// Map participant id → 1-based queue position for the raise-hand badge.

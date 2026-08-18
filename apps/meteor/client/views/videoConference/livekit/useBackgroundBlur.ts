@@ -1,7 +1,8 @@
-import type { BackgroundProcessorWrapper } from '@livekit/track-processors';
 import type { LocalVideoTrack } from 'livekit-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import type { BackgroundBlurProcessor } from './backgroundBlurProcessor';
+import { supportsBackgroundBlur } from './backgroundBlurSupport';
 import type { BlurLevel } from '../../conference/hooks/useCallPreferences';
 import { useBackgroundBlurPreference } from '../../conference/hooks/useCallPreferences';
 
@@ -9,10 +10,18 @@ import { useBackgroundBlurPreference } from '../../conference/hooks/useCallPrefe
 type Blur = 'camera' | 'processor';
 
 /**
- * How strong each level is, in pixels of blur radius. Three, because "on" is not a useful amount: a little softens
- * a room, and a lot hides it, and people want different ones of those.
+ * How strong each level is, as a fraction of the frame's height.
+ *
+ * A fraction rather than a number of pixels: the same track is watched at whatever size the other end's tile happens
+ * to be, so what has to hold across resolutions is the blur *relative to the picture*. Twelve pixels on a 360p frame
+ * and thirty-six on 1080p are the same photograph; pinning it to pixels would make every level three times lighter
+ * as the camera got better.
+ *
+ * Three, because "on" is not a useful amount: a little softens a room, a lot hides it, and people want different
+ * ones of those. Tuned by eye against Meet at the same resolution — light is a hint of separation, strong hides the
+ * room behind you.
  */
-const RADIUS: Record<Exclude<BlurLevel, 'none'>, number> = { light: 5, medium: 12, strong: 25 };
+export const BLUR_STRENGTH: Record<Exclude<BlurLevel, 'none'>, number> = { light: 0.012, medium: 0.024, strong: 0.048 };
 
 /**
  * Blurring the background of the local camera, at a strength the user picks.
@@ -24,14 +33,14 @@ const RADIUS: Record<Exclude<BlurLevel, 'none'>, number> = { light: 5, medium: 1
  * than by trying it, because `applyConstraints` resolves happily for a constraint the browser has never heard of.
  * It has no strength to choose: it is on or off, so picking any level turns it on.
  *
- * **Ours**, via `@livekit/track-processors`: MediaPipe segmentation over every frame. This one takes the radius,
- * and switching between strengths keeps the segmenter loaded — `switchTo` rather than a rebuild — so changing your
- * mind costs nothing after the first time.
+ * **Ours**, via {@link BackgroundBlurProcessor}: MediaPipe segmentation over every frame, composited on a canvas at
+ * full frame size. This one takes a strength, and changing it is a number on the running processor — no rebuild, no
+ * re-publish — so only the first choice in a call is slow.
  */
 export const useBackgroundBlur = (videoTrack: LocalVideoTrack | undefined) => {
 	const { blurLevel: preferred, selectBlurLevel } = useBackgroundBlurPreference();
 
-	const processorRef = useRef<BackgroundProcessorWrapper | null>(null);
+	const processorRef = useRef<BackgroundBlurProcessor | null>(null);
 	const blurRef = useRef<Blur | null>(null);
 	const trackRef = useRef<LocalVideoTrack | undefined>(videoTrack);
 	trackRef.current = videoTrack;
@@ -65,30 +74,22 @@ export const useBackgroundBlur = (videoTrack: LocalVideoTrack | undefined) => {
 				return;
 			}
 
-			try {
-				const { supportsBackgroundProcessors } = await import('@livekit/track-processors');
-				if (cancelled) {
-					return;
-				}
-
-				if (!supportsBackgroundProcessors()) {
-					setAvailable(false);
-					return;
-				}
-
-				// Nothing is downloaded for the *option* — the model and the WASM arrive when a level is picked, so a
-				// call nobody blurs pays nothing for it being offered. See the note in `select` about arriving with a
-				// remembered level.
-				blurRef.current = 'processor';
-				setBlur('processor');
-				setAvailable(true);
-				setLevel('none');
-			} catch (err) {
-				console.warn('background blur is unavailable', err);
-				if (!cancelled) {
-					setAvailable(false);
-				}
+			if (cancelled) {
+				return;
 			}
+
+			if (!supportsBackgroundBlur()) {
+				setAvailable(false);
+				return;
+			}
+
+			// Nothing is downloaded for the *option*: the check next door only asks the browser what it can do, and
+			// MediaPipe arrives when a level is picked. A call nobody blurs pays nothing for it being offered. See the
+			// note in `select` about arriving with a remembered level.
+			blurRef.current = 'processor';
+			setBlur('processor');
+			setAvailable(true);
+			setLevel('none');
 		})();
 
 		return () => {
@@ -135,13 +136,13 @@ export const useBackgroundBlur = (videoTrack: LocalVideoTrack | undefined) => {
 			setPending(true);
 			void (async () => {
 				try {
-					const options =
-						next === 'none' ? ({ mode: 'disabled' } as const) : ({ mode: 'background-blur', blurRadius: RADIUS[next] } as const);
+					const strength = next === 'none' ? 0 : BLUR_STRENGTH[next];
 					const existing = processorRef.current;
 
 					if (existing) {
-						// The segmenter and its model stay loaded, so changing strength is instant.
-						await existing.switchTo(options);
+						// A number on a processor that is already running: instant, and the camera stays published, which
+						// is why turning blur off leaves it attached and passing frames through rather than detaching.
+						existing.setStrength(strength);
 						setLevel(next);
 						return;
 					}
@@ -151,9 +152,8 @@ export const useBackgroundBlur = (videoTrack: LocalVideoTrack | undefined) => {
 						return;
 					}
 
-					const { BackgroundProcessor } = await import('@livekit/track-processors');
-					// eslint-disable-next-line new-cap
-					const processor = BackgroundProcessor(options);
+					const { BackgroundBlurProcessor } = await import('./backgroundBlurProcessor');
+					const processor = new BackgroundBlurProcessor(strength);
 					await track.setProcessor(processor);
 					processorRef.current = processor;
 					setLevel(next);
