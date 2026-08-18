@@ -30,7 +30,10 @@ export type CallDevices = {
 /** The three things there are to choose. The speaker is output-only, so it has no on/off of its own. */
 export type CallDeviceKind = 'mic' | 'cam' | 'speaker';
 
-type StoredCallPreferences = CallPreferences & CallDevices & CallRingPreference;
+/** Whether to run noise cancelling on the microphone. Remembered, like everything else here. */
+export type CallNoiseSuppressionPreference = { noiseSuppression: boolean };
+
+type StoredCallPreferences = CallPreferences & CallDevices & CallRingPreference & CallNoiseSuppressionPreference;
 
 /**
  * Joining muted and unseen is the safe way into a call: it can only be a surprise in the harmless direction.
@@ -38,7 +41,7 @@ type StoredCallPreferences = CallPreferences & CallDevices & CallRingPreference;
  * Ringing defaults on, because a call nobody is told about is a call nobody answers — and where ringing would be
  * an interruption rather than an invitation, it is the room type that decides, not this.
  */
-const DEFAULTS: StoredCallPreferences = { mic: true, cam: false, ring: true };
+const DEFAULTS: StoredCallPreferences = { mic: true, cam: false, ring: true, noiseSuppression: true };
 
 /**
  * Whether to ring the people being called — the same answer wherever it is asked.
@@ -58,6 +61,28 @@ export const useCallRingPreference = () => {
 	const toggleRing = useCallback(() => setStored((current) => ({ ...current, ring: !(current.ring ?? true) })), [setStored]);
 
 	return { ring, toggleRing };
+};
+
+/**
+ * Whether to run noise cancelling on the microphone.
+ *
+ * On by default: a filter that has to be found and switched on is a filter most people never get, and the room it
+ * is filtering out is the same room they were in last time. Whoever turns it off — to play an instrument, or
+ * because they can hear it working on their own voice — has a reason that will still hold on their next call, so
+ * the answer is kept.
+ */
+export const useNoiseSuppressionPreference = () => {
+	const [stored, setStored] = useLocalStorage<StoredCallPreferences>('videoconf-call-preferences', DEFAULTS);
+
+	// `?? true` for the same reason as ringing: a stored object written before this preference existed says nothing
+	// about it, and reading that silence as "off" would quietly stop filtering for everyone who has called before.
+	const noiseSuppression = stored.noiseSuppression ?? true;
+	const toggleNoiseSuppression = useCallback(
+		() => setStored((current) => ({ ...current, noiseSuppression: !(current.noiseSuppression ?? true) })),
+		[setStored],
+	);
+
+	return { noiseSuppression, toggleNoiseSuppression };
 };
 
 /**

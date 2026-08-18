@@ -69,6 +69,17 @@ type MediaCallViewContextValue = {
 	 */
 	onMuteParticipant?: (participantId: string) => void;
 	/**
+	 * Noise cancelling on the local microphone, where the transport can do it. `available` is false until there is
+	 * a filter to switch — it arrives with the published track — and on browsers that cannot run one at all.
+	 */
+	noiseSuppression?: {
+		available: boolean;
+		enabled: boolean;
+		/** Which filter is doing the work: Krisp where the workspace is entitled to it, the browser's own otherwise. */
+		filter?: 'krisp' | 'browser' | null;
+		toggle: () => void;
+	};
+	/**
 	 * All raised hands across the call, ordered by raise time (oldest first).
 	 * The index + 1 is the queue position rendered on the participant tile.
 	 */

@@ -194,6 +194,30 @@ Matching a recorded device against a menu entry goes through `isSameDevice` (`pa
 because browsers list the system default twice — as the `default` alias and under its own id — and the two halves of that
 pair are held by different parts of the app.
 
+### Noise cancelling
+
+Two filters, and which one runs is not a preference — it is whichever can actually work.
+
+**Krisp** (`@livekit/krisp-noise-filter`) is licensed through **LiveKit Cloud**. On a self-hosted server it fails in
+the worst possible way: `isKrispNoiseFilterSupported()` returns true, `setProcessor` succeeds, the WASM worklet
+starts, models download — and then `setEnabled(true)` calls an authentication endpoint, gets **404**, and leaves
+`isEnabled()` false. The result is a filter that is attached, routing every audio sample through a worklet, and
+filtering nothing. That is what "noise cancelling seems not to work" was: it had never once been on.
+
+So `useNoiseSuppression` checks the *result* of `setEnabled` rather than assuming it, and a filter that will not
+turn on is `destroy()`ed and taken out of the path instead of left there costing latency for nothing.
+
+**The browser's own** (`noiseSuppression` on the mic constraints) is the fallback, and on a self-hosted workspace it
+is what everyone gets. It is a property of the microphone rather than a processor, so switching it means
+`restartTrack` — a brief gap in the audio, which is why it is not the mechanism where Krisp works.
+
+The switch is in the mic menu under **Audio**, on by default, remembered in `videoconf-call-preferences`. It says
+which filter is doing the work on its own second line — *Enhanced (Krisp)* or *Standard (your browser)* — because
+the two do not sound alike and "why does this call sound like this" deserves an answer. Nothing is shown until a
+filter is settled on, so the switch is never wired to nothing.
+
+Diagnosing it again: `KrispNoiseFilter({ debugLogs: true })` turns on Krisp's own logging.
+
 ### What a microphone looks like
 
 `VoiceActivity` (`packages/ui-voip/src/components/VoiceActivity.tsx`) is three bars that rise with how loudly

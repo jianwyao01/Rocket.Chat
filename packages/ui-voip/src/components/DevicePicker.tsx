@@ -1,4 +1,4 @@
-import { Box, RadioButton } from '@rocket.chat/fuselage';
+import { Box, RadioButton, ToggleSwitch } from '@rocket.chat/fuselage';
 import { useSafely } from '@rocket.chat/fuselage-hooks';
 import { GenericMenu } from '@rocket.chat/ui-client';
 import type { GenericMenuItemProps } from '@rocket.chat/ui-client';
@@ -75,11 +75,14 @@ export type DevicePickerProps = {
 	danger?: boolean;
 };
 
+/** Its own id, so the one item in the menu that is not a device is not mistaken for one. */
+const NOISE_SUPPRESSION_ITEM = 'noise-suppression';
+
 // eslint-disable-next-line react/no-multi-comp
 const DevicePicker = ({ secondary = false, chevron = false, danger = false, className }: DevicePickerProps) => {
 	const { t } = useTranslation();
 
-	const { onDeviceChange, sessionState, streams } = useMediaCallView();
+	const { onDeviceChange, sessionState, streams, noiseSuppression } = useMediaCallView();
 
 	// Measured here rather than passed in: this is the picker for the local microphone, so the level it shows is
 	// the one thing it can always work out for itself. A muted mic never moves, whatever it is still hearing.
@@ -185,10 +188,38 @@ const DevicePicker = ({ secondary = false, chevron = false, danger = false, clas
 		[requestPermission, setIsOpen],
 	);
 
+	// Noise cancelling belongs with the microphone, but not among the microphones: those are a choice of *which*
+	// one, and this is a fact about whichever is chosen. Offered only once there is a filter to switch — see
+	// `available` — so the menu never shows a switch that would do nothing.
+	const noiseSection = {
+		title: t('Audio'),
+		items: [
+			{
+				id: NOISE_SUPPRESSION_ITEM,
+				content: (
+					<Box display='flex' flexDirection='column' fontSize={14} minWidth={0}>
+						<Box is='span' withTruncatedText>
+							{t('Noise_cancellation')}
+						</Box>
+						{/* Which filter is actually doing it, on its own line — the same place a device says it is the
+						    system default. Said only while it is on, since with it off there is nothing doing the work.
+						    The two do not sound alike, so "why does this call sound like this" has an answer here. */}
+						{noiseSuppression?.enabled && noiseSuppression.filter && (
+							<Box is='span' fontScale='c1' color='hint'>
+								{t(noiseSuppression.filter === 'krisp' ? 'Noise_cancellation_enhanced' : 'Noise_cancellation_standard')}
+							</Box>
+						)}
+					</Box>
+				),
+				addon: <ToggleSwitch checked={Boolean(noiseSuppression?.enabled)} onChange={() => undefined} />,
+			},
+		],
+	};
+
 	return (
 		<GenericMenu
 			title={disabled ? t('Device_settings_not_supported_by_browser') : t('Device_settings_lowercase')}
-			sections={[micSection, speakerSection]}
+			sections={noiseSuppression?.available ? [micSection, speakerSection, noiseSection] : [micSection, speakerSection]}
 			disabled={disabled}
 			placement='top-end'
 			selectionMode='multiple'
@@ -197,6 +228,11 @@ const DevicePicker = ({ secondary = false, chevron = false, danger = false, clas
 			className={className}
 			onAction={(deviceId) => {
 				if (typeof deviceId !== 'string') {
+					return;
+				}
+
+				if (deviceId === NOISE_SUPPRESSION_ITEM) {
+					noiseSuppression?.toggle();
 					return;
 				}
 
