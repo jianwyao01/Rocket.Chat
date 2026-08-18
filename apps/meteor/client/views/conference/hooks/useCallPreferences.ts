@@ -33,7 +33,14 @@ export type CallDeviceKind = 'mic' | 'cam' | 'speaker';
 /** Whether to run noise cancelling on the microphone. Remembered, like everything else here. */
 export type CallNoiseSuppressionPreference = { noiseSuppression: boolean };
 
-type StoredCallPreferences = CallPreferences & CallDevices & CallRingPreference & CallNoiseSuppressionPreference;
+/** Whether to blur the camera's background. */
+export type CallBackgroundBlurPreference = { backgroundBlur: boolean };
+
+type StoredCallPreferences = CallPreferences &
+	CallDevices &
+	CallRingPreference &
+	CallNoiseSuppressionPreference &
+	CallBackgroundBlurPreference;
 
 /**
  * Joining muted and unseen is the safe way into a call: it can only be a surprise in the harmless direction.
@@ -41,7 +48,7 @@ type StoredCallPreferences = CallPreferences & CallDevices & CallRingPreference 
  * Ringing defaults on, because a call nobody is told about is a call nobody answers — and where ringing would be
  * an interruption rather than an invitation, it is the room type that decides, not this.
  */
-const DEFAULTS: StoredCallPreferences = { mic: true, cam: false, ring: true, noiseSuppression: true };
+const DEFAULTS: StoredCallPreferences = { mic: true, cam: false, ring: true, noiseSuppression: true, backgroundBlur: false };
 
 /**
  * Whether to ring the people being called — the same answer wherever it is asked.
@@ -83,6 +90,25 @@ export const useNoiseSuppressionPreference = () => {
 	);
 
 	return { noiseSuppression, toggleNoiseSuppression };
+};
+
+/**
+ * Whether to blur the camera's background.
+ *
+ * Off by default, unlike noise cancelling: a blurred background is a deliberate look rather than an improvement
+ * everyone wants, and where the camera cannot do it itself we do it by segmenting every frame — which costs real
+ * CPU and a download. Whoever wants it wants it every time, so the answer is kept.
+ */
+export const useBackgroundBlurPreference = () => {
+	const [stored, setStored] = useLocalStorage<StoredCallPreferences>('videoconf-call-preferences', DEFAULTS);
+
+	const backgroundBlur = stored.backgroundBlur ?? false;
+	const toggleBackgroundBlur = useCallback(
+		() => setStored((current) => ({ ...current, backgroundBlur: !(current.backgroundBlur ?? false) })),
+		[setStored],
+	);
+
+	return { backgroundBlur, toggleBackgroundBlur };
 };
 
 /**

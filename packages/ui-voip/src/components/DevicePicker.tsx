@@ -214,7 +214,9 @@ const DevicePicker = ({ secondary = false, chevron = false, danger = false, clas
 						)}
 					</Box>
 				),
-				addon: <ToggleSwitch checked={Boolean(noiseSuppression?.enabled)} onChange={() => undefined} />,
+				// Read-only on purpose: the menu row is what gets pressed, and `onAction` above is what acts. A no-op
+				// `onChange` here made React warn about a controlled field with nowhere to send its changes.
+				addon: <ToggleSwitch checked={Boolean(noiseSuppression?.enabled)} readOnly />,
 			},
 		],
 	};

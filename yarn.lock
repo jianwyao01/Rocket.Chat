@@ -5486,6 +5486,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@livekit/track-processors@npm:^0.7.2":
+  version: 0.7.2
+  resolution: "@livekit/track-processors@npm:0.7.2"
+  dependencies:
+    "@mediapipe/tasks-vision": "npm:0.10.14"
+  peerDependencies:
+    "@types/dom-mediacapture-transform": ^0.1.9
+    livekit-client: ^1.12.0 || ^2.1.0
+  checksum: 10/18627b7ed53d35a51fe884c96fd9a3433f775e86603ac29d03818e14548659a51bf440196c53e899e42d4a5205cce1d05c24f270760ffc4d89f955a55e9eec6c
+  languageName: node
+  linkType: hard
+
 "@manypkg/find-root@npm:^1.1.0":
   version: 1.1.0
   resolution: "@manypkg/find-root@npm:1.1.0"
@@ -5547,6 +5559,13 @@ __metadata:
     "@types/react": ">=16"
     react: ">=16"
   checksum: 10/d566407af11e76f498f8133fbfa8a9d8a2ad80dc7a66ca109d29fcb92e953a2d2d7aaedc0c28571d126f1967faeb126dd2e4ab4ea474c994bf5c76fa204c5997
+  languageName: node
+  linkType: hard
+
+"@mediapipe/tasks-vision@npm:0.10.14":
+  version: 0.10.14
+  resolution: "@mediapipe/tasks-vision@npm:0.10.14"
+  checksum: 10/59bd0e5da5c14f2b449721c91e2d81c0602ba51222231455418bec7860281299021088db6e384d696093769fbad62b2a19818582714cd8a4e174d3561c322861
   languageName: node
   linkType: hard
 
@@ -10176,6 +10195,7 @@ __metadata:
     "@kaciras/deasync": "npm:^1.1.0"
     "@livekit/components-react": "npm:2.9.23"
     "@livekit/krisp-noise-filter": "npm:^0.2.16"
+    "@livekit/track-processors": "npm:^0.7.2"
     "@nivo/bar": "npm:0.88.0"
     "@nivo/core": "npm:0.88.0"
     "@nivo/heatmap": "npm:0.88.0"

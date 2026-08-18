@@ -194,6 +194,47 @@ Matching a recorded device against a menu entry goes through `isSameDevice` (`pa
 because browsers list the system default twice — as the `default` alias and under its own id — and the two halves of that
 pair are held by different parts of the app.
 
+### Background blur
+
+Two ways of doing it, and which one runs is whichever can — the same arrangement as noise cancelling:
+
+- **The camera's own**, via the `backgroundBlur` constraint. Free: the platform does it before the frames reach us.
+  It exists on ChromeOS and on Windows where the hardware provides it, and nowhere else — macOS does not.
+- **Ours**, via `@livekit/track-processors`: MediaPipe selfie segmentation over every frame, replacing the published
+  track. Works anywhere with the modern APIs, and it is not free — it segments each frame and fetches its WASM and
+  model from a CDN (`cdn.jsdelivr.net`, `storage.googleapis.com`) the first time. A workspace with no way out to the
+  internet gets the caught failure and blur stays off.
+
+**Ask `getCapabilities()`, never `applyConstraints`.** `applyConstraints({ backgroundBlur: true })` *resolves
+happily* on a browser that has never heard of the constraint — an unrecognised non-required constraint is dropped
+per spec — and `getSettings().backgroundBlur` stays `undefined`. Trying it and believing the result ships a switch
+that reports success and blurs nothing.
+
+The switch is in the camera menu under **Effects**, off by default (it is a deliberate look, and ours costs CPU),
+and it says which is doing it: *By your camera* or *Processed on this device*, with *Starting…* while the segmenter
+loads. Toggling reuses the loaded segmenter via `switchTo` rather than rebuilding it, so turning blur back on is
+instant.
+
+#### Two things a processor changes about a track
+
+Once a processor is attached, `track.mediaStreamTrack` is the **processed** track, and a processed track belongs to
+no device. Both of these followed from that, and both are fixed:
+
+- **The local tile showed the raw camera**, so blur went out to the call while the person who switched it on saw
+  themselves unblurred. It now renders the processor's `processedTrack`, in a `MediaStream` held in a ref keyed by
+  the track so re-renders don't hand the video element a new object.
+- **`useStreamHasLiveVideo` reported it as not producing frames.** It gates on `!track.muted`, and a
+  generator-backed track reports `muted` until its first frame and does not reliably announce it — so the tile fell
+  back to the avatar and looked black. A track with no device behind it is now treated as synthetic, where `live`
+  and `enabled` are enough; a real camera track still needs `!muted`, so a paused camera still shows the avatar.
+- **The camera stopped being selected in its own menu**, because `currentCameraDeviceId` read the processed track's
+  empty `deviceId` — which also made choosing the camera already in use look like a change, restarting the track
+  into a black frame. It reads the id from the track's constraints now.
+
+Not yet done: a remembered "blur on" is not applied on join. Starting blur republishes the camera track, which
+re-runs the setup effect whose cleanup stops the processor it just started, leaving the switch on with a sharp
+background. Applying it on arrival needs that effect keyed off the publication's sid rather than the track object.
+
 ### Noise cancelling
 
 Two filters, and which one runs is not a preference — it is whichever can actually work.

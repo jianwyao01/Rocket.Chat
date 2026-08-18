@@ -80,6 +80,12 @@ type MediaCallViewContextValue = {
 		toggle: () => void;
 	};
 	/**
+	 * Blurring the background of the local camera, where something can do it. `blur` says what is doing it — the
+	 * camera itself, or frame-by-frame segmentation of ours — and `pending` is true while ours is starting, which
+	 * is the one slow moment in it.
+	 */
+	backgroundBlur?: { available: boolean; enabled: boolean; blur?: 'camera' | 'processor' | null; pending?: boolean; toggle: () => void };
+	/**
 	 * All raised hands across the call, ordered by raise time (oldest first).
 	 * The index + 1 is the queue position rendered on the participant tile.
 	 */

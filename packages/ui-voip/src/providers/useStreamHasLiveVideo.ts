@@ -12,6 +12,26 @@ import { useEffect, useState } from 'react';
  * to mute/unmute/ended events on each track + addtrack/removetrack on the
  * stream keep this hook accurate.
  */
+/**
+ * Whether this particular track is producing frames.
+ *
+ * `muted` is the awkward one. A camera reports it while paused, which is exactly what this hook is for — but a
+ * *synthetic* track, the kind a processor hands back after transforming each frame, reports `muted` until its first
+ * frame arrives and does not reliably announce when that happens. Waiting for an unmute that never comes is how a
+ * blurred self-view ends up as an empty tile.
+ *
+ * Synthetic tracks are told apart by having no device behind them: a real camera track always names one, so a paused
+ * camera still correctly falls back to the avatar.
+ */
+const isProducingFrames = (track: MediaStreamTrack): boolean => {
+	if (!track.enabled || track.readyState !== 'live') {
+		return false;
+	}
+
+	const isSynthetic = !track.getSettings().deviceId;
+	return isSynthetic || !track.muted;
+};
+
 export const useStreamHasLiveVideo = (stream?: MediaStream | null): boolean => {
 	const [hasLive, setHasLive] = useState(false);
 
@@ -22,7 +42,7 @@ export const useStreamHasLiveVideo = (stream?: MediaStream | null): boolean => {
 		}
 
 		const update = () => {
-			const live = stream.getVideoTracks().some((t) => t.enabled && !t.muted && t.readyState === 'live');
+			const live = stream.getVideoTracks().some(isProducingFrames);
 			setHasLive(live);
 		};
 

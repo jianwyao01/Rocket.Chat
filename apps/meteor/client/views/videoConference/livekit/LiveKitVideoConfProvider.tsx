@@ -15,7 +15,7 @@ import {
 	playJoinChime,
 	type RemoteParticipantInfo,
 } from '@rocket.chat/ui-voip';
-import type { LocalAudioTrack, RemoteParticipant, RoomOptions } from 'livekit-client';
+import type { LocalAudioTrack, LocalVideoTrack, RemoteParticipant, RoomOptions } from 'livekit-client';
 import { ParticipantKind, RoomEvent, Track } from 'livekit-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -23,6 +23,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { useLiveKitVideoConf } from './LiveKitVideoConfContext';
+import { useBackgroundBlur } from './useBackgroundBlur';
 import { useNoiseSuppression } from './useNoiseSuppression';
 
 /**
@@ -41,6 +42,24 @@ const captureDefaults = ({ micId, camId }: { micId?: string; camId?: string } = 
 	...(micId && { audioCaptureDefaults: { deviceId: micId } }),
 	...(camId && { videoCaptureDefaults: { deviceId: camId } }),
 });
+
+/**
+ * The device id out of a constraint, which the spec allows to be a bare string, a list, or an object with `exact`
+ * or `ideal`. LiveKit stores whatever it was given, so all of them turn up here.
+ */
+const deviceIdFrom = (constraint: MediaTrackConstraints['deviceId']): string | undefined => {
+	if (typeof constraint === 'string') {
+		return constraint;
+	}
+	if (Array.isArray(constraint)) {
+		return constraint[0];
+	}
+	const exact = constraint?.exact ?? constraint?.ideal;
+	if (typeof exact === 'string') {
+		return exact;
+	}
+	return Array.isArray(exact) ? exact[0] : undefined;
+};
 
 const headersOf = () => ({
 	'X-Auth-Token': localStorage.getItem('Meteor.loginToken') || '',
@@ -192,10 +211,27 @@ const InnerProvider = ({
 	const localCameraPub = localParticipant.getTrackPublication(Track.Source.Camera);
 	const localScreenPub = localParticipant.getTrackPublication(Track.Source.ScreenShare);
 	const localMicPub = localParticipant.getTrackPublication(Track.Source.Microphone);
-	const localCameraStream = useMemo(
-		() => (localCameraPub?.track?.mediaStream ? { active: camEnabled, stream: localCameraPub.track.mediaStream } : undefined),
-		[localCameraPub?.track?.mediaStream, camEnabled],
-	);
+	// What the call is actually being sent, which once a processor is attached is not the raw camera: background blur
+	// went out to everyone else while the person who switched it on saw themselves unblurred, with no way to tell it
+	// was working.
+	//
+	// The processed track is a track on its own, so it needs a stream around it — held in a ref keyed by the track, so
+	// re-renders reuse the same MediaStream rather than handing the video element a new object to start over with.
+	const localProcessedStream = useRef<{ track: MediaStreamTrack; stream: MediaStream } | null>(null);
+	const localCameraStream = useMemo(() => {
+		const track = localCameraPub?.track;
+		const processed = track?.getProcessor()?.processedTrack;
+
+		if (processed) {
+			if (localProcessedStream.current?.track !== processed) {
+				localProcessedStream.current = { track: processed, stream: new MediaStream([processed]) };
+			}
+			return { active: camEnabled, stream: localProcessedStream.current.stream };
+		}
+
+		localProcessedStream.current = null;
+		return track?.mediaStream ? { active: camEnabled, stream: track.mediaStream } : undefined;
+	}, [localCameraPub?.track, localCameraPub?.track?.mediaStream, localCameraPub?.track?.getProcessor()?.processedTrack, camEnabled]);
 	const localScreenStream = useMemo(
 		() => (localScreenPub?.track?.mediaStream ? { active: screenEnabled, stream: localScreenPub.track.mediaStream } : undefined),
 		[localScreenPub?.track?.mediaStream, screenEnabled],
@@ -208,6 +244,9 @@ const InnerProvider = ({
 	// Noise cancelling on the published microphone, and the switch the user gets for it. See `useNoiseSuppression`
 	// for why it waits for the track and why switching it off leaves the filter attached.
 	const noiseSuppression = useNoiseSuppression(localMicPub?.track as LocalAudioTrack | undefined);
+
+	// The same arrangement for the camera: whatever can blur its background, and the switch for it.
+	const backgroundBlur = useBackgroundBlur(localCameraPub?.track as LocalVideoTrack | undefined);
 
 	const onToggleMic = useCallback(() => void localParticipant.setMicrophoneEnabled(!micEnabled), [localParticipant, micEnabled]);
 	const onToggleCamera = useCallback(() => void localParticipant.setCameraEnabled(!camEnabled), [localParticipant, camEnabled]);
@@ -546,8 +585,14 @@ const InnerProvider = ({
 	// rerender when the publication changes (e.g. after switchActiveDevice).
 	const currentCameraDeviceId = useMemo(() => {
 		const pub = localParticipant.getTrackPublication(Track.Source.Camera);
-		return pub?.track?.mediaStreamTrack?.getSettings().deviceId;
-	}, [localParticipant, camEnabled, localCameraPub?.trackSid]);
+		const track = pub?.track;
+
+		// Asked of the *constraints* first, because `mediaStreamTrack` is the processed track once a processor is
+		// attached, and a processed track belongs to no device: its settings report an empty `deviceId`. That emptied
+		// the camera menu's selection — nothing matched, so nothing was ticked — and made choosing the camera already
+		// in use look like a change, which restarted the track and came back with a black frame.
+		return deviceIdFrom(track?.constraints?.deviceId) || track?.mediaStreamTrack?.getSettings().deviceId;
+	}, [localParticipant, camEnabled, localCameraPub?.trackSid, localCameraPub?.track?.getProcessor()?.processedTrack]);
 
 	const ctxValue = useMemo(
 		() => ({
@@ -581,6 +626,7 @@ const InnerProvider = ({
 			raisedHands,
 			onMuteParticipant,
 			noiseSuppression,
+			backgroundBlur,
 			onSendReaction,
 			activeReactions,
 			onVideoInputChange,
@@ -606,6 +652,7 @@ const InnerProvider = ({
 			raisedHands,
 			onMuteParticipant,
 			noiseSuppression,
+			backgroundBlur,
 			onSendReaction,
 			activeReactions,
 			onDeviceChange,

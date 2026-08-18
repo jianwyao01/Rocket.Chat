@@ -1,4 +1,4 @@
-import { Box, RadioButton } from '@rocket.chat/fuselage';
+import { Box, RadioButton, ToggleSwitch } from '@rocket.chat/fuselage';
 import { useSafely } from '@rocket.chat/fuselage-hooks';
 import { GenericMenu } from '@rocket.chat/ui-client';
 import type { GenericMenuItemProps } from '@rocket.chat/ui-client';
@@ -55,10 +55,13 @@ const useAvailableVideoInputs = () => {
 	return devices;
 };
 
+/** Its own id, so the one item in the menu that is not a camera is not mistaken for one. */
+const BACKGROUND_BLUR_ITEM = 'background-blur';
+
 // eslint-disable-next-line react/no-multi-comp
 const CameraPicker = ({ secondary = true, danger = false, className }: { secondary?: boolean; danger?: boolean; className?: string }) => {
 	const { t } = useTranslation();
-	const { onVideoInputChange, currentCameraDeviceId } = useMediaCallView();
+	const { onVideoInputChange, currentCameraDeviceId, backgroundBlur } = useMediaCallView();
 	const devices = useAvailableVideoInputs();
 
 	// The system default first, its duplicate dropped, and every name without the USB id the browser tacks on.
@@ -91,7 +94,40 @@ const CameraPicker = ({ secondary = true, danger = false, className }: { seconda
 		};
 	});
 
-	const sections = [{ title: t('Camera'), items }];
+	// Blurring the background belongs with the camera, but not among the cameras: those are a choice of *which* one,
+	// and this is something done to whichever is chosen. Only offered where something can actually do it, and it says
+	// which — the camera's own effect is free, ours costs a download and every frame's worth of segmentation.
+	const blurSection = {
+		title: t('Effects'),
+		items: [
+			{
+				id: BACKGROUND_BLUR_ITEM,
+				textValue: t('Background_blur'),
+				content: (
+					<Box display='flex' flexDirection='column' fontSize={14} minWidth={0}>
+						<Box is='span' withTruncatedText>
+							{t('Background_blur')}
+						</Box>
+						{backgroundBlur?.pending && (
+							<Box is='span' fontScale='c1' color='hint'>
+								{t('Starting')}…
+							</Box>
+						)}
+						{!backgroundBlur?.pending && backgroundBlur?.enabled && backgroundBlur.blur && (
+							<Box is='span' fontScale='c1' color='hint'>
+								{t(backgroundBlur.blur === 'camera' ? 'Background_blur_by_camera' : 'Background_blur_by_processing')}
+							</Box>
+						)}
+					</Box>
+				),
+				// Read-only for the same reason as the noise switch: the row is pressed, not the switch.
+				addon: <ToggleSwitch checked={Boolean(backgroundBlur?.enabled)} disabled={backgroundBlur?.pending} readOnly />,
+			},
+		],
+	};
+
+	const cameraSection = { title: t('Camera'), items };
+	const sections = backgroundBlur?.available ? [cameraSection, blurSection] : [cameraSection];
 
 	// Hide entirely if the transport doesn't expose camera switching (P2P
 	// today) — rendering a chevron that does nothing is worse than no chevron.
@@ -111,6 +147,10 @@ const CameraPicker = ({ secondary = true, danger = false, className }: { seconda
 			className={className}
 			onAction={(deviceId) => {
 				if (typeof deviceId !== 'string') return;
+				if (deviceId === BACKGROUND_BLUR_ITEM) {
+					backgroundBlur?.toggle();
+					return;
+				}
 				if (!deviceId.endsWith('-videoinput')) return;
 				const id = deviceId.slice(0, -'-videoinput'.length);
 				// Picking the camera already in use is not a change, and putting it through the switch anyway tore the
