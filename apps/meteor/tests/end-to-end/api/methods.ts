@@ -2740,7 +2740,7 @@ describe('Meteor.methods', () => {
 						msg: 'method',
 					}),
 				})
-				.expect(200);
+				.expect(400);
 
 			const parsedResponse = JSON.parse(res.body.message);
 			expect(parsedResponse).to.have.property('error');
