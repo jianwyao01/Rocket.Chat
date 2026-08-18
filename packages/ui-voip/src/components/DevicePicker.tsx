@@ -108,6 +108,7 @@ const DevicePicker = ({ secondary = false, chevron = false, danger = false, clas
 
 		return {
 			id: `${device.id}-input`,
+			textValue: name,
 			content: (
 				<Box title={name} fontSize={14} display='flex' flexDirection='column' minWidth={0}>
 					<Box is='span' withTruncatedText>
@@ -135,6 +136,7 @@ const DevicePicker = ({ secondary = false, chevron = false, danger = false, clas
 
 		return {
 			id: `${device.id}-output`,
+			textValue: name,
 			content: (
 				<Box title={name} fontSize={14} display='flex' flexDirection='column' minWidth={0}>
 					<Box is='span' withTruncatedText>
@@ -196,6 +198,7 @@ const DevicePicker = ({ secondary = false, chevron = false, danger = false, clas
 		items: [
 			{
 				id: NOISE_SUPPRESSION_ITEM,
+				textValue: t('Noise_cancellation'),
 				content: (
 					<Box display='flex' flexDirection='column' fontSize={14} minWidth={0}>
 						<Box is='span' withTruncatedText>

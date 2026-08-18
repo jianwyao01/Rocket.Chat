@@ -89,6 +89,7 @@ const CallRaisedHands = ({ hands }: { hands: RaisedHand[] }) => {
 
 	const items: GenericMenuItemProps[] = hands.map(({ id, name }, index) => ({
 		id,
+		textValue: name,
 		// Numbered, because the order is the point — this is a queue, not a set.
 		content: (
 			<Box display='flex' alignItems='center' fontSize={14} minWidth={0} title={name}>

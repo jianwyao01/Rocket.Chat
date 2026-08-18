@@ -73,6 +73,7 @@ const CameraPicker = ({ secondary = true, danger = false, className }: { seconda
 
 		return {
 			id: `${device.deviceId}-videoinput`,
+			textValue: name,
 			content: (
 				<Box title={name} fontSize={14} display='flex' flexDirection='column' minWidth={0}>
 					<Box is='span' withTruncatedText>
