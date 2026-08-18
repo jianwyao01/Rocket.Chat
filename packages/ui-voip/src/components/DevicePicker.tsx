@@ -1,4 +1,4 @@
-import { Box, RadioButton, ToggleSwitch } from '@rocket.chat/fuselage';
+import { Box, RadioButton } from '@rocket.chat/fuselage';
 import { useSafely } from '@rocket.chat/fuselage-hooks';
 import { GenericMenu } from '@rocket.chat/ui-client';
 import type { GenericMenuItemProps } from '@rocket.chat/ui-client';
@@ -75,8 +75,21 @@ export type DevicePickerProps = {
 	danger?: boolean;
 };
 
-/** Its own id, so the one item in the menu that is not a device is not mistaken for one. */
-const NOISE_SUPPRESSION_ITEM = 'noise-suppression';
+/** Prefixed ids, so the rows in the menu that are not devices are not mistaken for devices. */
+const NOISE_METHOD_PREFIX = 'noise-method:';
+
+/** Named by what they give you, with the vendor in brackets where there is one. */
+const NOISE_METHOD_LABELS: Record<string, string> = {
+	none: 'Noise_cancellation_off',
+	browser: 'Noise_cancellation_standard',
+	rnnoise: 'Noise_cancellation_rnnoise',
+	krisp: 'Noise_cancellation_enhanced',
+};
+
+const NOISE_METHOD_NOTES: Record<string, string> = {
+	rnnoise: 'Noise_cancellation_on_this_device',
+	krisp: 'Noise_cancellation_by_livekit',
+};
 
 // eslint-disable-next-line react/no-multi-comp
 const DevicePicker = ({ secondary = false, chevron = false, danger = false, className }: DevicePickerProps) => {
@@ -190,41 +203,34 @@ const DevicePicker = ({ secondary = false, chevron = false, danger = false, clas
 		[requestPermission, setIsOpen],
 	);
 
-	// Noise cancelling belongs with the microphone, but not among the microphones: those are a choice of *which*
-	// one, and this is a fact about whichever is chosen. Offered only once there is a filter to switch — see
-	// `available` — so the menu never shows a switch that would do nothing.
-	const noiseSection = {
-		title: t('Audio'),
-		items: [
-			{
-				id: NOISE_SUPPRESSION_ITEM,
-				textValue: t('Noise_cancellation'),
-				content: (
-					<Box display='flex' flexDirection='column' fontSize={14} minWidth={0}>
-						<Box is='span' withTruncatedText>
-							{t('Noise_cancellation')}
-						</Box>
-						{/* Which filter is actually doing it, on its own line — the same place a device says it is the
-						    system default. Said only while it is on, since with it off there is nothing doing the work.
-						    The two do not sound alike, so "why does this call sound like this" has an answer here. */}
-						{noiseSuppression?.enabled && noiseSuppression.filter && (
-							<Box is='span' fontScale='c1' color='hint'>
-								{t(noiseSuppression.filter === 'krisp' ? 'Noise_cancellation_enhanced' : 'Noise_cancellation_standard')}
-							</Box>
-						)}
+	// Noise cancelling belongs with the microphone, but not among the microphones: those are a choice of *which* one,
+	// and this is what is done to whichever is chosen. Offered as one row per method, the same way the devices are,
+	// because there is more than one answer — and because a switch could only say "on", which of three filters is not.
+	const noiseItems: GenericMenuItemProps[] = (noiseSuppression?.methods ?? []).map((noiseMethod) => ({
+		id: `${NOISE_METHOD_PREFIX}${noiseMethod}`,
+		textValue: t(NOISE_METHOD_LABELS[noiseMethod] ?? 'Noise_cancellation'),
+		content: (
+			<Box display='flex' flexDirection='column' fontSize={14} minWidth={0}>
+				<Box is='span' withTruncatedText>
+					{t(NOISE_METHOD_LABELS[noiseMethod] ?? 'Noise_cancellation')}
+				</Box>
+				{/* What it costs or where it runs, said under the ones where that is the deciding factor. */}
+				{NOISE_METHOD_NOTES[noiseMethod] && (
+					<Box is='span' fontScale='c1' color='hint'>
+						{t(NOISE_METHOD_NOTES[noiseMethod])}
 					</Box>
-				),
-				// Read-only on purpose: the menu row is what gets pressed, and `onAction` above is what acts. A no-op
-				// `onChange` here made React warn about a controlled field with nowhere to send its changes.
-				addon: <ToggleSwitch checked={Boolean(noiseSuppression?.enabled)} readOnly />,
-			},
-		],
-	};
+				)}
+			</Box>
+		),
+		addon: <RadioButton checked={noiseSuppression?.method === noiseMethod} disabled={noiseSuppression?.pending} readOnly />,
+	}));
+
+	const noiseSection = { title: t('Noise_cancellation'), items: noiseItems };
 
 	return (
 		<GenericMenu
 			title={disabled ? t('Device_settings_not_supported_by_browser') : t('Device_settings_lowercase')}
-			sections={noiseSuppression?.available ? [micSection, speakerSection, noiseSection] : [micSection, speakerSection]}
+			sections={noiseItems.length ? [micSection, speakerSection, noiseSection] : [micSection, speakerSection]}
 			disabled={disabled}
 			placement='top-end'
 			selectionMode='multiple'
@@ -236,8 +242,8 @@ const DevicePicker = ({ secondary = false, chevron = false, danger = false, clas
 					return;
 				}
 
-				if (deviceId === NOISE_SUPPRESSION_ITEM) {
-					noiseSuppression?.toggle();
+				if (deviceId.startsWith(NOISE_METHOD_PREFIX)) {
+					noiseSuppression?.select(deviceId.slice(NOISE_METHOD_PREFIX.length));
 					return;
 				}
 

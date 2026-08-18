@@ -73,18 +73,28 @@ type MediaCallViewContextValue = {
 	 * a filter to switch — it arrives with the published track — and on browsers that cannot run one at all.
 	 */
 	noiseSuppression?: {
-		available: boolean;
-		enabled: boolean;
-		/** Which filter is doing the work: Krisp where the workspace is entitled to it, the browser's own otherwise. */
-		filter?: 'krisp' | 'browser' | null;
-		toggle: () => void;
+		/** Which ways of cleaning up the microphone this workspace can actually offer, weakest first. */
+		methods: string[];
+		/** The one running. */
+		method: string;
+		pending?: boolean;
+		select: (method: string) => void;
 	};
 	/**
 	 * Blurring the background of the local camera, where something can do it. `blur` says what is doing it — the
 	 * camera itself, or frame-by-frame segmentation of ours — and `pending` is true while ours is starting, which
 	 * is the one slow moment in it.
 	 */
-	backgroundBlur?: { available: boolean; enabled: boolean; blur?: 'camera' | 'processor' | null; pending?: boolean; toggle: () => void };
+	backgroundBlur?: {
+		available: boolean;
+		/** The strength in use: `none`, or one of the offered levels. */
+		level: string;
+		/** Which strengths can be picked. The camera's own effect has only one, so it offers `none` and `medium`. */
+		levels: string[];
+		blur?: 'camera' | 'processor' | null;
+		pending?: boolean;
+		select: (level: string) => void;
+	};
 	/**
 	 * All raised hands across the call, ordered by raise time (oldest first).
 	 * The index + 1 is the queue position rendered on the participant tile.

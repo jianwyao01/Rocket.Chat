@@ -210,10 +210,12 @@ happily* on a browser that has never heard of the constraint — an unrecognised
 per spec — and `getSettings().backgroundBlur` stays `undefined`. Trying it and believing the result ships a switch
 that reports success and blurs nothing.
 
-The switch is in the camera menu under **Effects**, off by default (it is a deliberate look, and ours costs CPU),
-and it says which is doing it: *By your camera* or *Processed on this device*, with *Starting…* while the segmenter
-loads. Toggling reuses the loaded segmenter via `switchTo` rather than rebuilding it, so turning blur back on is
-instant.
+The camera menu offers it as **one row per strength** — No blur / Light / Medium / Strong (radii 5, 12, 25) — the
+same shape as the camera rows above it, because "how much" is a choice and a switch could only ever say "on". Where
+the *camera* is doing the blurring the list is No blur / Medium only: that effect has no strengths to choose from.
+`none` by default (it is a deliberate look, and ours costs CPU), remembered, and the row in use says who is doing the
+work: *By your camera* or *Processed on this device*. Changing strength reuses the loaded segmenter via `switchTo`,
+so only the first choice is slow.
 
 #### Two things a processor changes about a track
 
@@ -252,10 +254,19 @@ turn on is `destroy()`ed and taken out of the path instead of left there costing
 is what everyone gets. It is a property of the microphone rather than a processor, so switching it means
 `restartTrack` — a brief gap in the audio, which is why it is not the mechanism where Krisp works.
 
-The switch is in the mic menu under **Audio**, on by default, remembered in `videoconf-call-preferences`. It says
-which filter is doing the work on its own second line — *Enhanced (Krisp)* or *Standard (your browser)* — because
-the two do not sound alike and "why does this call sound like this" deserves an answer. Nothing is shown until a
-filter is settled on, so the switch is never wired to nothing.
+**RNNoise** sits between them: Xiph's recurrent network (~85KB of weights) in an AudioWorklet, which is what Jitsi
+ships. It removes typing, chairs and the road outside, which the browser's own leaves in. Its worklet and WASM are
+served from `apps/meteor/public/noise-suppressor/` rather than a CDN — deliberately, since this exists for the
+deployments that cannot reach Krisp's licensing server, and those often cannot reach a CDN either. Switching it out
+rewires straight through rather than tearing the graph down, so there is no gap and nothing renegotiates.
+
+The mic menu offers all three as **one row per method**, weakest first: Off / Basic (your browser) / Good (RNNoise) /
+Best (Krisp). Each is *proven* before being offered rather than taken from a support flag — Krisp reports itself
+supported, attaches, starts its worklet and only then fails the entitlement check, so a flag-based list would show a
+choice that quietly does nothing. Proving it is also what starts it, so the cost is paid once. The choice is
+remembered, and a remembered method that is no longer possible falls back to the best on offer.
+
+(Those assets are copied into `public/` for now; they should be a build step rather than committed binaries.)
 
 Diagnosing it again: `KrispNoiseFilter({ debugLogs: true })` turns on Krisp's own logging.
 
