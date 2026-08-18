@@ -10,6 +10,7 @@ import type {
 	ISubscription,
 	RequiredField,
 	MessageTypesValues,
+	RoomType,
 } from '@rocket.chat/core-typings';
 
 import { ajv, ajvQuery } from './Ajv';
@@ -913,6 +914,10 @@ export type RoomsEndpoints = {
 		GET: (params: RoomsAutocompleteAdminRoomsPayload) => {
 			items: IRoom[];
 		};
+	};
+
+	'/v1/rooms.getOrCreate': {
+		POST: (params: { type: RoomType; name: string }) => { room: IRoom };
 	};
 
 	'/v1/rooms.info': {

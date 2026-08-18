@@ -96,6 +96,60 @@ describe('[Rooms]', () => {
 		});
 	});
 
+	describe('/rooms.getOrCreate', () => {
+		let dmTarget: TestUser<IUser>;
+		let publicChannel: IRoom;
+
+		before(async () => {
+			dmTarget = await createUser();
+			publicChannel = (await createRoom({ type: 'c', name: `getorcreate-${Date.now()}` })).body.channel;
+		});
+
+		after(async () => {
+			await Promise.all([deleteRoom({ type: 'c', roomId: publicChannel._id }), deleteUser(dmTarget)]);
+		});
+
+		it('should create the direct message when it does not exist yet', async () => {
+			const res = await request.post(api('rooms.getOrCreate')).set(credentials).send({ type: 'd', name: dmTarget.username }).expect(200);
+
+			expect(res.body).to.have.property('success', true);
+			expect(res.body.room).to.have.property('t', 'd');
+			expect(res.body.room).to.have.property('_id').that.is.a('string');
+
+			await deleteRoom({ type: 'd', roomId: res.body.room._id });
+		});
+
+		it('should be idempotent, returning the same room on a second call', async () => {
+			const first = (await request.post(api('rooms.getOrCreate')).set(credentials).send({ type: 'd', name: dmTarget.username }).expect(200))
+				.body.room;
+
+			const second = (
+				await request.post(api('rooms.getOrCreate')).set(credentials).send({ type: 'd', name: dmTarget.username }).expect(200)
+			).body.room;
+
+			expect(second._id).to.equal(first._id);
+
+			await deleteRoom({ type: 'd', roomId: first._id });
+		});
+
+		it('should resolve an existing channel by name without creating anything', async () => {
+			const res = await request.post(api('rooms.getOrCreate')).set(credentials).send({ type: 'c', name: publicChannel.name }).expect(200);
+
+			expect(res.body.room).to.have.property('_id', publicChannel._id);
+		});
+
+		it('should fail for a channel that does not exist, since only DMs can be created on demand', async () => {
+			const res = await request
+				.post(api('rooms.getOrCreate'))
+				.set(credentials)
+				.send({ type: 'c', name: `missing-${Date.now()}` })
+				.expect(400);
+
+			expect(res.body).to.have.property('success', false);
+			expect(res.body).to.have.property('errorType', 'error-invalid-room');
+		});
+	});
+
 	describe('[/rooms.saveDraft]', () => {
 		let testChannel: IRoom;
 		let threadId: IMessage['_id'];

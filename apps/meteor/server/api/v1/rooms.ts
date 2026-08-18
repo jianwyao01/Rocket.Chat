@@ -9,6 +9,7 @@ import {
 	isPrivateRoom,
 	isPublicRoom,
 	type IUser,
+	type RoomType,
 } from '@rocket.chat/core-typings';
 import { Messages, Rooms, Users, Uploads, Subscriptions } from '@rocket.chat/models';
 import type { Notifications } from '@rocket.chat/rest-typings';
@@ -60,8 +61,10 @@ import { FileUpload } from '../../lib/media/file-upload';
 import { notifyOnSubscriptionChanged } from '../../lib/notifyListener';
 import { openRoom } from '../../lib/openRoom';
 import type { RoomRoles } from '../../lib/roles/getRoomRoles';
+import { parseDirectRoomTargets } from '../../lib/rooms/findDirectRoomByIdentifier';
 import { syncRolePrioritiesForRoomIfRequired } from '../../lib/rooms/syncRolePrioritiesForRoomIfRequired';
 import { unbanUserFromRoom } from '../../lib/unbanUserFromRoom';
+import { createDirectMessage } from '../../meteor-methods/messages/createDirectMessage';
 import { createDiscussion } from '../../meteor-methods/messages/createDiscussion';
 import { sendFileMessage } from '../../meteor-methods/messages/sendFileMessage';
 import { executeArchiveRoom } from '../../meteor-methods/rooms/archiveRoom';
@@ -76,7 +79,7 @@ import { executeUnarchiveRoom } from '../../meteor-methods/rooms/unarchiveRoom';
 import { unmuteUserInRoom } from '../../meteor-methods/rooms/unmuteUserInRoom';
 import { saveNotificationSettingsMethod } from '../../meteor-methods/users/saveNotificationSettings';
 import type { NotificationFieldType } from '../../meteor-methods/users/saveNotificationSettings';
-import { roomsGetMethod } from '../../publications/room';
+import { findRoomByTypeAndName, roomsGetMethod } from '../../publications/room';
 import { settings } from '../../settings';
 import type { ExtractRoutesFromAPI } from '../ApiClass';
 import { API } from '../api';
@@ -109,7 +112,7 @@ export async function findRoomByIdOrName({
 }): Promise<IRoom> {
 	if (
 		(!('roomId' in params) && !('roomName' in params)) ||
-		('roomId' in params && !(params as { roomId?: string }).roomId && 'roomName' in params && !(params as { roomName?: string }).roomName)
+		('roomId' in params && !params.roomId && 'roomName' in params && !(params as { roomName?: string }).roomName)
 	) {
 		throw new Meteor.Error('error-roomid-param-not-provided', 'The parameter "roomId" or "roomName" is required');
 	}
@@ -513,6 +516,62 @@ API.v1.post(
 		});
 
 		return API.v1.success({ _id, count });
+	},
+);
+
+API.v1.post(
+	'rooms.getOrCreate',
+	{
+		authRequired: false,
+		// Opting out, not omitting: the limiter keys on IP, so a cap here would be shared by every user
+		// behind the same egress address, and omitting this inherits the 10/min default. Still open:
+		// this route can create rooms, so the right guard is likely per-user on the create branch.
+		rateLimiterOptions: false,
+		body: ajv.compile<{ type: RoomType; name: string }>({
+			type: 'object',
+			properties: {
+				type: { type: 'string', enum: ['c', 'd', 'p', 'l'] },
+				name: { type: 'string', minLength: 1 },
+			},
+			required: ['type', 'name'],
+			additionalProperties: false,
+		}),
+		response: {
+			200: ajv.compile<{ room: IRoom }>({
+				type: 'object',
+				properties: {
+					room: { type: 'object' },
+					success: { type: 'boolean', enum: [true] },
+				},
+				required: ['room', 'success'],
+				additionalProperties: false,
+			}),
+			400: validateBadRequestErrorResponse,
+			401: validateUnauthorizedErrorResponse,
+		},
+	},
+	async function action() {
+		const { type, name } = this.bodyParams;
+
+		const room = await findRoomByTypeAndName(this.userId ?? null, type, name);
+		if (room) {
+			return API.v1.success({ room });
+		}
+
+		// Only direct messages can be created on demand; every other type must already exist. The
+		// caller may be anonymous here, since the route stays readable without a session.
+		if (type !== 'd' || !this.userId) {
+			return API.v1.failure('Invalid room [error-invalid-room]', 'error-invalid-room');
+		}
+
+		const { rid } = await createDirectMessage(parseDirectRoomTargets(name), this.userId);
+
+		const created = await findRoomByTypeAndName(this.userId ?? null, type, rid);
+		if (!created) {
+			return API.v1.failure('Invalid room [error-invalid-room]', 'error-invalid-room');
+		}
+
+		return API.v1.success({ room: created });
 	},
 );
 

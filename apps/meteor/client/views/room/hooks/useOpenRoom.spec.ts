@@ -40,7 +40,7 @@ describe('useOpenRoom', () => {
 				wrapper: mockAppRoot()
 					.withJohnDoe()
 					.withPermission('preview-c-room')
-					.withMethod('getRoomByTypeAndName', () => channelRoom as any)
+					.withEndpoint('POST', '/v1/rooms.getOrCreate', () => ({ room: channelRoom }) as any)
 					.build(),
 			});
 
@@ -80,31 +80,31 @@ describe('useOpenRoom', () => {
 
 	describe('error classification', () => {
 		it('maps error-no-permission to RoomNotFoundError without retrying (regression for #40991)', async () => {
-			const getRoomByTypeAndName = jest.fn().mockImplementation(() => {
-				throw Object.assign(new Error('No permission'), { error: 'error-no-permission' });
+			const getOrCreateRoom = jest.fn().mockImplementation(() => {
+				throw Object.assign(new Error('No permission'), { errorType: 'error-no-permission' });
 			});
 
 			const { result } = renderHook(() => useOpenRoom({ type: 'p', reference: 'private-channel' }), {
-				wrapper: mockAppRoot().withJohnDoe().withMethod('getRoomByTypeAndName', getRoomByTypeAndName).build(),
+				wrapper: mockAppRoot().withJohnDoe().withEndpoint('POST', '/v1/rooms.getOrCreate', getOrCreateRoom).build(),
 			});
 
 			await waitFor(() => expect(result.current.isError).toBe(true));
 			expect(result.current.error).toBeInstanceOf(RoomNotFoundError);
-			expect(getRoomByTypeAndName).toHaveBeenCalledTimes(1);
+			expect(getOrCreateRoom).toHaveBeenCalledTimes(1);
 		});
 
-		it('maps error-invalid-room to RoomNotFoundError without retrying for non-DM rooms', async () => {
-			const getRoomByTypeAndName = jest.fn().mockImplementation(() => {
-				throw Object.assign(new Error('Invalid room'), { error: 'error-invalid-room' });
+		it('maps error-invalid-room to RoomNotFoundError without retrying', async () => {
+			const getOrCreateRoom = jest.fn().mockImplementation(() => {
+				throw Object.assign(new Error('Invalid room'), { errorType: 'error-invalid-room' });
 			});
 
 			const { result } = renderHook(() => useOpenRoom({ type: 'c', reference: 'missing-channel' }), {
-				wrapper: mockAppRoot().withJohnDoe().withMethod('getRoomByTypeAndName', getRoomByTypeAndName).build(),
+				wrapper: mockAppRoot().withJohnDoe().withEndpoint('POST', '/v1/rooms.getOrCreate', getOrCreateRoom).build(),
 			});
 
 			await waitFor(() => expect(result.current.isError).toBe(true));
 			expect(result.current.error).toBeInstanceOf(RoomNotFoundError);
-			expect(getRoomByTypeAndName).toHaveBeenCalledTimes(1);
+			expect(getOrCreateRoom).toHaveBeenCalledTimes(1);
 		});
 
 		it('retries unclassified transient errors and recovers on a later attempt', async () => {
@@ -112,25 +112,25 @@ describe('useOpenRoom', () => {
 			const channelName = 'flaky-channel';
 			const channelRoom = createFakeRoom({ _id: channelRid, t: 'c', name: channelName });
 
-			const getRoomByTypeAndName = jest
+			const getOrCreateRoom = jest
 				.fn()
 				.mockImplementationOnce(() => {
 					throw new Error('network down');
 				})
-				.mockImplementation(() => channelRoom);
+				.mockImplementation(() => ({ room: channelRoom }));
 
 			const { result } = renderHook(() => useOpenRoom({ type: 'c', reference: channelName }), {
 				wrapper: mockAppRoot()
 					.withJohnDoe()
 					.withPermission('preview-c-room')
-					.withMethod('getRoomByTypeAndName', getRoomByTypeAndName)
+					.withEndpoint('POST', '/v1/rooms.getOrCreate', getOrCreateRoom)
 					.build(),
 			});
 
 			// Backoff is Math.min(1000 * 2 ** attempt, 5000); first retry fires after ~1s.
 			await waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 3000 });
 			expect(result.current.data?.rid).toBe(channelRid);
-			expect(getRoomByTypeAndName).toHaveBeenCalledTimes(2);
+			expect(getOrCreateRoom).toHaveBeenCalledTimes(2);
 		});
 	});
 });
