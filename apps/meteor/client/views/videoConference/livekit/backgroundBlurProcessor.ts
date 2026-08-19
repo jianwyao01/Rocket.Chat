@@ -17,16 +17,15 @@ import { supportsBackgroundBlur } from './backgroundBlurSupport';
  *   **15.6 MB** against 244 KB, and roughly twice the work per frame.
  * - **selfie** is one class at 256×144 — the landscape shape a call actually is, cheap, and blunter around hair.
  *
- * Both are fetched from Google's CDN on first use, so a workspace with no way out to the internet gets a caught
- * failure and no blur. Serving them from `public/`, as the RNNoise assets are, is what would fix that.
+ * Both are served from `public/mediapipe/`, alongside the WASM runtime, so airgapped workspaces work out of the box.
  */
 export const SEGMENTER_MODELS = {
 	multiclass: {
-		url: 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite',
+		url: '/mediapipe/selfie_multiclass_256x256.tflite',
 		input: { width: 256, height: 256 },
 	},
 	selfie: {
-		url: 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter_landscape/float16/latest/selfie_segmenter_landscape.tflite',
+		url: '/mediapipe/selfie_segmenter_landscape.tflite',
 		input: { width: 256, height: 144 },
 	},
 } as const;
@@ -38,10 +37,10 @@ export const SEGMENTER = SEGMENTER_MODELS.multiclass;
  * MediaPipe's WASM, which has to match the version of `@mediapipe/tasks-vision` this app depends on — it is the
  * runtime for the JS in the package, not an independent thing. Keep the two in step when the package moves.
  *
- * Both this and the model come from a CDN, so a workspace with no way out to the internet gets a caught failure and
- * no blur. Serving them from `public/`, as the RNNoise assets are, is what would fix that.
+ * Served from `public/mediapipe/wasm/`, copied from the npm package at build time. When `@mediapipe/tasks-vision`
+ * is updated, re-copy the wasm directory contents.
  */
-export const SEGMENTER_WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm';
+export const SEGMENTER_WASM = '/mediapipe/wasm';
 
 /**
  * Which confidence mask describes the person, and whether it has to be read inside out.

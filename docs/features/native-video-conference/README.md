@@ -228,9 +228,9 @@ Two ways of doing it, and which one runs is whichever can — the same arrangeme
 - **The camera's own**, via the `backgroundBlur` constraint. Free: the platform does it before the frames reach us.
   Some platforms let the app control it; others expose an OS-controlled effect that the app can only observe.
 - **Ours**, `BackgroundBlurProcessor` in `apps/meteor/client/views/videoConference/livekit/`: MediaPipe segmentation
-  and a WebGL2 compositor, as a LiveKit `TrackProcessor`. Works anywhere with the modern APIs, and it is not free — it fetches
-  MediaPipe's WASM and a model from a CDN (`cdn.jsdelivr.net`, `storage.googleapis.com`) the first time a level is
-  picked. A workspace with no way out to the internet gets the caught failure and blur stays off.
+  and a WebGL2 compositor, as a LiveKit `TrackProcessor`. Works anywhere with the modern APIs, and it is not free — it loads
+  MediaPipe's WASM runtime and a TFLite model from `public/mediapipe/` the first time a level is picked. Both are
+  shipped with the application, so airgapped workspaces work out of the box.
 
 **Ask `getCapabilities()`, never `applyConstraints`.** `applyConstraints({ backgroundBlur: true })` *resolves
 happily* on a browser that has never heard of the constraint — an unrecognised non-required constraint is dropped
