@@ -14,6 +14,7 @@ import ConferenceChat from './ConferenceChat';
 import ConferenceIframe from './ConferenceIframe';
 import ConferencePageError from './ConferencePageError';
 import ConferencePreflight from './ConferencePreflight';
+import ConferenceStatePage from './ConferenceStatePage';
 import ConferenceThreadModal from './ConferenceThreadModal';
 import ConferenceUnauthorizedPage from './ConferenceUnauthorizedPage';
 import { PREFLIGHT_FACES_SHOWN } from '../../../lib/videoConference/constants';
@@ -229,6 +230,18 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 
 	if (conference.loading) {
 		return <PageLoading />;
+	}
+
+	// The conference existed when the info query ran, but it may have ended since — or before the user opened
+	// this window. Show a clear "call ended" page instead of a preflight that would fail on join.
+	if (call.ended && !conference.joined) {
+		return (
+			<ConferenceStatePage
+				icon='phone-off'
+				title={t('Call_ended')}
+				action={{ label: t('Close'), onClick: leaveNow }}
+			/>
+		);
 	}
 
 	// Not in the call yet: the user says how they want to arrive, and joining is what turns that into the

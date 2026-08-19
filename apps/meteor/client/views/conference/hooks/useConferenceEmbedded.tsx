@@ -141,6 +141,8 @@ export const useConferenceEmbedded = (callId: string) => {
 			members,
 			/** Only a direct call rang a particular person, so only there does ringing again mean anything. */
 			canRing: info?.type === 'direct',
+			/** Whether the conference has ended and can no longer be joined. */
+			ended: info ? 'endedAt' in info && !!info.endedAt : false,
 			/** What the call is called: its own name if it has one, otherwise the room it belongs to. */
 			name: currentName,
 			/**
