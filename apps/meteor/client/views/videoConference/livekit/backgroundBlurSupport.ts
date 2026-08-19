@@ -23,5 +23,6 @@ export const supportsBackgroundBlur = (): boolean => {
 	const filters = context.filter === 'blur(4px)';
 
 	// MediaPipe's GPU delegate wants WebGL2. Its CPU one is too slow at these sizes to be worth offering.
-	return filters && Boolean(canvas.getContext('webgl2'));
+	// A separate canvas: a canvas that already has a 2D context won't hand out a WebGL one.
+	return filters && Boolean(document.createElement('canvas').getContext('webgl2'));
 };

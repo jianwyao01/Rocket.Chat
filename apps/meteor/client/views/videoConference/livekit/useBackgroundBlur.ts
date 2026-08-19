@@ -47,7 +47,9 @@ export const useBackgroundBlur = (videoTrack: LocalVideoTrack | undefined) => {
 
 	const [blur, setBlur] = useState<Blur | null>(null);
 	const [available, setAvailable] = useState(false);
-	const [level, setLevel] = useState<BlurLevel>('none');
+	const [level, setLevel] = useState<BlurLevel>(preferred);
+	const levelRef = useRef<BlurLevel>(level);
+	levelRef.current = level;
 	const [pending, setPending] = useState(false);
 
 	const cameraCanBlur = useCallback((track: LocalVideoTrack) => {
@@ -55,11 +57,17 @@ export const useBackgroundBlur = (videoTrack: LocalVideoTrack | undefined) => {
 		return Boolean(capabilities?.backgroundBlur?.includes(true));
 	}, []);
 
+	// When the track goes away (camera toggled off), keep the blur UI available at whatever level it was — the user
+	// should still be able to pick a strength while the camera is off, and it will be applied when the camera returns.
+	// Only the processor needs to be stopped; the preference and availability survive.
 	useEffect(() => {
 		if (!videoTrack) {
-			setAvailable(false);
-			setLevel('none');
-			setBlur(null);
+			const processor = processorRef.current;
+			processorRef.current = null;
+			if (processor) {
+				// Track is already gone; just drop the processor reference.
+				processor.setStrength(0);
+			}
 			return;
 		}
 
@@ -70,7 +78,11 @@ export const useBackgroundBlur = (videoTrack: LocalVideoTrack | undefined) => {
 				blurRef.current = 'camera';
 				setBlur('camera');
 				setAvailable(true);
-				setLevel(videoTrack.mediaStreamTrack?.getSettings?.().backgroundBlur ? 'medium' : 'none');
+				if (levelRef.current !== 'none') {
+					void videoTrack.mediaStreamTrack
+						?.applyConstraints({ backgroundBlur: true } as any)
+						.catch((err: unknown) => console.warn('could not re-apply camera blur', err));
+				}
 				return;
 			}
 
@@ -79,27 +91,34 @@ export const useBackgroundBlur = (videoTrack: LocalVideoTrack | undefined) => {
 			}
 
 			if (!supportsBackgroundBlur()) {
-				setAvailable(false);
 				return;
 			}
 
-			// Nothing is downloaded for the *option*: the check next door only asks the browser what it can do, and
-			// MediaPipe arrives when a level is picked. A call nobody blurs pays nothing for it being offered. See the
-			// note in `select` about arriving with a remembered level.
 			blurRef.current = 'processor';
 			setBlur('processor');
 			setAvailable(true);
-			setLevel('none');
+
+			// Re-apply the processor at the remembered level when the camera comes back.
+			const currentLevel = levelRef.current;
+			if (currentLevel !== 'none') {
+				const strength = BLUR_STRENGTH[currentLevel];
+				try {
+					const { BackgroundBlurProcessor } = await import('./backgroundBlurProcessor');
+					if (cancelled) return;
+					const processor = new BackgroundBlurProcessor(strength);
+					await videoTrack.setProcessor(processor);
+					processorRef.current = processor;
+				} catch (err) {
+					console.warn('background blur could not be re-applied', err);
+					setLevel('none');
+				}
+			}
 		})();
 
 		return () => {
 			cancelled = true;
 			const processor = processorRef.current;
 			processorRef.current = null;
-			blurRef.current = null;
-			setBlur(null);
-			setAvailable(false);
-			setLevel('none');
 			if (processor) {
 				void videoTrack.stopProcessor?.().catch(() => undefined);
 			}
@@ -115,12 +134,17 @@ export const useBackgroundBlur = (videoTrack: LocalVideoTrack | undefined) => {
 	 */
 	const select = useCallback(
 		(next: BlurLevel) => {
-			const track = trackRef.current;
-			if (!track || pending || next === level) {
+			if (pending || next === level) {
 				return;
 			}
 
 			selectBlurLevel(next);
+
+			const track = trackRef.current;
+			if (!track) {
+				setLevel(next);
+				return;
+			}
 
 			if (blurRef.current === 'camera') {
 				// One effect, no strengths: any level means on.
