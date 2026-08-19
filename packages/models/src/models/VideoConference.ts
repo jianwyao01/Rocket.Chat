@@ -49,7 +49,7 @@ export class VideoConferenceRaw extends BaseRaw<VideoConference> implements IVid
 		// Matches conferences started in this room (`rid`) and those whose discussion *is* this room
 		// (`discussionRid`), so a discussion resolves the conference it belongs to — its members may have no
 		// access to the parent room the conference originated in.
-		return this.findPaginated(
+		return this.findPaginated<VideoConference>(
 			{ $or: [{ rid }, { discussionRid: rid }] },
 			{
 				sort: { createdAt: -1 },
