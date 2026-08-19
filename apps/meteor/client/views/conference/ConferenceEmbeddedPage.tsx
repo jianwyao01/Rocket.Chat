@@ -14,6 +14,7 @@ import ConferenceChat from './ConferenceChat';
 import ConferenceIframe from './ConferenceIframe';
 import ConferencePageError from './ConferencePageError';
 import ConferencePreflight from './ConferencePreflight';
+import ConferenceThreadModal from './ConferenceThreadModal';
 import ConferenceUnauthorizedPage from './ConferenceUnauthorizedPage';
 import { PREFLIGHT_FACES_SHOWN } from '../../../lib/videoConference/constants';
 import PageLoading from '../root/PageLoading';
@@ -47,10 +48,24 @@ const emptyUnreadData = { alert: false, userMentions: 0, unread: 0, groupMention
 const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 	const { room, conference, call } = useConferenceEmbedded(callId);
 	const { t } = useTranslation();
+	const [threadTmid, setThreadTmid] = useState<string | null>(null);
+
+	// In "main room" chat mode the panel shows the full room, where thread indicators are visible but the
+	// conference route has no tab/context params to open them. Intercept those clicks and show the thread
+	// in a modal instead.
+	const handleOpenThread = useCallback(
+		(tmid: string) => {
+			if (!room.rid) {
+				return;
+			}
+			setThreadTmid(tmid);
+		},
+		[room.rid],
+	);
 
 	// The chat panel is a full room UI, so a link/mention click would navigate this window away and tear
 	// down the call. Keep this window pinned to the conference — those go to the opener or a new tab.
-	useConfinedNavigation();
+	useConfinedNavigation({ onOpenThread: room.tmid ? undefined : handleOpenThread });
 
 	// Closing this window is the only end-of-call signal a provider that doesn't report one leaves us, and the
 	// call has to end for its history to be written.
@@ -315,6 +330,8 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 				{!embedded && membersAction}
 				{chatAction}
 			</CallBar>
+
+			{threadTmid && room.rid && <ConferenceThreadModal rid={room.rid} tmid={threadTmid} onClose={() => setThreadTmid(null)} />}
 		</Box>
 	);
 };

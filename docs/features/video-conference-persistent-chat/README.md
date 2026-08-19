@@ -302,6 +302,8 @@ The chat panel is a full room UI, so a link, channel reference or user mention w
 
 Anything that would leave the conference opens in a **`noopener` new tab**, internal or external alike.
 
+In **main room** chat mode the panel renders the full room, where thread indicators are visible but the conference route has no `tab`/`context` params to open them. The same wrapper detects a thread navigation (`params.tab === 'thread'`) and calls an `onOpenThread` callback instead of navigating, which opens the thread in a `ConferenceThreadModal` — a Fuselage `Modal` wrapping `ConferenceThread`. The callback is only wired when the chat mode is main room (no `tmid`); in thread mode the panel renders the thread directly and there are no indicators to click.
+
 Handing internal routes to the window that launched the call would read better — the link would land in the app
 the user already has open, as a client-side navigation rather than a fresh tab — but it needs a desktop bridge and
 a `postMessage` handshake with the opener. That is [deferred](#deferred-to-follow-ups); a tab is the honest
@@ -1000,7 +1002,7 @@ could not be loaded" panel, because the detail panel is contact-call-shaped.
 | Conference model | `packages/models/src/models/VideoConference.ts` |
 | Route + viewport | `apps/meteor/client/views/conference/ConferenceRoute.tsx`, `ConferenceViewport.tsx` |
 | Call chrome | `apps/meteor/client/views/conference/ConferenceEmbeddedPage.tsx`, `ConferenceIframe.tsx`, `components/CallBar/`, `components/CallPanel/` |
-| Chat panel | `apps/meteor/client/views/conference/ConferenceChat.tsx`, `ConferenceRoom.tsx`, `ConferenceThread.tsx`, `ConferenceThreadChat.tsx`, `ConferenceStoresReady.tsx`, `CallPanelHeader.tsx`, `ConferenceChatNotShared.tsx` |
+| Chat panel | `apps/meteor/client/views/conference/ConferenceChat.tsx`, `ConferenceRoom.tsx`, `ConferenceThread.tsx`, `ConferenceThreadChat.tsx`, `ConferenceThreadModal.tsx`, `ConferenceStoresReady.tsx`, `CallPanelHeader.tsx`, `ConferenceChatNotShared.tsx` |
 | Nothing to show | `apps/meteor/client/views/conference/ConferenceStatePage.tsx`, `ConferencePageError.tsx`, `ConferenceUnauthorizedPage.tsx` |
 | Conference data | `apps/meteor/client/views/conference/hooks/useConferenceEmbedded.tsx` |
 | Confined navigation | `apps/meteor/client/views/conference/hooks/useConfinedNavigation.ts` (+ `.spec.ts`) |
