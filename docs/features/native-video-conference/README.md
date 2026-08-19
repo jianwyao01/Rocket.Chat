@@ -442,6 +442,15 @@ Camera tiles fall back to the avatar when `track.enabled && !track.muted && trac
 5. `LiveKitVideoConfContext` fetches `/transport.config` and mounts `<LiveKitRoom>` in the portal: `audio`/`video` say whether to publish each track, and the chosen devices go in the room's `audioCaptureDefaults` / `videoCaptureDefaults` — see below.
 6. LK connects.
 
+### Calling a user from the user card or sidebar
+
+The video-call button on the user card (hover/click a username) and in the sidebar user-info panel comes from `useVideoCallAction`. It creates a DM on-demand when one does not yet exist:
+
+1. User clicks the video icon on the user card or user-info panel.
+2. `useVideoCallAction` loads capabilities and closes the user card.
+3. If a DM subscription already exists, its `rid` is used directly. If not, `POST /v1/im.create` creates the DM first and returns the new room's `rid`.
+4. `dispatchPopup({ rid })` opens the `StartCallPopup` → standard call flow from there.
+
 ## 8. Who gets rung
 
 Ringing is for the people a call is actually aimed at:
