@@ -1855,11 +1855,15 @@ export class VideoConfService extends ServiceClassInternal implements IVideoConf
 	}
 
 	private isPersistentChatEnabled(): boolean {
-		return settings.get<boolean>('VideoConf_Enable_Persistent_Chat') && settings.get<boolean>('Discussion_enabled');
+		return settings.get<boolean>('VideoConf_Enable_Persistent_Chat');
+	}
+
+	private getPersistentChatMode(): 'thread' | 'main_room' {
+		return (settings.get<string>('VideoConf_Persistent_Chat_Mode') as 'thread' | 'main_room') || 'thread';
 	}
 
 	private async maybeCreateDiscussion(callId: VideoConference['_id'], createdBy?: IUser): Promise<void> {
-		if (!this.isPersistentChatEnabled()) {
+		if (!this.isPersistentChatEnabled() || this.getPersistentChatMode() !== 'main_room' || !settings.get<boolean>('Discussion_enabled')) {
 			return;
 		}
 

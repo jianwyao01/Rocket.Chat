@@ -1,6 +1,6 @@
 import type { IVideoConferenceUser, VideoConferenceChatAccess } from '@rocket.chat/core-typings';
 import { useUserDisplayName } from '@rocket.chat/ui-client';
-import { useEndpoint, useStream, useToastMessageDispatch, useUser, useUserId } from '@rocket.chat/ui-contexts';
+import { useEndpoint, useSetting, useStream, useToastMessageDispatch, useUser, useUserId } from '@rocket.chat/ui-contexts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 
@@ -49,8 +49,8 @@ export const useConferenceEmbedded = (callId: string) => {
 	const user = useUser();
 	const displayName = useUserDisplayName({ name: user?.name, username: user?.username });
 
-	// The chat room comes from the conference record: show `discussionRid` when it's set (a discussion was
-	// created), otherwise the conference's `rid` (the original room). The `rid` never changes.
+	const chatMode = useSetting('VideoConf_Persistent_Chat_Mode', 'thread') as 'thread' | 'main_room';
+
 	const {
 		data: info,
 		isPending: isInfoPending,
@@ -160,7 +160,10 @@ export const useConferenceEmbedded = (callId: string) => {
 				members.some((member) => member._id !== uid && isUnaskedConferenceMember(member)),
 		} as const,
 		room: {
-			rid: info?.discussionRid || info?.rid,
+			rid: chatMode === 'thread' ? info?.rid : info?.discussionRid || info?.rid,
+			tmid: chatMode === 'thread' ? info?.messages.started : undefined,
+			name: info?.chatAccess.name,
+			type: info?.chatAccess.type,
 			loading: isInfoPending,
 			error: infoError,
 			chatAccess,

@@ -38,18 +38,30 @@ export function addSettings(): Promise<void> {
 					type: 'boolean',
 					public: true,
 					invalidValue: false,
-					alert: 'VideoConf_Enable_Persistent_Chat_Alert',
-					enableQuery: [discussionsEnabled],
 				});
 
 				const persistentChatEnabled = { _id: 'VideoConf_Enable_Persistent_Chat', value: true };
+
+				await this.add('VideoConf_Persistent_Chat_Mode', 'thread', {
+					type: 'select',
+					values: [
+						{ key: 'thread', i18nLabel: 'Thread' },
+						{ key: 'main_room', i18nLabel: 'Main_room' },
+					],
+					public: true,
+					invalidValue: 'thread',
+					i18nDescription: 'VideoConf_Persistent_Chat_Mode_Description',
+					enableQuery: [persistentChatEnabled],
+				});
+
+				const discussionMode = { _id: 'VideoConf_Persistent_Chat_Mode', value: 'main_room' };
 
 				await this.add('VideoConf_Persistent_Chat_Discussion_Name', 'Video Call Chat', {
 					type: 'string',
 					public: true,
 					invalidValue: 'Conference Call Chat History',
 					i18nDescription: 'VideoConf_Persistent_Chat_Discussion_Name_Description',
-					enableQuery: [discussionsEnabled, persistentChatEnabled],
+					enableQuery: [discussionsEnabled, persistentChatEnabled, discussionMode],
 				});
 
 				// LiveKit-as-VC-provider settings. The keys mirror the previous

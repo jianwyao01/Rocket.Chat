@@ -298,7 +298,15 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 						/>
 					)}
 					{activePanel === 'chat' && (
-						<ConferenceChat rid={room.rid} loading={room.loading} chatAccess={room.chatAccess} onClose={() => togglePanel('chat')} />
+						<ConferenceChat
+							rid={room.rid}
+							tmid={room.tmid}
+							roomName={room.name}
+							roomType={room.type}
+							loading={room.loading}
+							chatAccess={room.chatAccess}
+							onClose={() => togglePanel('chat')}
+						/>
 					)}
 				</CallPanel>
 			</Box>

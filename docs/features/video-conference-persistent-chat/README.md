@@ -4,9 +4,12 @@
 
 Persistent chat gives a video conference a Rocket.Chat room that lives alongside the call, so the conversation survives after the call ends. Instead of handing the user off to the provider's own page, joining a conference opens an in-product page at `/conference/:id` — the provider's call in an iframe, a control bar along the bottom, and the conference's chat in a collapsible panel docked to the inline end.
 
-The chat room is resolved from the conference record: `discussionRid` when a discussion exists, otherwise the conference's `rid` (the room the call was started in). A conference's `rid` never changes; only `discussionRid` moves.
+The chat can run in one of two modes, controlled by `VideoConf_Persistent_Chat_Mode`:
 
-Gated by the EE setting `VideoConf_Enable_Persistent_Chat` (requires `Discussion_enabled`, module `videoconference-enterprise`).
+- **Thread** (default): the chat panel renders a thread started from the conference message in the original channel. No discussion room is created. Access is based on the parent channel — anyone who can read the channel can participate in the thread.
+- **Main room** (`main_room`): the chat panel shows the channel itself. A separate discussion room is created off the parent channel when needed (requires `Discussion_enabled`). The chat room is resolved from `discussionRid` when the discussion exists, otherwise the conference's `rid`. A conference's `rid` never changes; only `discussionRid` moves.
+
+Gated by the EE setting `VideoConf_Enable_Persistent_Chat` (module `videoconference-enterprise`).
 
 ## The flows at a glance
 
@@ -238,7 +241,8 @@ The conference page renders one room outside the main app, so the cached stores 
 - `ConferenceStoresReady` marks the cached stores ready. That is all it does: the room UI waits on them being
   *ready*, not on them being full, and the one room in play is fetched by `useOpenRoomById` below. It used to
   fetch that room here as well, which meant two `rooms.info` for the same room a moment apart.
-- `ConferenceRoom` opens the room by id (`useOpenRoomById`), forces `isEmbedded` layout, and subscribes to `notify-user/…/subscriptions-changed` to keep unread counts fresh (no sidebar watcher is running).
+- In **main room mode**, `ConferenceRoom` opens the room by id (`useOpenRoomById`), forces `isEmbedded` layout, and subscribes to `notify-user/…/subscriptions-changed` to keep unread counts fresh (no sidebar watcher is running).
+- In **thread mode**, `ConferenceThread` opens the original channel via `RoomProvider`, then mounts a `ChatProvider` with `tmid` (the conference message's `_id`) and renders `ConferenceThreadChat` — a thread message list and composer scoped to the conference message. Access is governed by the parent channel; no discussion is created.
 - `useOpenRoomById` is the by-rid counterpart to the router-driven `useOpenRoom`. It fetches via `GET /v1/rooms.info` (hence `mapRoomFromApi` to deserialize dates) and falls back to fetching the subscription directly, since `Subscriptions.state` may be empty here.
 
 `LegacyRoomManager.open` is what starts the message stream the composer waits on. It resolves rooms by **name** for channels/groups but by **rid** for DMs — passing the wrong identifier leaves the composer stuck loading.
@@ -715,8 +719,9 @@ The provider's URL is embedded in an iframe, so it must permit framing (no restr
 
 | Setting | Notes |
 |---------|-------|
-| `VideoConf_Enable_Persistent_Chat` | EE; requires `Discussion_enabled`. Also gates whether joining opens the in-product conference page. |
-| `VideoConf_Persistent_Chat_Discussion_Name` | Discussion name; `[date]` is substituted, or the date is prefixed when absent. |
+| `VideoConf_Enable_Persistent_Chat` | EE. Gates whether joining opens the in-product conference page. |
+| `VideoConf_Persistent_Chat_Mode` | `thread` (default) or `main_room`. Thread opens a thread from the call message; main room shows the channel itself in the chat panel. |
+| `VideoConf_Persistent_Chat_Discussion_Name` | Discussion name (only in discussion mode); `[date]` is substituted, or the date is prefixed when absent. Requires `Discussion_enabled`. |
 
 ## REST Endpoints
 
@@ -995,7 +1000,7 @@ could not be loaded" panel, because the detail panel is contact-call-shaped.
 | Conference model | `packages/models/src/models/VideoConference.ts` |
 | Route + viewport | `apps/meteor/client/views/conference/ConferenceRoute.tsx`, `ConferenceViewport.tsx` |
 | Call chrome | `apps/meteor/client/views/conference/ConferenceEmbeddedPage.tsx`, `ConferenceIframe.tsx`, `components/CallBar/`, `components/CallPanel/` |
-| Chat panel | `apps/meteor/client/views/conference/ConferenceChat.tsx`, `ConferenceRoom.tsx`, `ConferenceStoresReady.tsx`, `CallPanelHeader.tsx`, `ConferenceChatNotShared.tsx` |
+| Chat panel | `apps/meteor/client/views/conference/ConferenceChat.tsx`, `ConferenceRoom.tsx`, `ConferenceThread.tsx`, `ConferenceThreadChat.tsx`, `ConferenceStoresReady.tsx`, `CallPanelHeader.tsx`, `ConferenceChatNotShared.tsx` |
 | Nothing to show | `apps/meteor/client/views/conference/ConferenceStatePage.tsx`, `ConferencePageError.tsx`, `ConferenceUnauthorizedPage.tsx` |
 | Conference data | `apps/meteor/client/views/conference/hooks/useConferenceEmbedded.tsx` |
 | Confined navigation | `apps/meteor/client/views/conference/hooks/useConfinedNavigation.ts` (+ `.spec.ts`) |

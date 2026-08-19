@@ -1,4 +1,5 @@
-import { Box } from '@rocket.chat/fuselage';
+import type { IRoom } from '@rocket.chat/core-typings';
+import { Box, Icon } from '@rocket.chat/fuselage';
 import { useUserId } from '@rocket.chat/ui-contexts';
 import { useTranslation } from 'react-i18next';
 
@@ -6,19 +7,34 @@ import CallPanelHeader from './CallPanelHeader';
 import ConferenceChatNotShared from './ConferenceChatNotShared';
 import ConferenceRoom from './ConferenceRoom';
 import ConferenceStoresReady from './ConferenceStoresReady';
+import ConferenceThread from './ConferenceThread';
 import type { ConferenceChatAccess } from './hooks/useConferenceEmbedded';
 import { hasConferenceChatAccess } from '../../../lib/videoConference/chatAccess';
 import NotFoundPage from '../notFound/NotFoundPage';
 import PageLoading from '../root/PageLoading';
 
+const roomTypeIcon = (t?: IRoom['t']): 'hash' | 'hashtag-lock' | 'at' | 'baloons' => {
+	switch (t) {
+		case 'p':
+			return 'hashtag-lock';
+		case 'd':
+			return 'at';
+		default:
+			return 'hash';
+	}
+};
+
 type ConferenceChatProps = {
 	rid?: string;
+	tmid?: string;
+	roomName?: string;
+	roomType?: IRoom['t'];
 	loading: boolean;
 	chatAccess?: ConferenceChatAccess;
 	onClose: () => void;
 };
 
-const ConferenceChat = ({ rid, loading, chatAccess, onClose }: ConferenceChatProps) => {
+const ConferenceChat = ({ rid, tmid, roomName, roomType, loading, chatAccess, onClose }: ConferenceChatProps) => {
 	const { t } = useTranslation();
 	const uid = useUserId();
 
@@ -34,13 +50,28 @@ const ConferenceChat = ({ rid, loading, chatAccess, onClose }: ConferenceChatPro
 	// worked out who those members are, which beats letting the room fetch fail and calling it a missing page.
 	const shared = hasConferenceChatAccess(chatAccess, uid);
 
+	const headerLabel = tmid ? t('Thread') : t('Chat');
+	const title = roomName ? (
+		<>
+			{tmid ? t('Thread_in') : t('Chat_in')} <Icon name={roomTypeIcon(roomType)} size='x16' /> {roomName}
+		</>
+	) : (
+		headerLabel
+	);
+
 	return (
 		<Box position='relative' display='flex' flexDirection='column' flexGrow={1} height='full'>
-			<CallPanelHeader title={t('Chat')} onClose={onClose} />
+			<CallPanelHeader title={title} onClose={onClose} />
 
 			{!shared && <ConferenceChatNotShared />}
 
-			{shared && (
+			{shared && tmid && (
+				<ConferenceStoresReady>
+					<ConferenceThread rid={rid} tmid={tmid} onEscape={onClose} />
+				</ConferenceStoresReady>
+			)}
+
+			{shared && !tmid && (
 				<ConferenceStoresReady>
 					<ConferenceRoom rid={rid} />
 				</ConferenceStoresReady>

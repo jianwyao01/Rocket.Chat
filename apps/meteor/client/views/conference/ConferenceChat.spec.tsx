@@ -11,6 +11,7 @@ jest.mock('./ConferenceStoresReady', () => ({
 	default: ({ children }: { children: React.ReactNode }) => <div data-testid='chat-room'>{children}</div>,
 }));
 jest.mock('./ConferenceRoom', () => ({ __esModule: true, default: () => null }));
+jest.mock('./ConferenceThread', () => ({ __esModule: true, default: () => null }));
 
 // `withJohnDoe` fixes the logged-in id, so the member without access has to be that same user.
 const uid = 'john.doe';
