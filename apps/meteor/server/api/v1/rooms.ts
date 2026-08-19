@@ -61,7 +61,7 @@ import { FileUpload } from '../../lib/media/file-upload';
 import { notifyOnSubscriptionChanged } from '../../lib/notifyListener';
 import { openRoom } from '../../lib/openRoom';
 import type { RoomRoles } from '../../lib/roles/getRoomRoles';
-import { parseDirectRoomTargets } from '../../lib/rooms/findDirectRoomByIdentifier';
+import { resolveDirectRoomTargets } from '../../lib/rooms/findDirectRoomByIdentifier';
 import { syncRolePrioritiesForRoomIfRequired } from '../../lib/rooms/syncRolePrioritiesForRoomIfRequired';
 import { unbanUserFromRoom } from '../../lib/unbanUserFromRoom';
 import { createDirectMessage } from '../../meteor-methods/messages/createDirectMessage';
@@ -523,10 +523,6 @@ API.v1.post(
 	'rooms.getOrCreate',
 	{
 		authRequired: false,
-		// Opting out, not omitting: the limiter keys on IP, so a cap here would be shared by every user
-		// behind the same egress address, and omitting this inherits the 10/min default. Still open:
-		// this route can create rooms, so the right guard is likely per-user on the create branch.
-		rateLimiterOptions: false,
 		body: ajv.compile<{ type: RoomType; name: string }>({
 			type: 'object',
 			properties: {
@@ -564,7 +560,12 @@ API.v1.post(
 			return API.v1.failure('Invalid room [error-invalid-room]', 'error-invalid-room');
 		}
 
-		const { rid } = await createDirectMessage(parseDirectRoomTargets(name), this.userId);
+		const targets = await resolveDirectRoomTargets(name);
+		if (!targets) {
+			return API.v1.failure('Invalid room [error-invalid-room]', 'error-invalid-room');
+		}
+
+		const { rid } = await createDirectMessage(targets, this.userId);
 
 		const created = await findRoomByTypeAndName(this.userId ?? null, type, rid);
 		if (!created) {

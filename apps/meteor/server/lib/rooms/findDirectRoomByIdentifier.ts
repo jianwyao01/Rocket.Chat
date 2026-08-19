@@ -1,13 +1,22 @@
 import type { IRoom, IUser } from '@rocket.chat/core-typings';
 import { Rooms, Users } from '@rocket.chat/models';
 
-// `/direct/:rid` carries either a room id or the participants themselves: one username for a
-// regular DM, a comma separated list for a group one. Lookup and creation must read it the same
-// way, so both go through here.
 export const parseDirectRoomTargets = (identifier: string): string[] => identifier.split(',').map((username) => username.trim());
 
-// Direct rooms carry no `name`; the member set is what identifies them, and it is the same
-// primitive `createDirectRoom` resolves against.
+const resolveUsernames = async (usernames: string[]): Promise<Pick<IUser, '_id' | 'username'>[] | null> => {
+	const users = await Users.findUsersByUsernames<Pick<IUser, '_id' | 'username'>>(usernames, {
+		projection: { _id: 1, username: 1 },
+	}).toArray();
+
+	return users.length === usernames.length ? users : null;
+};
+
+export const resolveDirectRoomTargets = async (identifier: string): Promise<string[] | null> => {
+	const targets = [...new Set(parseDirectRoomTargets(identifier))];
+
+	return (await resolveUsernames(targets)) ? targets : null;
+};
+
 export const findDirectRoomByIdentifier = async (identifier: string, user: Pick<IUser, '_id' | 'username'>): Promise<IRoom | null> => {
 	const targets = parseDirectRoomTargets(identifier);
 
@@ -22,9 +31,8 @@ export const findDirectRoomByIdentifier = async (identifier: string, user: Pick<
 		return null;
 	}
 
-	const usernames = [...new Set([user.username, ...targets])];
-	const members = await Users.findUsersByUsernames(usernames, { projection: { _id: 1 } }).toArray();
-	if (members.length !== usernames.length) {
+	const members = await resolveUsernames([...new Set([user.username, ...targets])]);
+	if (!members) {
 		return null;
 	}
 

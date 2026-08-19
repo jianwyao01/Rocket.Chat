@@ -12,9 +12,11 @@ const UsersStub = {
 	findUsersByUsernames: Sinon.stub(),
 };
 
-const { findDirectRoomByIdentifier } = proxyquire.noCallThru().load('../../../../../server/lib/rooms/findDirectRoomByIdentifier.ts', {
-	'@rocket.chat/models': { Rooms: RoomsStub, Users: UsersStub },
-});
+const { findDirectRoomByIdentifier, resolveDirectRoomTargets } = proxyquire
+	.noCallThru()
+	.load('../../../../../server/lib/rooms/findDirectRoomByIdentifier.ts', {
+		'@rocket.chat/models': { Rooms: RoomsStub, Users: UsersStub },
+	});
 
 const cursorOf = (docs: unknown[]) => ({ toArray: async () => docs });
 
@@ -100,5 +102,30 @@ describe('findDirectRoomByIdentifier', () => {
 
 	it('should return null when the caller has no username', async () => {
 		expect(await findDirectRoomByIdentifier('alice', { _id: 'me' })).to.be.null;
+	});
+});
+
+describe('resolveDirectRoomTargets', () => {
+	beforeEach(() => {
+		UsersStub.findUsersByUsernames.reset();
+	});
+
+	it('should return the targets when every username resolves to a user', async () => {
+		UsersStub.findUsersByUsernames.returns(cursorOf([{ _id: 'a' }, { _id: 'b' }]));
+
+		expect(await resolveDirectRoomTargets('a, b')).to.deep.equal(['a', 'b']);
+	});
+
+	it('should return null when any username does not resolve to a user', async () => {
+		UsersStub.findUsersByUsernames.returns(cursorOf([{ _id: 'a' }]));
+
+		expect(await resolveDirectRoomTargets('a,ghost')).to.be.null;
+	});
+
+	it('should not ask for the same username twice', async () => {
+		UsersStub.findUsersByUsernames.returns(cursorOf([{ _id: 'a' }]));
+
+		expect(await resolveDirectRoomTargets('a,a')).to.deep.equal(['a']);
+		expect(UsersStub.findUsersByUsernames.firstCall.args[0]).to.deep.equal(['a']);
 	});
 });

@@ -32,7 +32,7 @@ import {
 import { assignRoleToUser, createCustomRole, deleteCustomRole } from '../../data/roles.helper';
 import { createRoom, deleteRoom } from '../../data/rooms.helper';
 import { createTeam, deleteTeam } from '../../data/teams.helper';
-import { password } from '../../data/user';
+import { adminUsername, password } from '../../data/user';
 import type { TestUser } from '../../data/users.helper';
 import { createUser, deleteUser, login } from '../../data/users.helper';
 import { IS_EE } from '../../e2e/config/constants';
@@ -136,6 +136,35 @@ describe('[Rooms]', () => {
 			const res = await request.post(api('rooms.getOrCreate')).set(credentials).send({ type: 'c', name: publicChannel.name }).expect(200);
 
 			expect(res.body.room).to.have.property('_id', publicChannel._id);
+		});
+
+		it('should create the self-DM when the caller addresses their own username', async () => {
+			const res = await request.post(api('rooms.getOrCreate')).set(credentials).send({ type: 'd', name: adminUsername }).expect(200);
+
+			expect(res.body.room).to.have.property('t', 'd');
+			expect(res.body.room).to.have.property('usersCount', 1);
+		});
+
+		it('should fail when a direct message target does not exist, instead of creating a smaller room', async () => {
+			const res = await request
+				.post(api('rooms.getOrCreate'))
+				.set(credentials)
+				.send({ type: 'd', name: `ghost-${Date.now()}` })
+				.expect(400);
+
+			expect(res.body).to.have.property('success', false);
+			expect(res.body).to.have.property('errorType', 'error-invalid-room');
+		});
+
+		it('should fail when one of the group direct message targets does not exist', async () => {
+			const res = await request
+				.post(api('rooms.getOrCreate'))
+				.set(credentials)
+				.send({ type: 'd', name: `${dmTarget.username},ghost-${Date.now()}` })
+				.expect(400);
+
+			expect(res.body).to.have.property('success', false);
+			expect(res.body).to.have.property('errorType', 'error-invalid-room');
 		});
 
 		it('should fail for a channel that does not exist, since only DMs can be created on demand', async () => {
