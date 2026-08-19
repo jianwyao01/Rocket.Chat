@@ -1771,7 +1771,7 @@ export class VideoConfService extends ServiceClassInternal implements IVideoConf
 	 * A direct call has no title of its own — it is named after the other person — so there is nothing to set.
 	 */
 	public async renameCall(uid: IUser['_id'], callId: VideoConference['_id'], title: string): Promise<void> {
-		const call = await VideoConferenceModel.findOneById(callId, { projection: { type: 1, rid: 1, createdBy: 1, endedAt: 1 } });
+		const call = await VideoConferenceModel.findOneById<VideoConference>(callId, { projection: { type: 1, rid: 1, createdBy: 1, endedAt: 1 } });
 		if (!call || call.endedAt || !isGroupVideoConference(call)) {
 			throw new Error('error-invalid-video-conf');
 		}

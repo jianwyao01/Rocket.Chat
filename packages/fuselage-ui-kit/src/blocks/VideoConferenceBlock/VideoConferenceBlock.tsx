@@ -157,7 +157,9 @@ const VideoConferenceBlock = ({ block }: VideoConferenceBlockProps) => {
 				<VideoConfMessageFooter>
 					{data.type === 'direct' && (
 						<>
-							<VideoConfMessageButton disabled={videoConfJoinDisabled} onClick={callAgainHandler}>{isUserCaller ? t('Call_again') : t('Call_back')}</VideoConfMessageButton>
+							<VideoConfMessageButton disabled={videoConfJoinDisabled} onClick={callAgainHandler}>
+								{isUserCaller ? t('Call_again') : t('Call_back')}
+							</VideoConfMessageButton>
 							{[VideoConferenceStatus.EXPIRED, VideoConferenceStatus.DECLINED].includes(data.status) && (
 								<VideoConfMessageFooterText>{t('Call_was_not_answered')}</VideoConfMessageFooterText>
 							)}

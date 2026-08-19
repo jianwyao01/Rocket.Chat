@@ -18,6 +18,7 @@ const buildInfo = (membersWithoutAccess: string[]) =>
 		title: '',
 		createdBy: { _id: 'someone-else', username: 'someone.else', name: 'Someone Else' },
 		users: [outsider],
+		messages: { started: 'some-msg-id' },
 		capabilities: {},
 		chatAccess: {
 			rid: 'room-id',
