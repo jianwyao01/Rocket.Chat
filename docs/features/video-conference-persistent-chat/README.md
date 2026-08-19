@@ -217,9 +217,9 @@ The panel is docked to the inline end, so its close button sits at the far end o
 
 The call stage (`CallStage`) supports three layouts, cycled by a button in the control bar:
 
-- **Grid** (default) — all participants in equal-sized tiles, rows/cols computed by `useTileGridLayout` to fill the stage within a [3:4 .. 16:9] aspect band.
+- **Grid** (default) — all participants in equal-sized tiles, rows/cols computed by `useTileGridLayout` to fill the stage within a [3:4 .. 16:9] aspect band. When there are more than 9 participants, only 8 tiles are shown plus a "+N" overflow placeholder; tiles with camera enabled and the active speaker are prioritised for the visible slots, and the local participant always stays visible. To simulate many participants for testing, set `localStorage.setItem('videoconf-simulate-tiles', '20')` in the browser console before joining a call.
 - **Spotlight** — the active speaker fills the stage; the local user's self-view floats as a small PiP in the bottom-right corner. When the local user *is* the active speaker, the first remote participant is shown large instead.
-- **Sidebar** — the active speaker is large on the left, all other participants are shown in a thumb column on the right (or row at the bottom on narrow stages), reusing the same structure as the screen-share spotlight.
+- **Sidebar** — the active speaker is large on the left, other participants are shown in a thumb column on the right (or row at the bottom on narrow stages). The number of visible thumbs is dynamically limited to what fits without scrolling: the capacity is computed from the stage size and thumb dimensions (column: 200 px wide, 16:9 aspect; row: 140 px wide, 96 px strip). When there are more participants than fit, the last slot shows a "+N" overflow placeholder (camera-on and local participant are prioritised for the visible slots). The thumb container never scrolls.
 
 Active speaker detection runs in `useActiveSpeakerId`: a single `AudioContext` with one `AnalyserNode` per participant, sampling at ~12 Hz. A 1.5 s hold prevents flickering between speakers during conversational pauses. When nobody is speaking, the fallback is the first remote participant.
 

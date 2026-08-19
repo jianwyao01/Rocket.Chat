@@ -1,5 +1,5 @@
 import { css } from '@rocket.chat/css-in-js';
-import { Box, IconButton, Palette } from '@rocket.chat/fuselage';
+import { Avatar, Box, Icon, IconButton, Palette } from '@rocket.chat/fuselage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import CallTile from './CallTile';
@@ -231,6 +231,20 @@ const spotlightSelfPipStyles = css`
 	z-index: 2;
 `;
 
+const overflowTileStyles = css`
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	width: 100%;
+	height: 100%;
+	border-radius: 6px;
+	background-color: ${Palette.surface['surface-neutral'].toString()};
+	border: 1px solid ${Palette.stroke['stroke-medium'].toString()};
+	color: ${Palette.text['font-pure-white'].toString()};
+`;
+
 type ScreenViewerProps = {
 	stream: MediaStream;
 	label: string;
@@ -289,6 +303,43 @@ const ScreenShareThumb = ({
 		</Box>
 	);
 };
+
+// eslint-disable-next-line react/no-multi-comp
+const OverflowTile = ({ hidden }: { hidden: { avatarUrl?: string; displayName: string }[] }) => (
+	<Box className={overflowTileStyles}>
+		<Box display='flex' justifyContent='center' alignItems='center' flexDirection='row'>
+			{hidden.slice(0, 2).map((p, i) =>
+				p.avatarUrl ? (
+					<Avatar key={i} url={p.avatarUrl} size='x36' style={{ marginInlineStart: i > 0 ? -8 : 0 }} />
+				) : (
+					<Box
+						key={i}
+						display='flex'
+						alignItems='center'
+						justifyContent='center'
+						style={{
+							width: 36,
+							height: 36,
+							borderRadius: '50%',
+							backgroundColor: Palette.surface['surface-hover'].toString(),
+							marginInlineStart: i > 0 ? -8 : 0,
+							flexShrink: 0,
+						}}
+					>
+						<Icon name='user' size='x20' />
+					</Box>
+				),
+			)}
+		</Box>
+		{hidden.length > 2 && (
+			<Box fontSize={13} fontWeight={600} lineHeight={1}>
+				{hidden.length} others
+			</Box>
+		)}
+	</Box>
+);
+
+const MAX_VISIBLE_TILES = 9;
 
 // eslint-disable-next-line react/no-multi-comp
 const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShare, handPositions, layout = 'grid' }: CallStageProps) => {
@@ -391,6 +442,37 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 		return all;
 	}, [localParticipant, remoteParticipants, handPositions]);
 
+	// Dev: inject simulated tiles for testing pagination.
+	// In the browser console: localStorage.setItem('videoconf-simulate-tiles', '20')
+	// then rejoin the call. Set to '0' or remove the key to disable.
+	const [simulateCount] = useState(() => {
+		try {
+			return parseInt(localStorage.getItem('videoconf-simulate-tiles') ?? '', 10) || 0;
+		} catch {
+			return 0;
+		}
+	});
+
+	const allTiles = useMemo(() => {
+		if (simulateCount <= 0) return tiles;
+		return [
+			...tiles,
+			...Array.from({ length: simulateCount }, (_, i) => ({
+				id: `sim-${i}`,
+				displayName: `Simulated ${i + 1}`,
+				avatarUrl: undefined,
+				muted: i % 3 === 0,
+				held: false,
+				cameraStream: undefined as MediaStream | null | undefined,
+				audioStream: undefined as MediaStream | null | undefined,
+				mirrored: false,
+				muteVideoAudio: false,
+				handPosition: undefined as number | undefined,
+				sendHeight: undefined as number | undefined,
+			})),
+		];
+	}, [tiles, simulateCount]);
+
 	// Active speaker: used by spotlight and sidebar layouts to decide which
 	// participant gets the large view. Falls back to the first remote
 	// participant when nobody is speaking.
@@ -403,6 +485,31 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 	);
 	const activeSpeakerId = useActiveSpeakerId(audioParticipants, remoteParticipants[0]?.id ?? localParticipant.id);
 
+	// Grid pagination: show at most MAX_VISIBLE_TILES tiles. When there are
+	// more, the last slot becomes a "+N" overflow placeholder. Tiles with
+	// camera enabled and the current active speaker are prioritised for the
+	// visible set; the local participant always stays visible.
+	const { visibleTiles, hiddenTiles } = useMemo(() => {
+		if (allTiles.length <= MAX_VISIBLE_TILES) {
+			return { visibleTiles: allTiles, hiddenTiles: [] as typeof allTiles };
+		}
+		const maxVisible = MAX_VISIBLE_TILES - 1;
+		const scored = allTiles.map((tile, originalIndex) => {
+			let score = 0;
+			if (tile.id === activeSpeakerId) score += 1000;
+			if (tile.cameraStream) score += 100;
+			if (tile.id === localParticipant.id) score += 50;
+			return { originalIndex, score };
+		});
+		const sorted = [...scored].sort((a, b) => b.score - a.score);
+		const visibleIndices = new Set(sorted.slice(0, maxVisible).map((s) => s.originalIndex));
+		const visible = allTiles.filter((_, i) => visibleIndices.has(i));
+		const hidden = allTiles.filter((_, i) => !visibleIndices.has(i));
+		return { visibleTiles: visible, hiddenTiles: hidden };
+	}, [allTiles, activeSpeakerId, localParticipant.id]);
+
+	const gridTileCount = visibleTiles.length + (hiddenTiles.length > 0 ? 1 : 0);
+
 	// IMPORTANT: hooks must run unconditionally on every render. Both the
 	// grid layout hook and its companion ref live above any conditional
 	// return — when a screen share starts mid-call featuredScreen flips
@@ -410,7 +517,7 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 	// layout hooks were below that branch they'd skip a render and
 	// trigger "Rendered fewer hooks than expected".
 	const measureRef = useRef<HTMLDivElement>(null);
-	const { rows, cols, cellWidth, cellHeight } = useTileGridLayout(measureRef, tiles.length);
+	const { rows, cols, cellWidth, cellHeight } = useTileGridLayout(measureRef, gridTileCount);
 
 	// Spotlight orientation: when the stage is wider than ~16:9 the screen
 	// fits better against a vertical thumb column on the right; otherwise
@@ -446,6 +553,39 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 	const spotlightOrientation: 'stacked' | 'side-by-side' =
 		stageSize.height > 0 && stageSize.width / stageSize.height >= SPOTLIGHT_SIDE_BY_SIDE_ASPECT ? 'side-by-side' : 'stacked';
 
+	// Sidebar pagination: how many thumb tiles fit without scrolling.
+	// Column: each thumb is width=200, aspect-ratio 16:9 → ~112px tall.
+	// Row: each thumb is 140px wide, strip is 96px tall.
+	const sidebarCapacity = useMemo(() => {
+		if (stageSize.width === 0 || stageSize.height === 0) return Infinity;
+		const gap = TILE_GAP_PX;
+		if (spotlightOrientation === 'side-by-side') {
+			const thumbH = 200 * (9 / 16);
+			return Math.max(1, Math.floor((stageSize.height - 16 + gap) / (thumbH + gap)));
+		}
+		return Math.max(1, Math.floor((stageSize.width - 16 + gap) / (140 + gap)));
+	}, [stageSize, spotlightOrientation]);
+
+	const sidebarOthers = useMemo(() => {
+		const featured = allTiles.find((t) => t.id === activeSpeakerId) ?? allTiles[0];
+		const others = allTiles.filter((t) => t.id !== featured?.id);
+		if (others.length <= sidebarCapacity) {
+			return { visible: others, hidden: [] as typeof others };
+		}
+		const maxVisible = Math.max(0, sidebarCapacity - 1);
+		const scored = others.map((tile, idx) => {
+			let score = 0;
+			if (tile.cameraStream) score += 100;
+			if (tile.id === localParticipant.id) score += 50;
+			return { idx, score };
+		});
+		scored.sort((a, b) => b.score - a.score);
+		const visibleSet = new Set(scored.slice(0, maxVisible).map((s) => s.idx));
+		const visible = others.filter((_, i) => visibleSet.has(i));
+		const hidden = others.filter((_, i) => !visibleSet.has(i));
+		return { visible, hidden };
+	}, [allTiles, activeSpeakerId, localParticipant.id, sidebarCapacity]);
+
 	if (featuredScreen) {
 		const isSideBySide = spotlightOrientation === 'side-by-side';
 		return (
@@ -467,7 +607,7 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 								onSpotlight={() => setPinnedScreenId(s.id)}
 							/>
 						))}
-						{tiles.map((t) => (
+						{allTiles.map((t) => (
 							<Box key={t.id} className={isSideBySide ? thumbItemColumnStyles : thumbItemStyles}>
 								<CallTile {...t} compact />
 							</Box>
@@ -481,10 +621,11 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 	// Spotlight layout: active speaker fills the stage, local user's self-view
 	// floats as a small PiP in the bottom-right corner.
 	if (layout === 'spotlight') {
-		const featured = tiles.find((t) => t.id === activeSpeakerId) ?? tiles[0];
-		const selfTile = tiles.find((t) => t.id === localParticipant.id);
+		const featured = allTiles.find((t) => t.id === activeSpeakerId) ?? allTiles[0];
+		const selfTile = allTiles.find((t) => t.id === localParticipant.id);
 		// When the local user is the active speaker, show the first remote instead.
-		const mainTile = featured.id === localParticipant.id && tiles.length > 1 ? tiles.find((t) => t.id !== localParticipant.id)! : featured;
+		const mainTile =
+			featured.id === localParticipant.id && allTiles.length > 1 ? allTiles.find((t) => t.id !== localParticipant.id)! : featured;
 		return (
 			<Box className={stageStyles}>
 				<Box display='flex' width='full' height='full' position='relative'>
@@ -506,21 +647,26 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 	// spotlight, but with a camera feed instead of a screen.
 	if (layout === 'sidebar') {
 		const isSideBySide = spotlightOrientation === 'side-by-side';
-		const featured = tiles.find((t) => t.id === activeSpeakerId) ?? tiles[0];
-		const others = tiles.filter((t) => t.id !== featured.id);
+		const featured = allTiles.find((t) => t.id === activeSpeakerId) ?? allTiles[0];
+		const { visible: sidebarVisible, hidden: sidebarHidden } = sidebarOthers;
 		return (
 			<Box className={stageStyles} ref={stageRefCallback}>
 				<Box className={isSideBySide ? spotlightSideBySideStyles : spotlightStackedStyles}>
 					<Box className={mainStreamStyles}>
 						<CallTile {...featured} />
 					</Box>
-					{others.length > 0 && (
-						<Box className={isSideBySide ? thumbColumnStyles : thumbStripStyles} data-thumb-orientation={isSideBySide ? 'column' : 'row'}>
-							{others.map((t) => (
+					{(sidebarVisible.length > 0 || sidebarHidden.length > 0) && (
+						<Box className={isSideBySide ? thumbColumnStyles : thumbStripStyles} style={{ overflow: 'hidden' }} data-thumb-orientation={isSideBySide ? 'column' : 'row'}>
+							{sidebarVisible.map((t) => (
 								<Box key={t.id} className={isSideBySide ? thumbItemColumnStyles : thumbItemStyles}>
 									<CallTile {...t} compact />
 								</Box>
 							))}
+							{sidebarHidden.length > 0 && (
+								<Box className={isSideBySide ? thumbItemColumnStyles : thumbItemStyles}>
+									<OverflowTile hidden={sidebarHidden} />
+								</Box>
+							)}
 						</Box>
 					)}
 				</Box>
@@ -532,18 +678,10 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 
 	// When the last row has fewer tiles than `cols`, we center the orphans at
 	// their natural single-column width using `gridColumnStart` — never spanning.
-	// An earlier version expanded each orphan to fill remaining columns, which
-	// produced ultra-wide tiles (a single trailing tile would stretch 8:1
-	// against the rest of the grid). Empty cells are visually inert: they're
-	// the same dark surface as the grid background, so centered tiles read as
-	// "fewer in this row" rather than "broken layout".
-	const lastRowOrphans = tiles.length % cols;
-	const orphanStart = tiles.length - lastRowOrphans;
+	const lastRowOrphans = gridTileCount % cols;
+	const orphanStart = gridTileCount - lastRowOrphans;
 	const firstOrphanCol = lastRowOrphans > 0 ? Math.floor((cols - lastRowOrphans) / 2) + 1 : 1;
 
-	// Pre-compute the grid box total size from the clamped cell dims, so the
-	// grid is exactly cell*N + gap*(N-1) wide/tall. Avoids subpixel rounding
-	// causing a faint border peeking outside the box.
 	const gridWidth = cols > 0 && cellWidth > 0 ? cols * cellWidth + (cols - 1) * TILE_GAP_PX : undefined;
 	const gridHeight = rows > 0 && cellHeight > 0 ? rows * cellHeight + (rows - 1) * TILE_GAP_PX : undefined;
 
@@ -559,7 +697,7 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 						gridTemplateRows: `repeat(${rows}, ${cellHeight}px)`,
 					}}
 				>
-					{tiles.map((t, i) => {
+					{visibleTiles.map((t, i) => {
 						const orphanIndex = lastRowOrphans > 0 && i >= orphanStart ? i - orphanStart : -1;
 						const placement: { gridColumnStart?: number } = orphanIndex >= 0 ? { gridColumnStart: firstOrphanCol + orphanIndex } : {};
 						return (
@@ -568,6 +706,20 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 							</Box>
 						);
 					})}
+					{hiddenTiles.length > 0 && (
+						<Box
+							key='overflow'
+							style={
+								lastRowOrphans > 0 && visibleTiles.length >= orphanStart
+									? { gridColumnStart: firstOrphanCol + (visibleTiles.length - orphanStart) }
+									: undefined
+							}
+							minWidth={0}
+							minHeight={0}
+						>
+							<OverflowTile hidden={hiddenTiles} />
+						</Box>
+					)}
 				</Box>
 			</Box>
 		</Box>
