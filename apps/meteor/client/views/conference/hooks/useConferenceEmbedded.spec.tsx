@@ -81,6 +81,7 @@ it('follows the chat to a discussion the conference moved into', async () => {
 	const { result } = renderHook(() => useConferenceEmbedded(callId), {
 		wrapper: mockAppRoot()
 			.withJohnDoe()
+			.withSetting('VideoConf_Persistent_Chat_Mode', 'main_room')
 			.withStream('video-conference', streamRef)
 			.withEndpoint('GET', '/v1/video-conference.info', () => ({ ...buildInfo([]), discussionRid }) as any)
 			.withEndpoint('POST', '/v1/video-conference.join', () => ({ url: 'https://call.example', providerName: 'test' }) as any)
