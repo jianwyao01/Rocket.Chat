@@ -265,6 +265,8 @@ The call iframe is named with `aria-label` rather than `title`: a `title` on a f
 
 Video conference message blocks inside the panel have their join/call-back actions disabled (`videoConfJoinDisabled`, set when the current route is `conference`) — joining another conference from inside a conference would replace the call the user is in.
 
+When the preflight opens for a conference that has already ended (`endedAt` is set on the info response), a "Call ended" state page is shown instead of the preflight — with a Close button that tears down the window. The real-time `updated` subscription also catches a call ending while the user is still on the preflight.
+
 ## Members Panel
 
 Who is on the call and where each of them stands. It shares the side panel with the chat — **one at a time**,
@@ -920,7 +922,7 @@ git — `git show 5ab58858d7d:<path>` restores any of them intact.
 | **The provider → parent bridge** (`useProviderCallBridge`) | **no provider implements it** — not the bundled Jitsi app, which declares only `{ mic, cam, title }` | our own bar owns the panels; a provider showing its own toolbar shows two |
 | **Handing internal links to the opener** (the desktop bridge and the `postMessage` handshake) | needs a bridge on both sides for a nicer landing | a `noopener` new tab — see [Confined Navigation](#confined-navigation) |
 | **Regrouping the room's call list** into Ongoing/Past, named after the discussion | a redesign of a list that already works, and one every workspace sees | the existing flat list, with the fix that it no longer counts members who never joined |
-| **Disabling join on message blocks inside the call window** (`videoConfJoinDisabled`, `useCurrentRouteName`) | reached across `ui-contexts` and `fuselage-ui-kit` to stop something that isn't broken | the buttons stay live; joining from inside a call opens a second call window |
+| ~~**Disabling join on message blocks inside the call window**~~ | done — `videoConfJoinDisabled` on `UiKitContext`, set when `useCurrentRoutePath` starts with `/conference/` | join and call-back buttons are disabled inside the call window |
 
 Two changes were dropped rather than deferred, because they were never this feature's to make. The room kebab's
 Calls item keeps its own name and icon — renaming it to *Conference call history* belonged to the regrouping
