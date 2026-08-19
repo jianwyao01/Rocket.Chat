@@ -656,7 +656,11 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 						<CallTile {...featured} />
 					</Box>
 					{(sidebarVisible.length > 0 || sidebarHidden.length > 0) && (
-						<Box className={isSideBySide ? thumbColumnStyles : thumbStripStyles} style={{ overflow: 'hidden' }} data-thumb-orientation={isSideBySide ? 'column' : 'row'}>
+						<Box
+							className={isSideBySide ? thumbColumnStyles : thumbStripStyles}
+							style={{ overflow: 'hidden' }}
+							data-thumb-orientation={isSideBySide ? 'column' : 'row'}
+						>
 							{sidebarVisible.map((t) => (
 								<Box key={t.id} className={isSideBySide ? thumbItemColumnStyles : thumbItemStyles}>
 									<CallTile {...t} compact />

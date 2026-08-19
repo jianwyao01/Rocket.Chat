@@ -7,7 +7,16 @@ import { useTranslation } from 'react-i18next';
 
 import CallReactions, { type CallReaction } from './CallReactions';
 import CallStage, { type StageLayout } from './CallStage';
-import { ToggleButton, Timer, DevicePicker, CameraPicker, LayoutPicker, ActionButton, ActionStrip, ActionToggleChat } from '../../components';
+import {
+	ToggleButton,
+	Timer,
+	DevicePicker,
+	CameraPicker,
+	LayoutPicker,
+	ActionButton,
+	ActionStrip,
+	ActionToggleChat,
+} from '../../components';
 import { useMediaCallInstance } from '../../context/MediaCallInstanceContext';
 import type { RemoteParticipantInfo } from '../../context/MediaCallViewContext';
 import { useMediaCallView } from '../../context/MediaCallViewContext';
