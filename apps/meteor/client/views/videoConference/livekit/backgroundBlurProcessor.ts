@@ -2,6 +2,7 @@ import { FilesetResolver, ImageSegmenter } from '@mediapipe/tasks-vision';
 import type { MPMask } from '@mediapipe/tasks-vision';
 import type { Track, TrackProcessor, VideoProcessorOptions } from 'livekit-client';
 
+import { BackgroundBlurRenderer } from './backgroundBlurRenderer';
 import { supportsBackgroundBlur } from './backgroundBlurSupport';
 
 /**
@@ -43,32 +44,98 @@ export const SEGMENTER = SEGMENTER_MODELS.multiclass;
 export const SEGMENTER_WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm';
 
 /**
- * Which numbers in the mask mean "the person", as a lookup table over every possible category.
+ * Which confidence mask describes the person, and whether it has to be read inside out.
  *
- * Read from the labels the model reports rather than assumed, because the answer is not the same between models and
- * is the opposite of what it looks like in one of them. The landscape model reports a single label — `selfie` — at
- * index **0** and paints everything else 255, so its marked pixels are the *background*; treating them as the subject
- * blurs the person and leaves the room sharp, which is exactly what it did the first time. The multiclass model
- * reports `background` at 0 and five kinds of person after it.
+ * The multiclass model reports `background` and five parts of a person, so `1 - background` is the complete person.
+ * The landscape model reports `selfie` directly. Reading this from the model labels keeps both models interchangeable.
  *
- * One rule covers both: everything that is not called `background` is the person. A table rather than a set because
- * this is read once per pixel of the mask.
+ * Confidence rather than category masks matters at the boundary: 60% confidence around a strand of hair becomes 60%
+ * opacity instead of a hard verdict which no amount of later feathering can reconstruct.
  */
-export const subjectCategories = (labels: string[]): Uint8Array => {
-	const table = new Uint8Array(256);
+export const personConfidence = (labels: string[]): { index: number; invert: boolean } => {
+	const background = labels.indexOf('background');
+	return background < 0 ? { index: 0, invert: false } : { index: background, invert: true };
+};
 
-	labels.forEach((label, category) => {
-		if (label !== 'background') {
-			table[category] = 255;
+/**
+ * Converts model confidence to an alpha matte and damps small frame-to-frame changes without trailing real motion.
+ * Large changes are accepted immediately; only low-amplitude uncertainty, which appears as edge flicker, is averaged.
+ */
+export const stabilizeConfidenceMask = (values: Float32Array, previous: Uint8Array | undefined, invert: boolean): Uint8Array => {
+	const next = new Uint8Array(values.length);
+
+	for (let index = 0; index < values.length; index++) {
+		const rawConfidence = Math.max(0, Math.min(1, invert ? 1 - values[index] : values[index]));
+		// A semantic model assigns a little non-background probability to hard room details such as lettering, plants
+		// and chair edges. Using that raw value as opacity mixes a faint sharp frame over the blur everywhere, which
+		// reads as a halo. Suppress weak classifications while retaining a continuous midpoint for hair and soft edges.
+		const normalized = Math.max(0, Math.min(1, (rawConfidence - 0.2) / 0.6));
+		const confidence = normalized * normalized * (3 - 2 * normalized);
+		const current = Math.round(confidence * 255);
+		if (previous?.length !== values.length) {
+			next[index] = current;
+			continue;
 		}
-	});
 
-	// A model that names nothing at all: better a blurred background than a blurred face.
-	if (!labels.length) {
-		table[0] = 255;
+		const old = previous[index];
+		const difference = Math.abs(current - old);
+		let response = 0.35;
+		if (difference >= 96) {
+			response = 1;
+		} else if (difference >= 32) {
+			response = 0.75;
+		}
+		next[index] = Math.round(old + (current - old) * response);
 	}
 
-	return table;
+	return next;
+};
+
+/** Prefer the replacement track's dimensions because a reused video element can still report the previous frame size. */
+export const videoDimensions = (
+	settings: Pick<MediaTrackSettings, 'width' | 'height'>,
+	source: Pick<HTMLVideoElement, 'videoWidth' | 'videoHeight'>,
+): { width: number; height: number } | undefined => {
+	if (settings.width && settings.height) {
+		return { width: settings.width, height: settings.height };
+	}
+	if (source.videoWidth && source.videoHeight) {
+		return { width: source.videoWidth, height: source.videoHeight };
+	}
+	return undefined;
+};
+
+/** Prefer deterministic manual capture, with automatic capture as the compatibility fallback. */
+export const captureCanvasTrack = (canvas: Pick<HTMLCanvasElement, 'captureStream'>): MediaStreamTrack | undefined => {
+	const manual = canvas.captureStream(0).getVideoTracks()[0];
+	const capture = manual as unknown as { requestFrame?: () => void } | undefined;
+	if (capture?.requestFrame) {
+		return manual;
+	}
+
+	// A zero-frame-rate track without requestFrame could never publish anything.
+	manual?.stop();
+	return canvas.captureStream().getVideoTracks()[0];
+};
+
+/** Canvas capture tracks are not portable across backing-store resizes in Chromium; recapture at the new size. */
+export const refreshCapturedTrack = (
+	canvas: Pick<HTMLCanvasElement, 'captureStream'>,
+	current: MediaStreamTrack | undefined,
+	resolutionChanged: boolean,
+): MediaStreamTrack | undefined => {
+	if (!resolutionChanged) {
+		return current;
+	}
+
+	current?.stop();
+	return captureCanvasTrack(canvas);
+};
+
+/** Canvas capture is manual so every completed WebGL render becomes exactly one outgoing video frame. */
+export const requestCapturedFrame = (track: MediaStreamTrack | undefined): void => {
+	const capture = track as unknown as { requestFrame?: () => void } | undefined;
+	capture?.requestFrame?.();
 };
 
 /**
@@ -83,27 +150,18 @@ export const subjectCategories = (labels: string[]): Uint8Array => {
  */
 const SEGMENT_INTERVAL = 50;
 
-/** How wide the feather along the edge of the subject is, as a fraction of frame height. */
-const EDGE_SOFTNESS = 0.006;
-
 /**
  * Blurs the background of a camera track, and nothing else.
  *
- * This is MediaPipe's image segmenter driving a plain 2D canvas, in place of `@livekit/track-processors`. The library
- * works, and was what this feature shipped on first, but it composites the background into a texture at **a quarter
- * of the frame's size** and stretches it back — a 480×270 background on a 1080p frame. That upscale, not the blur
- * radius, is what read as "low quality", and no radius could get past it because the factor is a constant in the
- * library. This does the same segmentation and composites at full frame size.
+ * MediaPipe provides a low-resolution confidence matte and {@link BackgroundBlurRenderer} refines and composites it
+ * on WebGL2. The renderer keeps the important stages on GPU: a joint bilateral upsample aligns the matte with camera
+ * edges, a weighted separable blur excludes foreground colours, and the final blend happens at full frame size.
  *
- * The compositing is three draws, and the browser's own blur does the expensive part:
+ * This differs from both earlier implementations:
  *
- * 1. the frame, sharp;
- * 2. the mask over it as `destination-in`, so only the subject is left, feathered along the edge;
- * 3. the frame again as `destination-over`, blurred, filling in everything behind.
- *
- * `ctx.filter` is a real Gaussian at full resolution, and Skia runs it on the GPU — which is the whole reason this
- * is short enough to be worth owning. It is also why {@link isSupported} insists on it rather than assuming: where
- * the filter is ignored, every draw still succeeds and the result is an unblurred frame that claims to be blurred.
+ * - a binary category mask threw away partial coverage around hair before compositing began;
+ * - blurring the complete frame let the person's colours bleed outwards into a halo;
+ * - enlarging the blurred source to hide its canvas border moved the background relative to the sharp subject.
  *
  * Strength is a fraction of frame height — what has to look the same across resolutions is the blur *relative to
  * the picture*, since the same track is watched at whatever size the other end's tile happens to be. It can be
@@ -114,7 +172,12 @@ const EDGE_SOFTNESS = 0.006;
  * "no blur" does while the processor stays attached, since detaching a processor re-publishes the camera.
  */
 export class BackgroundBlurProcessor implements TrackProcessor<Track.Kind.Video, VideoProcessorOptions> {
+	/** Bump when an existing development-session processor must be reconstructed rather than updated in place. */
+	static readonly revision = 6;
+
 	readonly name = 'rocket-chat-background-blur';
+
+	readonly revision = BackgroundBlurProcessor.revision;
 
 	processedTrack?: MediaStreamTrack;
 
@@ -128,12 +191,13 @@ export class BackgroundBlurProcessor implements TrackProcessor<Track.Kind.Video,
 
 	private canvas?: HTMLCanvasElement;
 
-	private context?: CanvasRenderingContext2D | null;
+	private renderer?: BackgroundBlurRenderer;
 
-	private mask?: { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D; image: ImageData };
+	/** Which confidence mask is the person. See {@link personConfidence}. */
+	private person = { index: 0, invert: false };
 
-	/** Which category numbers in this model's mask are the person. See {@link subjectCategories}. */
-	private subject: Uint8Array = new Uint8Array(256);
+	/** Last matte at model resolution, used only to remove low-amplitude temporal flicker. */
+	private temporalMask?: Uint8Array;
 
 	/** The frame, scaled to what the model works at — what actually gets segmented. */
 	private small?: { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D };
@@ -170,27 +234,19 @@ export class BackgroundBlurProcessor implements TrackProcessor<Track.Kind.Video,
 		this.source.srcObject = new MediaStream([options.track]);
 		await this.source.play().catch(() => undefined);
 
-		const { width, height } = await this.dimensions();
+		const { width, height } = await this.dimensions(options.track);
 
 		// The canvas has to be in the document for its captured stream to keep producing frames — an offscreen one
 		// stalls in some browsers — but nobody should see it.
 		this.canvas = document.createElement('canvas');
-		this.canvas.width = width;
-		this.canvas.height = height;
 		this.canvas.style.display = 'none';
 		document.body.appendChild(this.canvas);
+		this.renderer = new BackgroundBlurRenderer(this.canvas);
+		this.renderer.resize(width, height);
 
-		this.context = this.canvas.getContext('2d');
-		if (!this.context) {
-			throw new Error('background blur needs a 2D canvas');
-		}
-		// The mask is small and gets stretched over the whole frame, so how it is stretched matters.
-		this.context.imageSmoothingEnabled = true;
-		this.context.imageSmoothingQuality = 'high';
-
-		// No frame rate: a captured stream with none takes a frame every time the canvas is drawn on, which is once
-		// per frame that arrives.
-		[this.processedTrack] = this.canvas.captureStream().getVideoTracks();
+		// Manual capture avoids depending on Chromium's canvas-dirty heuristic. That heuristic can stop observing WebGL
+		// updates after a backing-store resize, leaving lower-resolution previews stuck on their initial black frame.
+		this.processedTrack = captureCanvasTrack(this.canvas);
 
 		const small = document.createElement('canvas');
 		small.width = SEGMENTER.input.width;
@@ -205,11 +261,11 @@ export class BackgroundBlurProcessor implements TrackProcessor<Track.Kind.Video,
 		this.segmenter = await ImageSegmenter.createFromOptions(files, {
 			baseOptions: { modelAssetPath: SEGMENTER.url, delegate: 'GPU' },
 			runningMode: 'VIDEO',
-			outputCategoryMask: true,
-			outputConfidenceMasks: false,
+			outputCategoryMask: false,
+			outputConfidenceMasks: true,
 		});
 
-		this.subject = subjectCategories(this.segmenter.getLabels());
+		this.person = personConfidence(this.segmenter.getLabels());
 
 		this.schedule();
 	}
@@ -230,8 +286,16 @@ export class BackgroundBlurProcessor implements TrackProcessor<Track.Kind.Video,
 		this.source.srcObject = new MediaStream([options.track]);
 		await this.source.play().catch(() => undefined);
 
-		const { width, height } = await this.dimensions();
+		const { width, height } = await this.dimensions(options.track);
+		const resolutionChanged = this.canvas.width !== width || this.canvas.height !== height;
 		this.resize(width, height);
+		if (resolutionChanged) {
+			// Chromium can leave a canvas capture track black after its backing store changes size. LiveKit reads
+			// processedTrack after restart() returns, so hand it a fresh capture at the new dimensions for sender and preview.
+			this.processedTrack = refreshCapturedTrack(this.canvas, this.processedTrack, true);
+			this.temporalMask = undefined;
+			this.lastSegment = 0;
+		}
 
 		this.stopped = false;
 		this.schedule();
@@ -244,10 +308,11 @@ export class BackgroundBlurProcessor implements TrackProcessor<Track.Kind.Video,
 		this.processedTrack?.stop();
 		this.processedTrack = undefined;
 
+		this.renderer?.destroy();
+		this.renderer = undefined;
 		this.canvas?.remove();
 		this.canvas = undefined;
-		this.context = undefined;
-		this.mask = undefined;
+		this.temporalMask = undefined;
 		this.small = undefined;
 
 		if (this.source) {
@@ -268,14 +333,15 @@ export class BackgroundBlurProcessor implements TrackProcessor<Track.Kind.Video,
 	}
 
 	/** Waits for the camera to say how big its picture is, which it does not know the instant it is handed over. */
-	private async dimensions(): Promise<{ width: number; height: number }> {
+	private async dimensions(track?: MediaStreamTrack): Promise<{ width: number; height: number }> {
 		const { source } = this;
 		if (!source) {
 			throw new Error('background blur has no camera to read');
 		}
 
-		if (source.videoWidth && source.videoHeight) {
-			return { width: source.videoWidth, height: source.videoHeight };
+		const current = videoDimensions(track?.getSettings() ?? {}, source);
+		if (current) {
+			return current;
 		}
 
 		await new Promise<void>((resolve) => {
@@ -288,7 +354,7 @@ export class BackgroundBlurProcessor implements TrackProcessor<Track.Kind.Video,
 			setTimeout(done, 3000);
 		});
 
-		return { width: source.videoWidth || 640, height: source.videoHeight || 360 };
+		return videoDimensions(track?.getSettings() ?? {}, source) ?? { width: 640, height: 360 };
 	}
 
 	private resize(width: number, height: number): void {
@@ -296,13 +362,7 @@ export class BackgroundBlurProcessor implements TrackProcessor<Track.Kind.Video,
 			return;
 		}
 
-		this.canvas.width = width;
-		this.canvas.height = height;
-		// Resizing a canvas resets its context, including how it stretches the mask.
-		if (this.context) {
-			this.context.imageSmoothingEnabled = true;
-			this.context.imageSmoothingQuality = 'high';
-		}
+		this.renderer?.resize(width, height);
 	}
 
 	private schedule(): void {
@@ -312,14 +372,26 @@ export class BackgroundBlurProcessor implements TrackProcessor<Track.Kind.Video,
 		}
 
 		const step = () => {
+			if (this.timer !== undefined) {
+				clearTimeout(this.timer);
+				this.timer = undefined;
+			}
+			this.frameRequest = undefined;
 			this.render();
 			this.schedule();
 		};
 
 		// Driven by the camera's own frames where the browser will say when they arrive, so the output has the same
-		// rate as the input and no frame is drawn twice.
+		// rate as the input and no frame is drawn twice. Chromium can strand that callback when the video's srcObject
+		// changes resolution, so a watchdog keeps the canvas stream alive until frame callbacks resume.
 		if ('requestVideoFrameCallback' in source) {
 			this.frameRequest = source.requestVideoFrameCallback(step);
+			this.timer = setTimeout(() => {
+				if (this.frameRequest !== undefined) {
+					source.cancelVideoFrameCallback?.(this.frameRequest);
+				}
+				step();
+			}, 100);
 			return;
 		}
 
@@ -339,24 +411,17 @@ export class BackgroundBlurProcessor implements TrackProcessor<Track.Kind.Video,
 
 	private render(): void {
 		const { source } = this;
-		const { context } = this;
-		if (!source || !context || this.stopped || !source.videoWidth) {
+		const { renderer } = this;
+		if (!source || !renderer || this.stopped || !source.videoWidth) {
 			return;
 		}
 
-		this.resize(source.videoWidth, source.videoHeight);
-
-		if (!this.strength) {
-			// Pass-through. Frames have to keep coming — the room is publishing this canvas — but nothing is segmented,
-			// so turning blur off costs a copy rather than a model.
-			context.filter = 'none';
-			context.globalCompositeOperation = 'copy';
-			context.drawImage(source, 0, 0, context.canvas.width, context.canvas.height);
-			return;
+		if (this.strength) {
+			this.segment();
 		}
-
-		this.segment();
-		this.composite();
+		const radius = this.strength ? Math.max(1, Math.round(this.strength * (this.canvas?.height ?? source.videoHeight))) : 0;
+		renderer.render(source, radius);
+		requestCapturedFrame(this.processedTrack);
 	}
 
 	/**
@@ -395,11 +460,15 @@ export class BackgroundBlurProcessor implements TrackProcessor<Track.Kind.Video,
 
 		try {
 			this.segmenter.segmentForVideo(small.canvas, timestamp, (result) => {
-				if (result.categoryMask) {
-					this.readMask(result.categoryMask);
+				try {
+					const confidence = result.confidenceMasks?.[this.person.index];
+					if (confidence) {
+						this.readMask(confidence);
+					}
+				} finally {
+					result.close();
+					this.segmenting = false;
 				}
-				result.close();
-				this.segmenting = false;
 			});
 		} catch (err) {
 			this.segmenting = false;
@@ -408,64 +477,11 @@ export class BackgroundBlurProcessor implements TrackProcessor<Track.Kind.Video,
 	}
 
 	/**
-	 * Turns the segmenter's answer into something a canvas can cut with: a mask-sized bitmap whose alpha is the
-	 * subject.
-	 *
-	 * Only the alpha channel is written; the colours are never read, since `destination-in` cares about nothing else.
-	 * At the model's own size this is a few tens of thousands of pixels either way — under a millisecond.
+	 * Keeps the model's probability at each pixel, stabilizes only small changes, and uploads the matte for GPU edge
+	 * refinement. The renderer performs the full-resolution guided upsample; this method stays at model resolution.
 	 */
 	private readMask(mask: MPMask): void {
-		const values = mask.getAsUint8Array();
-
-		if (this.mask?.canvas.width !== mask.width || this.mask?.canvas.height !== mask.height) {
-			const canvas = document.createElement('canvas');
-			canvas.width = mask.width;
-			canvas.height = mask.height;
-			const context = canvas.getContext('2d');
-			if (!context) {
-				return;
-			}
-			this.mask = { canvas, context, image: context.createImageData(mask.width, mask.height) };
-		}
-
-		const { image, context } = this.mask;
-		for (let index = 0; index < values.length; index++) {
-			image.data[index * 4 + 3] = this.subject[values[index]];
-		}
-		context.putImageData(image, 0, 0);
-	}
-
-	private composite(): void {
-		const { source } = this;
-		const { context } = this;
-		if (!source || !context) {
-			return;
-		}
-
-		const { width, height } = context.canvas;
-		const radius = Math.max(1, Math.round(this.strength * height));
-		const feather = Math.max(1, Math.round(EDGE_SOFTNESS * height));
-
-		context.filter = 'none';
-		context.globalCompositeOperation = 'copy';
-		context.drawImage(source, 0, 0, width, height);
-
-		if (this.mask) {
-			// Keep the subject, and only the subject. The mask is blurred as it is stretched up, which is what stops
-			// the boundary looking cut out with scissors.
-			context.filter = `blur(${feather}px)`;
-			context.globalCompositeOperation = 'destination-in';
-			context.drawImage(this.mask.canvas, 0, 0, width, height);
-		}
-
-		// Everything behind, blurred. Drawn a radius larger on every side: a blur samples past the edge of what it is
-		// given, so a frame drawn to size would fade out around its own border, and the overlap also pushes the
-		// subject's own smeared outline outwards instead of leaving it as a halo.
-		context.filter = `blur(${radius}px)`;
-		context.globalCompositeOperation = 'destination-over';
-		context.drawImage(source, -radius, -radius, width + radius * 2, height + radius * 2);
-
-		context.filter = 'none';
-		context.globalCompositeOperation = 'source-over';
+		this.temporalMask = stabilizeConfidenceMask(mask.getAsFloat32Array(), this.temporalMask, this.person.invert);
+		this.renderer?.uploadMask(this.temporalMask, mask.width, mask.height);
 	}
 }

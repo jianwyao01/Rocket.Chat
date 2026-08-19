@@ -1,6 +1,6 @@
 import type { LocalVideoTrack } from 'livekit-client';
 import { createLocalVideoTrack } from 'livekit-client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { BlurLevel, VideoQuality } from './useCallPreferences';
 import type { BackgroundBlurProcessor } from '../../videoConference/livekit/backgroundBlurProcessor';
@@ -35,21 +35,27 @@ export const usePreviewVideoTrack = (
 ): { track?: LocalVideoTrack; error: boolean } => {
 	const [track, setTrack] = useState<LocalVideoTrack | undefined>();
 	const [error, setError] = useState(false);
+	const qualityRef = useRef(quality);
+	qualityRef.current = quality;
+	const requestedQuality = useRef<{ track: LocalVideoTrack; quality: VideoQuality } | undefined>(undefined);
 
-	// The camera is opened for the device and the resolution, and *not* for the blur: blur is applied to a track that
-	// already exists, so changing it must not re-open the camera.
+	// Open a new camera only when the device changes. Resolution changes restart this track in place below: replacing
+	// a processed track makes the video element follow a stopped canvas while the replacement processor initializes,
+	// which presents as a permanently black preview on slower, low-resolution camera modes.
 	useEffect(() => {
 		if (!enabled) {
+			requestedQuality.current = undefined;
 			setTrack(undefined);
 			return;
 		}
 
 		let cancelled = false;
 		let opened: LocalVideoTrack | undefined;
+		const initialQuality = qualityRef.current;
 
 		void createLocalVideoTrack({
 			...(deviceId && { deviceId: { exact: deviceId } }),
-			...(quality !== 'auto' && { resolution: RESOLUTIONS[quality] }),
+			...(initialQuality !== 'auto' && { resolution: RESOLUTIONS[initialQuality] }),
 		})
 			.then((next) => {
 				opened = next;
@@ -57,6 +63,7 @@ export const usePreviewVideoTrack = (
 					next.stop();
 					return;
 				}
+				requestedQuality.current = { track: next, quality: initialQuality };
 				setError(false);
 				setTrack(next);
 			})
@@ -72,7 +79,36 @@ export const usePreviewVideoTrack = (
 			// Stopped rather than left running: a preview nobody is looking at should not keep the camera light on.
 			opened?.stop();
 		};
-	}, [enabled, deviceId, quality]);
+	}, [enabled, deviceId]);
+
+	// Keep the LocalVideoTrack identity (and therefore the element attached to its processed output) stable while
+	// changing resolution. LiveKit restarts the processor with the replacement camera track once capture has changed.
+	useEffect(() => {
+		if (!track || (requestedQuality.current?.track === track && requestedQuality.current.quality === quality)) {
+			return;
+		}
+
+		let cancelled = false;
+		requestedQuality.current = { track, quality };
+
+		void track
+			.restartTrack(quality === 'auto' ? {} : { resolution: RESOLUTIONS[quality] })
+			.then(() => {
+				if (!cancelled) {
+					setError(false);
+				}
+			})
+			.catch((err: unknown) => {
+				if (!cancelled) {
+					setError(true);
+					console.warn('the preview camera would not change resolution', err);
+				}
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [track, quality]);
 
 	// Blur, applied to whichever track is current. Switched where a processor is already loaded, so moving between
 	// strengths costs nothing after the first — the same arrangement as in the call.
@@ -89,9 +125,29 @@ export const usePreviewVideoTrack = (
 				const existing = track.getProcessor() as BackgroundBlurProcessor | undefined;
 
 				if (existing) {
-					// Already segmenting: a strength is a number to it, so moving between levels here is instant, the
-					// same as it is in the call.
-					existing.setStrength(strength);
+					if (blurLevel === 'none') {
+						existing.setStrength(0);
+						return;
+					}
+
+					const { BackgroundBlurProcessor } = await import('../../videoConference/livekit/backgroundBlurProcessor');
+					if (cancelled) {
+						return;
+					}
+
+					if (existing.revision === BackgroundBlurProcessor.revision) {
+						// Already segmenting: a strength is a number to it, so moving between levels here is instant, the
+						// same as it is in the call.
+						existing.setStrength(strength);
+						return;
+					}
+
+					// Fast refresh cannot alter the capture mode of a processor that is already running. Replace that
+					// development-only stale instance so testing this fix does not require restarting the whole app.
+					await track.stopProcessor();
+					if (!cancelled) {
+						await track.setProcessor(new BackgroundBlurProcessor(strength));
+					}
 					return;
 				}
 

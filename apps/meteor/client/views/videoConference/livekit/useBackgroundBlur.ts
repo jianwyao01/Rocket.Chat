@@ -21,7 +21,17 @@ type Blur = 'camera' | 'processor';
  * ones of those. Tuned by eye against Meet at the same resolution — light is a hint of separation, strong hides the
  * room behind you.
  */
-export const BLUR_STRENGTH: Record<Exclude<BlurLevel, 'none'>, number> = { light: 0.012, medium: 0.024, strong: 0.048 };
+export const BLUR_STRENGTH: Record<Exclude<BlurLevel, 'none'>, number> = { light: 0.016, medium: 0.032, strong: 0.064 };
+
+export type CameraBlurCapability = 'none' | 'fixed' | 'controllable';
+
+/** A one-value capability can be observed, but only `[false, true]` can be changed by the application. */
+export const cameraBlurCapability = (values: boolean[] | undefined): CameraBlurCapability => {
+	if (!values?.includes(true)) {
+		return 'none';
+	}
+	return values.includes(false) ? 'controllable' : 'fixed';
+};
 
 /**
  * Blurring the background of the local camera, at a strength the user picks.
@@ -29,19 +39,20 @@ export const BLUR_STRENGTH: Record<Exclude<BlurLevel, 'none'>, number> = { light
  * Two ways of doing it, and which one runs is whichever can:
  *
  * **The camera's own**, via the `backgroundBlur` constraint — free, done by the platform before the frames reach
- * us, and available on ChromeOS and capable Windows hardware. It is asked for through `getCapabilities()` rather
- * than by trying it, because `applyConstraints` resolves happily for a constraint the browser has never heard of.
- * It has no strength to choose: it is on or off, so picking any level turns it on.
+ * us. Some platforms make it controllable and others only let us observe the OS setting. It is asked for through
+ * `getCapabilities()` rather than by trying it, because `applyConstraints` resolves happily for an unknown constraint.
+ * It has no strength to choose: it is on or off, so picking any level turns it on where control is available.
  *
- * **Ours**, via {@link BackgroundBlurProcessor}: MediaPipe segmentation over every frame, composited on a canvas at
- * full frame size. This one takes a strength, and changing it is a number on the running processor — no rebuild, no
- * re-publish — so only the first choice in a call is slow.
+ * **Ours**, via {@link BackgroundBlurProcessor}: MediaPipe confidence segmentation refined and composited on WebGL2.
+ * This one takes a strength, and changing it is a number on the running processor — no rebuild or re-publish — so
+ * only the first choice in a call is slow.
  */
 export const useBackgroundBlur = (videoTrack: LocalVideoTrack | undefined) => {
 	const { blurLevel: preferred, selectBlurLevel } = useBackgroundBlurPreference();
 
 	const processorRef = useRef<BackgroundBlurProcessor | null>(null);
 	const blurRef = useRef<Blur | null>(null);
+	const cameraControllableRef = useRef(false);
 	const trackRef = useRef<LocalVideoTrack | undefined>(videoTrack);
 	trackRef.current = videoTrack;
 
@@ -52,9 +63,9 @@ export const useBackgroundBlur = (videoTrack: LocalVideoTrack | undefined) => {
 	levelRef.current = level;
 	const [pending, setPending] = useState(false);
 
-	const cameraCanBlur = useCallback((track: LocalVideoTrack) => {
+	const cameraCapability = useCallback((track: LocalVideoTrack) => {
 		const capabilities = track.mediaStreamTrack?.getCapabilities?.() as { backgroundBlur?: boolean[] } | undefined;
-		return Boolean(capabilities?.backgroundBlur?.includes(true));
+		return cameraBlurCapability(capabilities?.backgroundBlur);
 	}, []);
 
 	// When the track goes away (camera toggled off), keep the blur UI available at whatever level it was — the user
@@ -72,15 +83,22 @@ export const useBackgroundBlur = (videoTrack: LocalVideoTrack | undefined) => {
 		}
 
 		let cancelled = false;
+		const mediaTrack = videoTrack.mediaStreamTrack;
+		const syncCameraLevel = () => setLevel(mediaTrack?.getSettings?.().backgroundBlur ? 'medium' : 'none');
 
 		void (async () => {
-			if (cameraCanBlur(videoTrack)) {
+			const nativeCapability = cameraCapability(videoTrack);
+			if (nativeCapability !== 'none') {
+				cameraControllableRef.current = nativeCapability === 'controllable';
 				blurRef.current = 'camera';
 				setBlur('camera');
-				setAvailable(true);
-				if (levelRef.current !== 'none') {
+				setAvailable(nativeCapability === 'controllable');
+				syncCameraLevel();
+				mediaTrack?.addEventListener('configurationchange', syncCameraLevel);
+				if (nativeCapability === 'controllable' && levelRef.current !== 'none') {
 					void videoTrack.mediaStreamTrack
-						?.applyConstraints({ backgroundBlur: true } as any)
+						?.applyConstraints({ backgroundBlur: true })
+						.then(syncCameraLevel)
 						.catch((err: unknown) => console.warn('could not re-apply camera blur', err));
 				}
 				return;
@@ -117,20 +135,21 @@ export const useBackgroundBlur = (videoTrack: LocalVideoTrack | undefined) => {
 
 		return () => {
 			cancelled = true;
+			mediaTrack?.removeEventListener('configurationchange', syncCameraLevel);
+			cameraControllableRef.current = false;
 			const processor = processorRef.current;
 			processorRef.current = null;
 			if (processor) {
 				void videoTrack.stopProcessor?.().catch(() => undefined);
 			}
 		};
-	}, [videoTrack, cameraCanBlur]);
+	}, [videoTrack, cameraCapability]);
 
 	/**
 	 * Picks a strength, or none.
 	 *
-	 * A remembered level is still not applied on arrival: starting blur republishes the camera, which brings the
-	 * effect above round again, and its cleanup stops the processor it just started. That is why this is the only
-	 * place blur begins.
+	 * The setup effect above applies a remembered level when a camera arrives. This path handles later user choices;
+	 * changing the strength of an existing processor is instant and does not republish the camera.
 	 */
 	const select = useCallback(
 		(next: BlurLevel) => {
@@ -147,12 +166,15 @@ export const useBackgroundBlur = (videoTrack: LocalVideoTrack | undefined) => {
 			}
 
 			if (blurRef.current === 'camera') {
+				if (!cameraControllableRef.current) {
+					return;
+				}
 				// One effect, no strengths: any level means on.
 				const on = next !== 'none';
 				void track.mediaStreamTrack
 					?.applyConstraints({ backgroundBlur: on })
 					// Read back rather than assumed, since the request resolves either way.
-					.then(() => setLevel(track.mediaStreamTrack?.getSettings?.().backgroundBlur ? next : 'none'))
+					.then(() => setLevel(track.mediaStreamTrack?.getSettings?.().backgroundBlur ? 'medium' : 'none'))
 					.catch((err: unknown) => console.warn('the camera would not change its background blur', err));
 				return;
 			}
@@ -164,9 +186,28 @@ export const useBackgroundBlur = (videoTrack: LocalVideoTrack | undefined) => {
 					const existing = processorRef.current;
 
 					if (existing) {
-						// A number on a processor that is already running: instant, and the camera stays published, which
-						// is why turning blur off leaves it attached and passing frames through rather than detaching.
-						existing.setStrength(strength);
+						const { BackgroundBlurProcessor } = await import('./backgroundBlurProcessor');
+						if (existing.revision === BackgroundBlurProcessor.revision) {
+							// A number on a current processor is instant, and the camera stays published, which is why turning
+							// blur off normally leaves it attached and passing frames through rather than detaching.
+							existing.setStrength(strength);
+							setLevel(next);
+							return;
+						}
+
+						// Hot code replacement cannot rewrite shaders already compiled into an existing WebGL context. A
+						// revision mismatch occurs only in a development session spanning such a change; replace that stale
+						// processor once so the preview does not continue showing the previous compositor indefinitely.
+						await track.stopProcessor?.();
+						processorRef.current = null;
+						if (next === 'none') {
+							setLevel('none');
+							return;
+						}
+
+						const processor = new BackgroundBlurProcessor(strength);
+						await track.setProcessor(processor);
+						processorRef.current = processor;
 						setLevel(next);
 						return;
 					}

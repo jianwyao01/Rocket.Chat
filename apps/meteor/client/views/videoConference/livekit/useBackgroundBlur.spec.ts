@@ -1,4 +1,4 @@
-import { BLUR_STRENGTH } from './useBackgroundBlur';
+import { BLUR_STRENGTH, cameraBlurCapability } from './useBackgroundBlur';
 
 // Three levels that produce the same picture are one level with two decoys — which is what the previous
 // implementation shipped, since the library divided every radius by four and clamped it to a minimum of one.
@@ -22,4 +22,11 @@ it('measures blur against the frame rather than in pixels', () => {
 		expect(strength).toBeGreaterThan(0);
 		expect(strength).toBeLessThan(0.5);
 	});
+});
+
+it('only treats a two-value camera blur capability as controllable', () => {
+	expect(cameraBlurCapability([false, true])).toBe('controllable');
+	expect(cameraBlurCapability([true])).toBe('fixed');
+	expect(cameraBlurCapability([false])).toBe('none');
+	expect(cameraBlurCapability(undefined)).toBe('none');
 });

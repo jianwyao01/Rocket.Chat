@@ -1,28 +1,93 @@
-import { subjectCategories } from './backgroundBlurProcessor';
+import {
+	captureCanvasTrack,
+	personConfidence,
+	refreshCapturedTrack,
+	requestCapturedFrame,
+	stabilizeConfidenceMask,
+	videoDimensions,
+} from './backgroundBlurProcessor';
 
-// What the multiclass model reports. Five of its six categories are parts of a person, so anything that treats one
-// category as "the subject" keeps only the hair sharp.
-it('takes every category that is not the background as the person', () => {
-	const subject = subjectCategories(['background', 'hair', 'body-skin', 'face-skin', 'clothes', 'others']);
-
-	expect(subject[0]).toBe(0);
-	[1, 2, 3, 4, 5].forEach((category) => expect(subject[category]).toBe(255));
+it('uses the inverse background confidence for the multiclass model', () => {
+	expect(personConfidence(['background', 'hair', 'body-skin', 'face-skin', 'clothes', 'others'])).toEqual({ index: 0, invert: true });
 });
 
-// The landscape model reports one label and paints everything else 255, so its *marked* pixels are the person and
-// the unnamed ones are the room. Read the other way round, it blurs the face and leaves the room sharp.
-it('takes the only label there is as the person, and what it never names as background', () => {
-	const subject = subjectCategories(['selfie']);
-
-	expect(subject[0]).toBe(255);
-	expect(subject[255]).toBe(0);
+it('uses the selfie confidence directly for the landscape model', () => {
+	expect(personConfidence(['selfie'])).toEqual({ index: 0, invert: false });
 });
 
-// Better a blurred background on a model nobody has met than a blurred face.
-it('falls back to the first category where nothing is named', () => {
-	expect(subjectCategories([])[0]).toBe(255);
+it('falls back to the first direct confidence mask for an unknown model', () => {
+	expect(personConfidence([])).toEqual({ index: 0, invert: false });
 });
 
-it('answers for every category a mask could hold', () => {
-	expect(subjectCategories(['background', 'hair'])).toHaveLength(256);
+it('preserves continuous confidence instead of reducing the matte to two categories', () => {
+	expect(stabilizeConfidenceMask(new Float32Array([0, 0.25, 0.5, 0.75, 1]), undefined, false)).toEqual(
+		new Uint8Array([0, 5, 128, 250, 255]),
+	);
+});
+
+it('can derive person alpha from background confidence', () => {
+	expect(stabilizeConfidenceMask(new Float32Array([0, 0.25, 1]), undefined, true)).toEqual(new Uint8Array([255, 250, 0]));
+});
+
+it('removes weak foreground confidence that would leak sharp room details over the blur', () => {
+	expect(stabilizeConfidenceMask(new Float32Array([0.1, 0.2, 0.3]), undefined, false)).toEqual(new Uint8Array([0, 0, 19]));
+});
+
+it('damps small confidence jitter but accepts real motion immediately', () => {
+	const previous = new Uint8Array([128, 0]);
+	const next = stabilizeConfidenceMask(new Float32Array([0.6, 1]), previous, false);
+
+	expect(next[0]).toBe(174);
+	expect(next[1]).toBe(255);
+});
+
+it('uses replacement-track dimensions instead of a stale video element after a resolution change', () => {
+	expect(videoDimensions({ width: 640, height: 360 }, { videoWidth: 1280, videoHeight: 720 })).toEqual({ width: 640, height: 360 });
+});
+
+it('falls back to video dimensions when track settings are not available', () => {
+	expect(videoDimensions({}, { videoWidth: 320, videoHeight: 180 })).toEqual({ width: 320, height: 180 });
+});
+
+it('recreates the captured output track when the canvas resolution changes', () => {
+	const current = { stop: jest.fn() } as unknown as MediaStreamTrack;
+	const replacement = { requestFrame: jest.fn() } as unknown as MediaStreamTrack;
+	const captureStream = jest.fn(() => ({ getVideoTracks: () => [replacement] }));
+	const canvas = { captureStream } as unknown as HTMLCanvasElement;
+
+	expect(refreshCapturedTrack(canvas, current, true)).toBe(replacement);
+	expect(current.stop).toHaveBeenCalledTimes(1);
+	expect(captureStream).toHaveBeenCalledWith(0);
+});
+
+it('keeps the captured output track while dimensions stay unchanged', () => {
+	const current = { stop: jest.fn() } as unknown as MediaStreamTrack;
+	const canvas = { captureStream: jest.fn() } as unknown as HTMLCanvasElement;
+
+	expect(refreshCapturedTrack(canvas, current, false)).toBe(current);
+	expect(current.stop).not.toHaveBeenCalled();
+	expect(canvas.captureStream).not.toHaveBeenCalled();
+});
+
+it('falls back to automatic canvas capture where manual frame requests are unavailable', () => {
+	const manual = { stop: jest.fn() } as unknown as MediaStreamTrack;
+	const automatic = {} as MediaStreamTrack;
+	const captureStream = jest
+		.fn()
+		.mockReturnValueOnce({ getVideoTracks: () => [manual] })
+		.mockReturnValueOnce({ getVideoTracks: () => [automatic] });
+
+	expect(captureCanvasTrack({ captureStream } as unknown as HTMLCanvasElement)).toBe(automatic);
+	expect(captureStream).toHaveBeenNthCalledWith(1, 0);
+	expect(captureStream).toHaveBeenNthCalledWith(2);
+	expect(manual.stop).toHaveBeenCalledTimes(1);
+});
+
+it('explicitly publishes each completed WebGL frame to the canvas capture track', () => {
+	const requestFrame = jest.fn();
+	const track = { requestFrame } as unknown as MediaStreamTrack;
+
+	requestCapturedFrame(track);
+
+	expect(requestFrame).toHaveBeenCalledTimes(1);
 });

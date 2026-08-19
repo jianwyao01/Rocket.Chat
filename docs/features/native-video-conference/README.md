@@ -226,9 +226,9 @@ truth about the result, which is why the two can disagree.
 Two ways of doing it, and which one runs is whichever can — the same arrangement as noise cancelling:
 
 - **The camera's own**, via the `backgroundBlur` constraint. Free: the platform does it before the frames reach us.
-  It exists on ChromeOS and on Windows where the hardware provides it, and nowhere else — macOS does not.
+  Some platforms let the app control it; others expose an OS-controlled effect that the app can only observe.
 - **Ours**, `BackgroundBlurProcessor` in `apps/meteor/client/views/videoConference/livekit/`: MediaPipe segmentation
-  and a 2D canvas, as a LiveKit `TrackProcessor`. Works anywhere with the modern APIs, and it is not free — it fetches
+  and a WebGL2 compositor, as a LiveKit `TrackProcessor`. Works anywhere with the modern APIs, and it is not free — it fetches
   MediaPipe's WASM and a model from a CDN (`cdn.jsdelivr.net`, `storage.googleapis.com`) the first time a level is
   picked. A workspace with no way out to the internet gets the caught failure and blur stays off.
 
@@ -238,9 +238,10 @@ per spec — and `getSettings().backgroundBlur` stays `undefined`. Trying it and
 that reports success and blurs nothing.
 
 The camera menu offers it as **one row per strength** — No blur / Light / Medium / Strong — the same shape as the
-camera rows above it, because "how much" is a choice and a switch could only ever say "on". Where the *camera* is
-doing the blurring the list is No blur / Medium only: that effect has no strengths to choose from. `none` by default
-(it is a deliberate look, and ours costs CPU), remembered, and the row in use says who is doing the work: *By your
+camera rows above it, because "how much" is a choice and a switch could only ever say "on". Where a controllable
+*camera* is doing the blurring the list is No blur / Medium only. An OS effect that reports only `[true]` is observed
+but not offered as a switch, because only a two-value capability can be changed by the application. `none` by default
+(it is a deliberate look, and ours costs device resources), remembered, and the row in use says who is doing the work: *By your
 camera* or *Processed on this device*. Changing strength is a number on the running processor, so only the first
 choice in a call is slow — and turning blur off leaves the processor attached, passing frames through untouched,
 because detaching one re-publishes the camera.
@@ -261,20 +262,21 @@ read as "low quality", and no value we passed could change it. It is also why th
 they were 0.1 / 1 / 2, and everything under 4 floors to the same clamped 1. Setting blur to 0.1 and *still* seeing a
 heavy, coarse background is what found it.
 
-Ours composites at full frame size, in three draws, with the browser doing the expensive part:
+Ours keeps the expensive rendering stages on WebGL2:
 
-1. the frame, sharp;
-2. the mask over it as `destination-in`, so only the subject is left, feathered along the edge;
-3. the frame again as `destination-over`, blurred, filling in everything behind — drawn a radius oversized on each
-   side, because a canvas blur samples past its own border and would otherwise fade the frame's own edges.
+1. MediaPipe returns a continuous confidence matte rather than a binary category verdict;
+2. a joint bilateral shader upsamples that matte against the full-resolution camera image, so its boundary follows
+   image edges instead of being feathered blindly;
+3. the background is represented as colour multiplied by background coverage, and both are blurred progressively
+   through consecutive texels on adaptive lower-resolution buffers; repeated passes converge on a smooth Gaussian
+   without creating separated copies of hard room edges;
+4. the final full-resolution pass divides colour by coverage and blends the sharp person over it.
 
-`ctx.filter = blur(Npx)` is a real Gaussian at full resolution and Skia runs it on the GPU, which is the whole reason
-this is short enough to be worth owning. It is also why support is *asked* rather than assumed: a browser that does
-not know canvas filters accepts the assignment, drops it, and every later draw succeeds — publishing a sharp
-background under a menu that says "strong". `supportsBackgroundBlur()` sets `ctx.filter` and reads it back, and lives
-in its own file so the menu can ask without loading MediaPipe for a call that may never blur.
+The coverage division prevents hair, skin and clothes from bleeding outwards into a coloured halo. Texture clamping
+also fixes the canvas implementation's other defect: it enlarged the background to hide soft outer edges, which moved
+the room relative to the sharp subject. `supportsBackgroundBlur()` therefore asks for WebGL2 and a capturable canvas.
 
-Strengths are **fractions of frame height** (0.012 / 0.024 / 0.048), not pixels. The same track is watched at whatever
+Strengths are **fractions of frame height** (0.016 / 0.032 / 0.064), not pixels. The same track is watched at whatever
 size the other end's tile happens to be, so what has to hold across resolutions is the blur relative to the picture;
 pixels would make every level three times lighter as the camera got better.
 
@@ -291,21 +293,20 @@ size regardless, so a frame-sized mask was only ever its own output stretched ba
 | mask read at model size, two-class model | 12ms | 9ms |
 | mask read at model size, multiclass model | 35ms | 20ms |
 
-Segmentation is what remains, so it runs on its own clock — `SEGMENT_INTERVAL`, 20Hz — and the last mask is reused
-between. That is invisible on a talking head and shows as a soft edge trailing a fast wave. `0` segments every frame.
+Segmentation is what remains, so it runs on its own clock — `SEGMENT_INTERVAL`, 20Hz. Low-amplitude confidence changes
+are stabilized to suppress edge flicker, while large changes are accepted immediately so real motion does not inherit
+the lag of an ordinary exponential average. `0` segments every frame.
 
-**Which category is the person comes from the model, not from us.** The two answers are opposites:
+**Which confidence is the person comes from the model, not from us.** The two answers are opposites:
 
 | model | labels | the person is |
 |---|---|---|
-| `selfie_segmenter_landscape`, 256×144, 244 KB | `selfie` | category **0**; the room is the unnamed 255 |
-| `selfie_multiclass_256x256`, 256×256, 15.6 MB | `background`, `hair`, `body-skin`, `face-skin`, `clothes`, `others` | categories **1–5** |
+| `selfie_segmenter_landscape`, 256×144, 244 KB | `selfie` | confidence mask **0** directly |
+| `selfie_multiclass_256x256`, 256×256, 15.6 MB | `background`, `hair`, `body-skin`, `face-skin`, `clothes`, `others` | **1 − background confidence** |
 
-One rule covers both — everything not called `background` — as a 256-entry lookup table built from
-`segmenter.getLabels()`. Read the other way round it blurs the person and leaves the room sharp, which is what it did
-the first time it ran. The multiclass model is the default: its separate `hair` class holds an edge far better, and it
-is worth being 65× the download and about twice the work per frame. `SEGMENTER` in the processor is the one line that
-changes that.
+`personConfidence()` derives that rule from `segmenter.getLabels()`. The multiclass model is the default: its separate
+`hair` class holds an edge far better, and it is worth being 65× the download and about twice the work per frame.
+`SEGMENTER` in the processor is the one line that changes that.
 
 #### Two things a processor changes about a track
 
@@ -477,10 +478,6 @@ same question, and remembers the same answer: it is one habit, not two.
 - **Single-process worker**. Supervisor only respawns one. No horizontal scaling story yet — for many concurrent rooms in a single workspace, you'd want multiple worker processes or external workers.
 
 - **The send-resolution picker aims at the camera, not the encoder.** See *Send resolution* above.
-
-- **A remembered blur level is not applied on join.** Starting blur republishes the camera track, which re-runs the
-  setup effect whose cleanup stops the processor it just started. Applying it on arrival needs that effect keyed off
-  the publication's sid rather than the track object — or the preflight's own track handed to the room.
 
 - **MediaPipe's WASM and model come from a CDN.** A workspace with no way out to the internet gets no blur. Serving
   them from `public/`, as the RNNoise assets already are, is what would fix it.
