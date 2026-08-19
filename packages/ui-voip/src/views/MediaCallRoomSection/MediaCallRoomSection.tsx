@@ -1,12 +1,13 @@
 import { css } from '@rocket.chat/css-in-js';
 import { Box, ButtonGroup } from '@rocket.chat/fuselage';
+import { useLocalStorage } from '@rocket.chat/fuselage-hooks';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import CallReactions, { type CallReaction } from './CallReactions';
-import CallStage from './CallStage';
-import { ToggleButton, Timer, DevicePicker, CameraPicker, ActionButton, ActionStrip, ActionToggleChat } from '../../components';
+import CallStage, { type StageLayout } from './CallStage';
+import { ToggleButton, Timer, DevicePicker, CameraPicker, LayoutPicker, ActionButton, ActionStrip, ActionToggleChat } from '../../components';
 import { useMediaCallInstance } from '../../context/MediaCallInstanceContext';
 import type { RemoteParticipantInfo } from '../../context/MediaCallViewContext';
 import { useMediaCallView } from '../../context/MediaCallViewContext';
@@ -224,6 +225,8 @@ const MediaCallRoomSection = ({
 	const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
 	const reactionPickerRef = useRef<HTMLDivElement>(null);
 
+	const [stageLayout, setStageLayout] = useLocalStorage<StageLayout>('videoconf-stage-layout', 'grid');
+
 	// Click-outside dismiss for the reaction popover. Stays open while the
 	// user clicks emojis inside it (so they can send several in a row), but
 	// closes when they click anywhere else on the page.
@@ -389,6 +392,7 @@ const MediaCallRoomSection = ({
 					onToggle={onToggleHand}
 				/>
 			)}
+			{isLiveKitCall && <LayoutPicker layout={stageLayout} onLayoutChange={setStageLayout} />}
 			{onSendReaction && (
 				<Box className={reactionPickerWrapStyles} ref={reactionPickerRef}>
 					<ToggleButton
@@ -462,6 +466,7 @@ const MediaCallRoomSection = ({
 					remoteParticipants={remoteParticipants}
 					onStopLocalScreenShare={onToggleScreenSharing}
 					handPositions={handPositions}
+					layout={stageLayout}
 				/>
 				<CallReactions reactions={reactions} />
 			</Box>

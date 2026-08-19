@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import CallTile from './CallTile';
 import type { RemoteParticipantInfo } from '../../context/MediaCallViewContext';
+import { useActiveSpeakerId } from '../../providers/useActiveSpeakerId';
 import { usePlayMediaStream } from '../../providers/usePlayMediaStream';
 import { useTileGridLayout } from '../../providers/useTileGridLayout';
 
@@ -20,12 +21,16 @@ type LocalParticipant = {
 	audioStream?: MediaStream | null;
 };
 
+export type StageLayout = 'grid' | 'spotlight' | 'sidebar';
+
 type CallStageProps = {
 	localParticipant: LocalParticipant;
 	remoteParticipants: RemoteParticipantInfo[];
 	onStopLocalScreenShare?: () => void;
 	/** Map from participantId → 1-based queue position for the raise-hand badge. */
 	handPositions?: Record<string, number>;
+	/** Which layout to use when no screen share is active. Defaults to `'grid'`. */
+	layout?: StageLayout;
 };
 
 const stageStyles = css`
@@ -213,6 +218,19 @@ const ownBadgeStyles = css`
 	pointer-events: none;
 `;
 
+// Spotlight layout: active speaker fills the stage, local user floats in the corner.
+const spotlightSelfPipStyles = css`
+	position: absolute;
+	bottom: 16px;
+	right: 16px;
+	width: 180px;
+	aspect-ratio: 16 / 9;
+	border-radius: 8px;
+	overflow: hidden;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+	z-index: 2;
+`;
+
 type ScreenViewerProps = {
 	stream: MediaStream;
 	label: string;
@@ -273,7 +291,7 @@ const ScreenShareThumb = ({
 };
 
 // eslint-disable-next-line react/no-multi-comp
-const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShare, handPositions }: CallStageProps) => {
+const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShare, handPositions, layout = 'grid' }: CallStageProps) => {
 	// All currently-active screen shares (local + remote), in a stable shape
 	// the rest of the component consumes. Re-derived each render from the
 	// participants list; tracking of "when did each share start" lives in a
@@ -373,6 +391,18 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 		return all;
 	}, [localParticipant, remoteParticipants, handPositions]);
 
+	// Active speaker: used by spotlight and sidebar layouts to decide which
+	// participant gets the large view. Falls back to the first remote
+	// participant when nobody is speaking.
+	const audioParticipants = useMemo(
+		() => [
+			{ id: localParticipant.id, audioStream: localParticipant.audioStream },
+			...remoteParticipants.map((p) => ({ id: p.id, audioStream: p.audioStream })),
+		],
+		[localParticipant.id, localParticipant.audioStream, remoteParticipants],
+	);
+	const activeSpeakerId = useActiveSpeakerId(audioParticipants, remoteParticipants[0]?.id ?? localParticipant.id);
+
 	// IMPORTANT: hooks must run unconditionally on every render. Both the
 	// grid layout hook and its companion ref live above any conditional
 	// return — when a screen share starts mid-call featuredScreen flips
@@ -447,6 +477,58 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 			</Box>
 		);
 	}
+
+	// Spotlight layout: active speaker fills the stage, local user's self-view
+	// floats as a small PiP in the bottom-right corner.
+	if (layout === 'spotlight') {
+		const featured = tiles.find((t) => t.id === activeSpeakerId) ?? tiles[0];
+		const selfTile = tiles.find((t) => t.id === localParticipant.id);
+		// When the local user is the active speaker, show the first remote instead.
+		const mainTile = featured.id === localParticipant.id && tiles.length > 1 ? tiles.find((t) => t.id !== localParticipant.id)! : featured;
+		return (
+			<Box className={stageStyles}>
+				<Box display='flex' width='full' height='full' position='relative'>
+					<Box className={mainStreamStyles}>
+						<CallTile {...mainTile} />
+					</Box>
+					{selfTile && selfTile.id !== mainTile.id && (
+						<Box className={spotlightSelfPipStyles}>
+							<CallTile {...selfTile} compact />
+						</Box>
+					)}
+				</Box>
+			</Box>
+		);
+	}
+
+	// Sidebar layout: active speaker large on the left, everyone else in a
+	// thumb column on the right — the same structure as the screen-share
+	// spotlight, but with a camera feed instead of a screen.
+	if (layout === 'sidebar') {
+		const isSideBySide = spotlightOrientation === 'side-by-side';
+		const featured = tiles.find((t) => t.id === activeSpeakerId) ?? tiles[0];
+		const others = tiles.filter((t) => t.id !== featured.id);
+		return (
+			<Box className={stageStyles} ref={stageRefCallback}>
+				<Box className={isSideBySide ? spotlightSideBySideStyles : spotlightStackedStyles}>
+					<Box className={mainStreamStyles}>
+						<CallTile {...featured} />
+					</Box>
+					{others.length > 0 && (
+						<Box className={isSideBySide ? thumbColumnStyles : thumbStripStyles} data-thumb-orientation={isSideBySide ? 'column' : 'row'}>
+							{others.map((t) => (
+								<Box key={t.id} className={isSideBySide ? thumbItemColumnStyles : thumbItemStyles}>
+									<CallTile {...t} compact />
+								</Box>
+							))}
+						</Box>
+					)}
+				</Box>
+			</Box>
+		);
+	}
+
+	// Grid layout (default): all participants in equal-sized tiles.
 
 	// When the last row has fewer tiles than `cols`, we center the orphans at
 	// their natural single-column width using `gridColumnStart` — never spanning.

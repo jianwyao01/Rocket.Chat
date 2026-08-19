@@ -213,6 +213,18 @@ The conference is a column: a row holding the call and the chat panel, then `Cal
 
 The panel is docked to the inline end, so its close button sits at the far end of its header — matching every other closable surface in the product. Both panels share that header (`CallPanelHeader`, the contextual bar's own header/title/close), so two docked side by side can't disagree about where their own edges are.
 
+### Stage layout
+
+The call stage (`CallStage`) supports three layouts, cycled by a button in the control bar:
+
+- **Grid** (default) — all participants in equal-sized tiles, rows/cols computed by `useTileGridLayout` to fill the stage within a [3:4 .. 16:9] aspect band.
+- **Spotlight** — the active speaker fills the stage; the local user's self-view floats as a small PiP in the bottom-right corner. When the local user *is* the active speaker, the first remote participant is shown large instead.
+- **Sidebar** — the active speaker is large on the left, all other participants are shown in a thumb column on the right (or row at the bottom on narrow stages), reusing the same structure as the screen-share spotlight.
+
+Active speaker detection runs in `useActiveSpeakerId`: a single `AudioContext` with one `AnalyserNode` per participant, sampling at ~12 Hz. A 1.5 s hold prevents flickering between speakers during conversational pauses. When nobody is speaking, the fallback is the first remote participant.
+
+When a screen share is active, the existing screen-share spotlight takes over regardless of the selected layout — the screen always wins.
+
 The bar carries two counts: how many people are in the call, and what is unread in the chat while its panel is
 closed. The unread one goes through `useUnreadDisplay`, the sidebar's own rules, so a mention reads as urgent in
 both places and a muted room stays quiet in both. The members count is deliberately `secondary` — a count of who is
@@ -1002,6 +1014,7 @@ could not be loaded" panel, because the detail panel is contact-call-shaped.
 | Conference model | `packages/models/src/models/VideoConference.ts` |
 | Route + viewport | `apps/meteor/client/views/conference/ConferenceRoute.tsx`, `ConferenceViewport.tsx` |
 | Call chrome | `apps/meteor/client/views/conference/ConferenceEmbeddedPage.tsx`, `ConferenceIframe.tsx`, `components/CallBar/`, `components/CallPanel/` |
+| Stage layout + active speaker | `packages/ui-voip/src/views/MediaCallRoomSection/CallStage.tsx`, `MediaCallRoomSection.tsx`, `providers/useActiveSpeakerId.ts` |
 | Chat panel | `apps/meteor/client/views/conference/ConferenceChat.tsx`, `ConferenceRoom.tsx`, `ConferenceThread.tsx`, `ConferenceThreadChat.tsx`, `ConferenceThreadModal.tsx`, `ConferenceStoresReady.tsx`, `CallPanelHeader.tsx`, `ConferenceChatNotShared.tsx` |
 | Nothing to show | `apps/meteor/client/views/conference/ConferenceStatePage.tsx`, `ConferencePageError.tsx`, `ConferenceUnauthorizedPage.tsx` |
 | Conference data | `apps/meteor/client/views/conference/hooks/useConferenceEmbedded.tsx` |
