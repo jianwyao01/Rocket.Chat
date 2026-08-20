@@ -54,11 +54,9 @@ const CallMemberItem = ({ member, hasChatAccess, handRaised, muted, audioStream,
 			<OptionAvatar>
 				<UserAvatar username={member.username} size='x28' />
 			</OptionAvatar>
-			{status === 'joined' && (
-				<OptionColumn>
-					<ReactiveUserStatus uid={member._id} />
-				</OptionColumn>
-			)}
+			<OptionColumn>
+				<ReactiveUserStatus uid={member._id} />
+			</OptionColumn>
 			<OptionContent>
 				<Box display='flex' alignItems='center'>
 					<Box withTruncatedText>{nameOrUsername}</Box>
