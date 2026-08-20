@@ -3,7 +3,7 @@
 ## 1. 方法
 
 - 调查基线：默认分支 `develop` @ `e10bd504b9e4576d6f862393caa277e695d249ed`（短 SHA `e10bd504b9`）。
-- 本文件从分支 `cursor/pm-atlas-merge-blueprint-d43d`（已含 00–05 / PR #5）拼接 **01–11** 全部 8 列功能行。
+- 本文件从分支 `cursor/pm-atlas-merge-06-11-f8ed`（已含 00–11 / PR #11）拼入 **12–16** 缺口猎捕 + i18n 停条件。01–11 表体不改写。
 - 源 PR / 分册（文档-only，未改产品代码）：
   1. [PR #2](https://github.com/jianwyao01/Rocket.Chat/pull/2) → `01-message-toolbar.md`
   2. [PR #1](https://github.com/jianwyao01/Rocket.Chat/pull/1) → `02-room-user-nav.md`
@@ -14,14 +14,19 @@
   7. [PR #8](https://github.com/jianwyao01/Rocket.Chat/pull/8) `cursor/omni-mkt-product-atlas-cc26` → `08-omnichannel-product.md` + `09-marketplace-product.md`
   8. [PR #7](https://github.com/jianwyao01/Rocket.Chat/pull/7) `cursor/pm-atlas-message-timeline-c4d9` → `10-message-timeline.md`
   9. [PR #6](https://github.com/jianwyao01/Rocket.Chat/pull/6) `cursor/pm-atlas-composer-states-877b` → `11-composer-states.md`
+  10. [PR #13](https://github.com/jianwyao01/Rocket.Chat/pull/13) `cursor/pm-atlas-12-chat-micro-gaps-b355` → `12-chat-micro-gaps.md`（canonical 12，35 行）+ [PR #15](https://github.com/jianwyao01/Rocket.Chat/pull/15) unique 9 行（12b）。不保留第二份 12。
+  11. [PR #14](https://github.com/jianwyao01/Rocket.Chat/pull/14) `cursor/room-chrome-gaps-eee2` → `13-room-chrome-gaps.md`
+  12. [PR #12](https://github.com/jianwyao01/Rocket.Chat/pull/12) `cursor/pm-atlas-account-gaps-c5d3` → `14-account-gaps.md`（canonical 14，12 个 `account.gap.*`）+ [PR #16](https://github.com/jianwyao01/Rocket.Chat/pull/16) unique 7 行（`e2e.save-modal.*` / `e2e.reset.2fa` / `tokens.*.2fa`）。
+  13. [PR #17](https://github.com/jianwyao01/Rocket.Chat/pull/17) `cursor/pm-atlas-i18n-cra-15-02ce` → `15-i18n-chat-room-account.md`（无 NEW 功能 id）
+  14. [PR #18](https://github.com/jianwyao01/Rocket.Chat/pull/18) `cursor/pm-atlas-16-i18n-must-fill-3aa3` → `16-i18n-must-fill.md`（2 个 `fill.*`；`## 仍必须补` empty）
 - 诚实标记：`[读]` = 源码推断；`[待渲染实测]` = 未在真实 RC Web 客户端核对。本蓝图不发明分册没有的入口或后果。
-- 分册原文完整保留在 `01`–`11`。本文件拼接 01–11 的每一张 **8 列功能行表**（05 无功能行）。04 的「供给 / 触发后果三件套」在本文件内按契约改写（见下），不回写分册。06–11 表体按分册原文拼接，不改写单元格。
-- **机械 id 碰撞**：跨分册精确 id 集合交集为空。未改任何分册文件。等价动作见文末「分册冲突 / canonical aliases」。
+- 分册原文保留在 `01`–`16`。本文件拼接 01–14 与 16 的每一张 **8 列功能行表**（05 / 15 无功能行）。04 的「供给 / 触发后果三件套」在本文件内按契约改写（见下），不回写分册。06–16 表体按分册原文拼接，不改写单元格。12 / 14 只在分册内追加 unique 行后再拼接。
+- **机械 id 碰撞**：跨分册精确 id 字符串交集仍为空（12 `chat.micro.*` ≠ 13 `room.join.*`；14 `account.gap.*` ≠ `acct.gap.*`）。等价动作见文末「分册冲突 / canonical aliases」（含 12/15 两份 12、12/16 两份 14）。
 - 04 契约改写（不发明事实）：
   - 触发后果三件套 = (1) DOM 出现/消失的元素 role+name (2) endpoint (3) 刷新后仍在什么。分册只写了「界面/导航/持久化」时：界面→(1)，能抽出的 `GET`/`POST`→(2)，否则 (2) 标 `[待渲染实测]`，持久化→(3)。
   - 供给 = **READ** 的设置/权限/路由参数/接口/上下文，不是 `core` vs `EE:module`。许可证留在门控。
 - 删行规则：入口序列与观察（一句话）都空才删。本合并 **删除 0 行**。
-- 回放：从本文件任一功能行表随机抽 10 行，**必须同时覆盖入口层（01–04）与内部层（06–11）**，按「完整入口点击序列」走，核「触发后果三件套」。
+- 回放：从本文件任一功能行表随机抽 10 行，**必须同时覆盖入口层（01–04）、内部层（06–11）与缺口层（12–14 / 16）**，按「完整入口点击序列」走，核「触发后果三件套」。
 
 ## 分册 01 — 消息工具栏 / 消息动作
 
@@ -3192,9 +3197,223 @@ Outgoing `name=`：event enabled name channel triggerWords targetRoom urls imper
 
 本表数据行：**5**。计数见附录验算。
 
+## 分册 12 — 聊天微交互缺口
+
+canonical = PR #13（A–I，35）。§J / 12b = PR #15 unique（9）。不保留第二份 12。
+
+## A. Quote 缺口
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `chat.micro.quote.multi` | 已有一条引用时再 Quote 另一条，堆到 composer 上方 | `房间消息 A→悬停工具栏→Quote`（已有 bar）→ `房间消息 B→悬停工具栏→Quote` | `subscription`+`chat`；同 mid 再点只是 `filter` 去重后仍一条 `createComposerAPI.ts:114`。链长 `Message_QuoteChainLimit`（默认 2）裁嵌套附件，**不**限 bar 条数。[读] | `[读]` ①`MessageBoxReplies` 出现 **两条** `QuoteAttachment`（`maxHeight=x256` 可滚）`MessageBoxReplies.tsx:21-25`。[待渲染实测] 是否 `list`。②无 REST until send。③仅内存；刷新掉（除非 `?reply=`） | core+setting | `msg.quote`；`implicit.quote.barDisplay`；`composer.state.quote.add` | `createComposerAPI.ts:113-116`；`MessageBoxReplies.tsx:14-26` |
+| `chat.micro.quote.more.absent` | More 菜单**没有** Quote | `房间消息→悬停工具栏→More` 找 Quote | Quote 只挂 `*Items` 图标，**不**进 `MessageToolbarActionMenu` 的 `use*Action` 表 | `[读]` ①More 无 `Quote` 项。②无。③负向。入口只有工具栏图标（+ 未赋值的 `message-mobile`） | core | `msg.quote` | `MessageToolbarActionMenu.tsx:46-77`（无 quote hook）；`DefaultItems.tsx:18` |
+| `chat.micro.quote.keyboard.absent` | **没有** Quote 快捷键 | 焦点 textarea 或消息行 → 按任何修饰+Q / 帮助 modal 找 Quote | `KeyboardShortcutsModal` 9 条无 quote；`MessageBox` keydown 无 quote 分支 | `[读]` ①帮助 modal 无 Quote 行；按键不挂引用条。②无。③负向 | core | `shortcut.composer.prevMessage` | `KeyboardShortcutsModal.tsx:17-66`；`MessageBox.tsx:216-278` |
+| `chat.micro.quote.from-search.absent` | 搜索结果工具栏**不能** Quote | `顶栏 Search_Messages→关键词→悬停结果` 找 Quote | `SearchItems` 只装配 Jump | `[读]` ①只有 `Jump_to_message`；无 Quote 图标、More 也无 quote hook（search context 不含 permalink/copy/quote）。②无 `quoteMessage`。③负向 | core | `msg.jump`；`msg.quote` | `SearchItems.tsx:11-16` |
+| `chat.micro.quote.collapse.absent` | 已发出消息上的引用块**不能**折叠/展开 | `房间时间线→引用 blockquote` 点标题/chevron | `QuoteAttachment` 无 `CollapsibleContent`；blockquote 本身无 onClick（仅 hover 样式） | `[读]` ①无 Collapse/Uncollapse。折叠是附件/Link_Preview（`tl.attach.collapse`），不是引用。②无。③负向 | core | `tl.attach.collapse`；`tl.quote.jump` | `QuoteAttachment.tsx:46-82` |
+
+本表数据行：**5**。计数见附录验算。
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `chat.micro.reply.thread.more.absent` | More **没有** Reply_in_thread（它是工具栏图标） | `房间消息→More` 找 Reply_in_thread | hook 表无 reply-in-thread；图标在 `DefaultItems`/`FederatedItems`/`VideoconfItems`/`MobileItems` | `[读]` ①More 无该项。②无。③负向。threads context 连图标都没有（`ThreadsItems` 无 ReplyInThread） | core | `msg.thread.reply` | `MessageToolbarActionMenu.tsx:46-77`；`DefaultItems.tsx:19`；`ThreadsItems.tsx:14-21` |
+| `chat.micro.reply.thread.from-search.absent` | 搜索结果**不能** Reply in thread | `Search_Messages→悬停结果` 找 Reply_in_thread | 同 SearchItems 只 Jump | `[读]` ①无该图标。②无 `router.navigate tab=thread`。③负向 | core | `msg.thread.reply`；`msg.jump` | `SearchItems.tsx:11-16` |
+| `chat.micro.reply.dm.from-search.absent` | 搜索结果**不能** Reply in DM | `Search_Messages→悬停→More` 找 Reply_in_direct_message | `useReplyInDMAction.context` 不含 `search`；Search More 几乎只可能剩 webdav | `[读]` ①无 Reply_in_direct_message。②无 `openRouteLink('d',…,{reply})`。③负向 | core | `msg.reply.dm` | `useReplyInDMAction.ts:71`；`SearchItems.tsx:11-16` |
+
+本表数据行：**3**。计数见附录验算。
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `chat.micro.delete.cancel` | 关掉删除确认、不删 | `房间消息→More→Delete→Are_you_sure→Cancel`（或关） | 已打开 `DeleteMessageConfirmModal` | `[读]` ①danger modal 关；listitem 仍在；若当时在编辑该条则 `stop`+focus composer `requestMessageDeletion.ts:20-28`。②无 `chat.delete`。③消息仍在 | core | `msg.delete` | `DeleteMessageConfirmModal.tsx:54-64`；`requestMessageDeletion.ts:31-41` |
+| `chat.micro.delete.last-hotkey.absent` | **没有**「一键删上一条」热键 | 帮助 modal 找 Delete；或空 composer 按 Backspace/Ctrl+D | 帮助 9 条无 delete；`MessageBox` 无 delete-last 分支。可达路径只有 More→Delete 或 ↑ 进编辑再清空 Send | `[读]` ①按键不删消息。②无。③负向。删上一条 = `shortcut.composer.prevMessage` + `composer.state.send.edit.empty-delete` | core | `msg.delete`；`composer.state.send.edit.empty-delete` | `KeyboardShortcutsModal.tsx:17-66`；`MessageBox.tsx:216-278` |
+
+本表数据行：**2**。计数见附录验算。
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `chat.micro.send.pending.indicator` | 刚发出的自己的消息呈发送中（不可点） | 已订阅房间 → 非空 Send/Enter → 看刚出现的 `listitem` | `runOptimisticSendMessage` 写 `temp:true`（联邦房 **不**走乐观，`app/lib/client/methods/sendMessage.ts:30-32`）。`RoomMessage` `isPending` + `aria-busy` | `[读]` ①该 `role=listitem` `aria-busy=true` `isPending`；**无** Retry/Cancel 钮。[待渲染实测] fuselage pending 样式 name。②伴随 `POST /v1/chat.sendMessage`。③stream/REST 成功后清 `temp`；刷新不再 pending | core | `composer.send`；`composer.state.send.new` | `sendMessage.ts:49-59`；`app/lib/client/methods/sendMessage.ts:34-44`；`RoomMessage.tsx:113,120`；`ThreadMessage.tsx:41` |
+| `chat.micro.send.error-toast` | 发送 REST 失败出 error toast，**不**在气泡上提供 Retry | 断网/服务端拒 → Send | `process()` 或 join 失败 `catch` | `[读]` ①error toast（文案=error）；乐观行可能仍 `temp`。[待渲染实测] 失败后 `aria-busy` 是否一直 true。②失败的 `POST /v1/chat.sendMessage`（或 join `POST /v1/rooms.join`）。③消息通常不 persist；无独立失败气泡 | core | `composer.state.send.e2ee.server-reject` | `sendMessage.ts:72-77,122-123,145-146` |
+| `chat.micro.send.retry.absent` | 失败/pending 消息上**没有** Retry | 发送失败后点该 listitem / 找 Retry | 全 `components/message` + `sendMessage.ts` 无 retry 控件 | `[读]` ①无 Retry。②不会重发。③负向。用户只能再打一次 Send | core | `chat.micro.send.error-toast` | `sendMessage.ts:113-124`；`RoomMessage.tsx:102-148` |
+| `chat.micro.send.cancel-pending.absent` | **不能**取消已乐观发出、仍 pending 的消息 | pending 行上找 Cancel | 无 cancel-temp API/按钮 | `[读]` ①无 Cancel。②无。③负向。composer 已 `clear()` | core | `chat.micro.send.pending.indicator` | `sendMessage.ts:48-49`；`RoomMessage.tsx:113` |
+| `chat.micro.send.queued-ui.absent` | **没有**离线队列/queued 气泡 | 断网连发多条，找 queued/pending 队列条 | 无 queue store；失败只 toast | `[读]` ①无 queued 列表、无「等待发送」。②无。③负向。上传队列是 chip（11），不是消息发送队列 | core | `composer.state.upload.chip.loading` | `sendMessage.ts` 全文无 queue；`client/components/message` 无 queued |
+| `chat.micro.send.too-long.as-attachment` | 超长文本改以 txt 附件发出 | textarea 文本 `> Message_MaxAllowedSize` → Send → 模态确认 | 非编辑；`FileUpload_Enabled`；`Message_AllowConvertLongMessagesToAttachment` | `[读]` ①`GenericModal` title=`Message_too_long` 文案 `Send_it_as_attachment_instead_question`；确认后 chip `username - {date}.txt`。[待渲染实测] confirm name。②`uploadFiles` → `POST /v1/rooms.media/:rid`（随后 confirm+send）。③附件消息 persist | core+setting | `composer.send`；`composer.action.file-upload` | `processTooLongMessage.ts:10-39,47-57` |
+| `chat.micro.send.too-long.toast` | 不能转附件时只 toast，文本留在 composer | 超长 +（正在编辑 **或** 关上传 **或** 关转附件）→ Send | `mid` 或 `!FileUpload_Enabled` 或 `!Message_AllowConvertLongMessagesToAttachment` | `[读]` ①error toast `Message_too_long`；textarea **仍是**原文。②无 send。③未发出 | core+setting | `composer.state.send.edit.save` | `processTooLongMessage.ts:19-22` |
+| `chat.micro.send.too-long.cancel` | 关掉超长转附件模态，不发 | 超长模态 → Cancel / 关 | 模态已开 | `[读]` ①modal 关；原文仍在 textarea。②无 upload。③未发出 | core | `chat.micro.send.too-long.as-attachment` | `processTooLongMessage.ts:42-54` |
+
+本表数据行：**8**。计数见附录验算。
+
+## E. 正文复制 / 长按
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `chat.micro.copy.text.from-body.absent` | 消息体（非代码块、非 More）**没有** Copy text | `消息行→正文` 找 Copy；或长按 | Copy 只在 More `useCopyAction`；正文仅围栏代码 `title=Copy` | `[读]` ①body 无 Copy_text。②无。③负向。浏览器选区复制是原生，无 RC toast | core | `msg.copy.text`；`tl.body.code.copy` | `useCopyAction.ts:14-38`；`RoomMessageContent` 无 copy |
+| `chat.micro.copy.link.from-body.absent` | 消息体/时间戳**没有** Copy link | `消息行→时间戳或正文` 找 Copy_link | permalink 只在 More（及 Forward 模态） | `[读]` ①`MessageTimestamp` 无 onClick `MessageHeader.tsx:74-76`。②无。③负向 | core | `msg.permalink.copy`；`tl.quote.time` | `MessageHeader.tsx:74-76`；`usePermalinkAction.ts:10-50` |
+| `chat.micro.long-press.absent` | Web **没有**独立长按消息菜单；`message-mobile` 未赋值 | 移动宽度长按消息行 | `MessageToolbarHolder` 只 `IntersectionObserver`+菜单开着保活；全 `client` **0** 处 `context='message-mobile'` | `[读]` ①无 long-press handler / contextmenu 菜单。②无。③负向。`MobileItems` 已装配但无调用方（01 已记） | core | `msg.quote`；01 表 B.message-mobile | `MessageToolbarHolder.tsx:17-53`；`MobileItems.tsx:15-24` |
+
+本表数据行：**3**。计数见附录验算。
+
+## F. 反应 picker 内部 / `+:shortcode`
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `chat.micro.reaction.plus-shortcode` | 在 composer 发送 `+:smile:` 给**房间最后一条**加反应（不是发消息） | textarea 只输入 `+:name:`（`name` 在 `emoji.list`）→ Send | `^\+(:.*?:)$`；emoji 必须已注册；存在 `findLastMessage`（本房/本线程最后一条，**不限自己的**） | `[读]` ①composer `clear()`；最后一条反应条出现该 emoji；**不**新增 listitem。②`POST /v1/chat.react` `{emoji, messageId}`；先 `runOptimisticSetReaction`。失败 toast。③刷新后反应仍在 | core | `msg.reaction.add`；`composer.popup.emoji-plus` | `processSetReaction.ts:9-34`；`sendMessage.ts:21-22`；`data.ts:51-55` |
+| `chat.micro.reaction.picker.search` | 从**消息**打开的 picker 里搜索再选（01 只写「选一个」） | `悬停工具栏→Add_Reaction` **或** `反应条→title=Add_Reaction` → dialog `aria-label=Search` 输入 | 与 `msg.reaction.add` / `tl.reaction.add` 同门；同一 `EmojiPicker`（`chat.emojiPicker.open`） | `[读]` ①`role=dialog` `Emoji_picker`；`aria-label=Search`；结果 `SearchingResult` / `No_emojis_found`。②选中才 `POST /v1/chat.react`。③`localStorage emoji.recent` | core+preference | `msg.reaction.add`；`composer.state.emoji.search` | `ReactionMessageAction.tsx:78-83`；`MessageListProvider.tsx:111-116`；`EmojiPicker.tsx:139-205` |
+| `chat.micro.reaction.picker.tone` | 从**消息**打开的 picker 改肤色 | 同上 dialog → `Skin_tone` → tone 0–5 → 再点 emoji | 同 picker | `[读]` ①后续带肤色的 emoji 按 tone 插入/反应。②无 REST until 选中。③`localStorage emoji.tone` | core | `composer.state.emoji.tone`；`msg.reaction.add` | `EmojiPicker.tsx:240-241`；`EmojiPickerProvider.tsx:23,116` |
+
+本表数据行：**3**。计数见附录验算。
+
+## G. Forward / Pin / Star 模态内部
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `chat.micro.forward.close` | 关掉转发模态、不发 | `悬停工具栏→Forward_message→ModalClose title=Close`（无独立 Cancel 文案钮） | 模态已开 | `[读]` ①`Forward_message` dialog 关。②无 `chat.postMessage`。③本房/目标房都不变 | core | `msg.forward` | `ForwardMessageModal.tsx:96,45-47`；`ForwardMessageAction.tsx:45-47` |
+| `chat.micro.forward.comment.absent` | 转发模态**没有**附加评论框 | 打开 Forward 找 comment/textarea | `optionalMessage` 写死 `''`，只 `prependReplies` 原消息 | `[读]` ①只有 `Person_Or_Channel` + 引用预览 + `Copy_Link`/`Forward`。②`POST /v1/chat.postMessage` `{roomId: rooms, text: curMsg}` 无用户评论文本。③负向 | core | `msg.forward` | `ForwardMessageModal.tsx:51-59,98-136` |
+| `chat.micro.pin.cancel` | 关掉钉选确认、不钉 | `More→Pin→Pin_Message 模态→Cancel` | 模态已开（`onCancel`） | `[读]` ①warning modal 关；钉选指示不出现。②无 `chat.pinMessage`。③`pinned` 仍 false | core | `msg.pin` | `usePinMessageAction.tsx:35`；`PinMessageModal.tsx:29` |
+| `chat.micro.star.confirm.absent` | Star **没有**确认模态 | `More→Star` | `Message_AllowStarring`；非 omni；尚未 star | `[读]` ①无 modal，直接 toast `Message_has_been_starred`。②立刻 `POST /v1/chat.starMessage`。③负向「确认步」 | core | `msg.star` | `useStarMessageAction.ts:28-29` |
+
+本表数据行：**4**。计数见附录验算。
+
+## H. 已读勾
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `chat.micro.read-receipt.tick.click.absent` | 气泡上的单/双勾**不可点**（详情只在 More） | `自己的消息行→右上角 check-single/check-double` | `Message_Read_Receipt_Enabled` 才渲染；`role=status` 无 onClick | `[读]` ①`aria-label=Message_sent` 或 `Message_viewed`；点击无模态。②无。③负向。名单走 `msg.read-receipts` | core+setting+license | `msg.read-receipts` | `ReadReceiptIndicator.tsx:14-23` |
+
+本表数据行：**1**。计数见附录验算。
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `chat.micro.invite.accept` | 接受房间/DM 邀请，进入时间线 | 打开 `subscription` 为邀请态的房间 → `Accept` | `Room.tsx` 走 `RoomInvite`；`POST /v1/rooms.invite` `{action:'accept'}` | `[读]` ①`StatesTitle=Message_request` + `Accept` loading 后换正常 `RoomBody`。[待渲染实测] button name。②`POST /v1/rooms.invite` `{roomId, action:'accept'}`。③刷新后已是订阅者 | core | `route.invite` | `RoomInviteBody.tsx:36-38`；`useRoomInvitation.ts:7-11`；`RoomInvite.tsx:49-54` |
+| `chat.micro.invite.reject` | 点 Reject 打开拒绝确认 | 邀请页 → `Reject` | 同上 | `[读]` ①先出 danger `Reject_invitation` 模态，**尚未** POST。②无直到确认。③仍停在邀请页 | core | `chat.micro.invite.reject.confirm` | `RoomInviteBody.tsx:33-35`；`useRoomInvitation.ts:12-14` |
+| `chat.micro.invite.reject.confirm` | 确认拒绝邀请并离开 | `Reject` → 模态 `Reject_invitation` 确认 | 模态 `resolve(true)` | `[读]` ①模态关；回 `/home`（`useGoToHomeOnRemoved`）。②`POST /v1/rooms.invite` `{roomId, action:'reject'}`。③刷新后不再是邀请/成员 | core | `chat.micro.invite.accept` | `useRoomRejectInvitationModal.tsx:31-39`；`useRoomInvitation.ts:12-14` |
+| `chat.micro.invite.reject.cancel` | 关掉拒绝确认、仍留在邀请页 | 拒绝模态 → Cancel | 模态 `resolve(false)` | `[读]` ①模态关；`Accept`/`Reject` 仍在。②无 POST。③邀请态仍在 | core | `chat.micro.invite.reject` | `useRoomRejectInvitationModal.tsx:40-43` |
+| `chat.micro.invite.learn-federation` | 联邦邀请页打开联邦文档 | 联邦房间邀请页 → `Learn_more_about_Federation` | `isRoomFederated(room)` 才有 `infoLink` | `[读]` ①新标签 `links.go.matrixFederation`。②无 RC endpoint。③邀请态不变 | core | `tl.e2ee.learn-more` | `RoomInvite.tsx:28`；`RoomInviteBody.tsx:40` |
+| `chat.micro.list.reload` | 时间线 React 崩溃后整页重载 | 消息列表 ErrorBoundary fallback → `Reload` | `ErrorBoundary`；`resetKeys=[room._id]` | `[读]` ①`StatesTitle=Error` `Error_something_went_wrong`；点后 `location.reload()`。②无专用 REST。③整页刷新 | core | — | `MessageListErrorBoundary.tsx:15-30` |
+
+本表数据行：**6**。计数见附录验算。
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `chat.micro.quote.of-quote` | Quote 一条本身带引用链的消息时按链长截断嵌套 | `房间时间线→已含引用附件的消息→悬停工具栏→Quote` | `Message_QuoteChainLimit` 默认 **2** `MessageBox.tsx:120`；`settings/message.ts:230`。`limit < 2` 或当前层 `>= limit` 时剥掉更深的 quote 附件，**保留**非 quote 附件 `limitQuoteChain.ts:21-23`。 | `[读]` ①composer chip 里嵌套 quote 比原消息浅；发出后时间线引用链同样被截。②点击无 REST；发送 `POST /v1/chat.sendMessage`（`prependReplies` 先写 `[ ](permalink)` `prependReplies.ts:6-15`）。③发出后引用链 persist 为截断后的附件。[读] | core+setting | `msg.quote`；`composer.state.quote.add` | `createComposerAPI.ts:114`；`limitQuoteChain.ts:8-37` |
+| `chat.micro.quote.same-readd` | 对同一条再点 Quote **不会**关掉引用，只是挪到数组末尾 | `已引用 mid=X 的 bar 仍在→同一条消息再点 Quote` | 该 mid 已在 `_quotedMessages` | `[读]` ①chip **不**消失；`filter(_id!==mid)` 后再 `push` 同一条 `createComposerAPI.ts:114`。②无 REST。③仍 session。PM 勿当成 toggle。负向：没有「再点 Quote 取消」 | core | `msg.quote`；`composer.state.quote.dismiss` | `createComposerAPI.ts:113-116` |
+| `chat.micro.quote.bar.jump.absent` | composer 引用 chip **没有**时间线上的 jump / 作者链 | `已 Quote→看 composer 上方 chip`（不要点时间线引用块） | `MessageBoxReply` 手造 attachment：**无** `message_link`、**无** `author_link`；`attachments`/`collapsed` 皆 true `MessageBoxReply.tsx:31-40`。`QuoteAttachment` 只在这两个字段存在时才渲染可点链 | `[读]` ①chip 上看不到 `title=Jump_to_message`；作者名不是 `a`；时间戳无 href。可点的只有 `Dismiss_quoted_message`。②无。③无。与 10 `tl.quote.jump` **不是**同一入口。负向断言 | core | `tl.quote.jump`；`tl.quote.author`；`tl.quote.time`；`composer.state.quote.dismiss` | `MessageBoxReply.tsx:30-51`；`QuoteAttachment.tsx:59-67` |
+| `chat.micro.send.toast.click.absent` | 发送失败 toast **不是**重试入口 | 触发 `chat.micro.send.retry.absent` 后 → 点 error toast | `dispatchToastMessage` 无 onClick 载荷 `toast.ts:22-25`；`ToastMessagesProvider` 只 `dispatchToastBar({ type, title, message })` `ToastMessagesProvider.tsx:50-69`。Fuselage ToastBar 点击通常只关掉条。[待渲染实测] 关 toast 的精确 role | `[读]` ①toast 消失或保持；composer / 乐观行 **不**因此重发。②无第二发 `chat.sendMessage`。③无。负向断言 | core | `chat.micro.send.retry.absent` | `toast.ts:22-25`；`ToastMessagesProvider.tsx:50-69` |
+| `chat.micro.composer.resize.absent` | composer **没有**用户可拖的高度手柄 | 把指针移到 textarea 底边 / 右下角找 resize handle | `useAutoGrow` 只随输入把 `height` 设为 `scrollHeight` `useAutoGrow.ts:24-43`。`RoomBody` `onResize={handleComposerResize}` 是布局回调，不是手柄。textarea style **无** `resize:vertical`。 | `[读]` ①无 drag handle；高度随字数自动变。②无 REST。③不 persist。负向断言 | core | `composer.send` | `useAutoGrow.ts:11-62`；`RoomBody.tsx:237-238` |
+| `chat.micro.composer.md-preview.absent` | composer **没有** Markdown 预览开关 | 看格式栏 / overflow `Message_Formatting_toolbox` / Send 旁 | `formattingButtons` 7 项：bold / italic / strike / inline-code / multiline-code / link / katex。全 `client/views/room/composer` **无** preview/markdown-preview 控件。`RoomBody.tsx:242-243` `previewUrls` 仍是 TODO，未挂发送前 URL 预览选择器。 | `[读]` ①无 Preview / 预览 tab。手打 markdown 发出后才在时间线渲染。②无。③无。负向断言 | core | `composer.fmt.quote.absent`；`composer.format.bold` | `messageBoxFormatting.ts:34-106`；`RoomBody.tsx:242-243` |
+| `chat.micro.otr.absent` | 本仓库 **没有** OTR 房间动作 / 消息动作 | 打开 DM → 房间工具箱 / 消息 More / composer 找 OTR | `rg` `apps/meteor/client` `apps/meteor/app` `ee`：`OTR` / `OTR_Enabled` / `useOTR` **0** 命中。E2EE 走 10 `tl.e2ee.*` 与 11 `composer.state.send.e2ee.*`，不是 OTR。 | `[读]` ①无 OTR 按钮 / 会话条。②无 otr endpoint。③无。负向断言 | — | `tl.e2ee.save-password`；`composer.state.send.e2ee.hint` | 全 `client`/`app`/`ee` 无匹配 |
+| `chat.micro.thread.title.jump.absent` | 线程栏标题 **不是**跳回父消息的控件 | `线程面板→header ContextualbarTitle`（主消息 HTML 标题） | `ThreadTitle` 只 `dangerouslySetInnerHTML`，无 onClick `ThreadTitle.tsx:11-16`。跳回主时间线走消息上的 `msg.jump`（threads Items）。 | `[读]` ①点标题不导航、不写 `?msg=`。②无 REST。③无。负向断言 | core | `msg.jump`；`thread.panel.close`；`thread.panel.backToList` | `ThreadTitle.tsx:11-16`；`Thread.tsx:111-115` |
+| `chat.micro.slash.join.already-member` | `/join` 已在该房时客户端改写成 `/open` 并跳转 | `textarea` 行首 `/join #已加入的频道` → Send | 命令 permission `view-c-room`；`result` 看 `error-user-already-in-room` `slashcommands-join/client/client.ts:10-16`。这是 **slash result 回调**，不是 Join 按钮（03 `composer.join`）。 | `[读]` ①composer `clear()`；路由进该频道（`/open` clientOnly）。②先 `POST /v1/commands.run`（join）；already-in-room 后本地 `slashCommands.run({command:'open'})`，`/open` 用订阅路由，必要时 `POST /v1/im.create`。③落在该房。`[待渲染实测]` 是否闪错误 toast | core+permission | `composer.state.slash.execute`；`composer.join` | `slashcommands-join/client/client.ts:3-16`；`slashcommands-open/client/client.ts:9-42` |
+
+本表数据行：**9**。计数见附录验算。
+
+## 分册 13 — 房间 chrome 缺口
+
+源：[PR #14](https://github.com/jianwyao01/Rocket.Chat/pull/14)。命名空间 `room.chrome.*` / `room.banner.*` / `room.join.*`。表体按分册原文（第一列无反引号）。
+
+## 表 A — `room.chrome.*`
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+|---|---|---|---|---|---|---|---|
+| room.chrome.topic-link | 已有主题时点主题里的 markdown 链接 | `房间头→主题 Markdown 内 <a>` | `room.topic` 非空且解析出 href `RoomTopic.tsx:36`；`MarkdownTextInner.tsx:35` | DOM: [读] 跟链（内链改路由 / 外链新标签）`[待渲染实测]` name；endpoint: 无房间 REST；persist: 导航 URL 刷新仍在 | `room.topic` | `room.header.topic-add` | `RoomTopic.tsx:36`；`MarkdownTextInner.tsx:35,119-143` |
+| room.chrome.parent-team | 从团队子房回到团队主房 | `房间头左→arrow-back-up title=Back_to__roomName__team` | `room.teamId && !room.teamMain`；公开团队 **或** 自己在该团队；`teamInfo` 未 error `ParentTeam.tsx:13-56` | DOM: [读] IconButton title 该 i18n；进团队主房；endpoint: [读] `GET` team info / user teams；persist: 刷新停在主房 URL | `teamId` `roomId` | `implicit.header.parentRoomBack` | `ParentTeam.tsx:45-63`；`ParentRoom.tsx:13-14` |
+| room.chrome.foreword.user-link | DM 前言点对方名进其 1:1 | `时间线顶 RoomForeword→对方 Tag` | 仅 DM；`usernames` 去掉自己后 length≥1 `RoomForeword.tsx:22-24` | DOM: [读] `Tag` `data-username` `href=/direct/{username}`；进该 DM；endpoint: [读] `GET /v1/users.info` 填显示名；persist: DM URL | `room.usernames` | `user.action.direct-message` | `RoomForewordUsernameList.tsx:15-19`；`RoomForewordUsernameListItem.tsx:17` |
+| room.chrome.sidebar.open-marks-read | 打开（或聚焦）未读房并在未读线可见时标已读 | `侧栏行→进房`（或窗口 focus，未读 divider 在视口） | 有 subscription 且 unread 或 alert；`document.hasFocus`；未读 mark 可见；无 `unreadNotLoaded` `readStateManager.ts:120-138` | DOM: [读] 行 `data-unread` / badge 消失；endpoint: [读] `POST /v1/subscriptions.read` `{rid}`；persist: 刷新无未读角标 | `subscription.unread` `ls` | `sidebar.roomMenu.toggleRead`；`tl.unread.mark-read` | `readStateManager.ts:59-61,120-157`；`SidebarItemTemplateWithData.tsx:117-127` |
+| room.chrome.escape-mark-read | 在已开房间按 Esc 标已读 | 焦点不在 input 时 → `Escape` | `useReadMessageWindowEvents` 已挂；有 subscription `readStateManager.ts:97-101` | DOM: [读] 未读条/角标按 server 清；endpoint: [读] `POST /v1/subscriptions.read`；persist: 刷新已读 | 同上 | `implicit.unread.markAllRead` | `readStateManager.ts:97-101,149-157`；`useReadMessageWindowEvents.ts:7-10` |
+| room.chrome.sidebar.call-accept | 侧栏行接听来电 | 该行有 incoming videoconf → 行内 success `phone` | `useVideoConfIncomingCalls()` 含 `call.rid===item.rid` `RoomListRow.tsx:30-37` | DOM: [读] 行内 `SidebarV2Action` phone；弹层消失并进会；endpoint: [读] 信令 accept + `POST /v1/video-conference.join`；persist: Calls 列表刷新可见 `[待渲染实测]` | `callId` `rid` | `room.chrome.call.incoming.accept` | `SidebarItemTemplateWithData.tsx:99-108`；V2 `SidebarItemWithData.tsx:52-56` |
+| room.chrome.sidebar.call-reject | 侧栏行拒接来电 | 同上 → danger `phone-off` | 同上 | DOM: [读] phone-off；来电图标消失；endpoint: [读] 信令 `rejected`（无 REST）；persist: 无会议记录 | `callId` | `room.chrome.call.incoming.decline` | `RoomListRow.tsx:36`；`VideoConfManager.ts:219-228` |
+| room.chrome.call.incoming.accept | 房间来电弹层接听 | 来电 `VideoConfPopup aria-label=Incoming_call_from__roomName__` → `Accept` | `isReceiving` `TimedVideoConfPopup.tsx:68-69` | DOM: [读] `button` name=`Accept`；弹层关、开会 URL；endpoint: [读] 信令 accepted + `POST /v1/video-conference.join` `{callId,state.mic/cam}`；persist: Calls 刷新 | `callId` capabilities | `room.toolbox.start-video-call` | `IncomingPopup.tsx:48-86`；`VideoConfManager.ts:176-216,342-375` |
+| room.chrome.call.incoming.decline | 房间来电弹层拒绝 | 同上 → `Decline` | 同上 | DOM: [读] `button` name=`Decline`；弹层消失；endpoint: [读] 信令 rejected；persist: 无 | `callId` | `room.chrome.sidebar.call-reject` | `IncomingPopup.tsx:87-90`；`TimedVideoConfPopup.tsx:50-53` |
+| room.chrome.call.incoming.mute | 静音并关掉来电提示（不拒接） | 同上 → title=`Mute_and_dismiss` | 同上 | DOM: [读] Controller icon=cross title 该 i18n；弹层消失，通话仍可从侧栏再出现 `[待渲染实测]`；endpoint: [读] `dismissIncomingCall`（本地 dismissed）；persist: session | `callId` | `room.chrome.call.incoming.decline` | `IncomingPopup.tsx:92`；`TimedVideoConfPopup.tsx:59-61` |
+| room.chrome.call.incoming.toggle-cam | 接听前开关摄像头偏好 | 来电弹层 → title=`Cam_on`/`Cam_off` | `video-conference.info` 报 `capabilities.cam` `IncomingPopup.tsx:45-67` | DOM: [读] Controller 双态 title；endpoint: 无 REST（`setPreferences`）；persist: 偏好进随后 join state | capabilities | `room.chrome.call.start.toggle-cam` | `IncomingPopup.tsx:60-66` |
+| room.chrome.call.incoming.toggle-mic | 接听前开关麦克风偏好 | 同上 → `Mic_on`/`Mic_off` | `capabilities.mic` | DOM: [读] 双态 title；endpoint: 无 REST；persist: join state.mic | capabilities | `room.chrome.call.start.toggle-mic` | `IncomingPopup.tsx:68-74` |
+| room.chrome.call.outgoing.cancel | 取消正在呼出的视频 | `Calling__roomName__` 弹层 → `Cancel` | `isCalling` `TimedVideoConfPopup.tsx:72-73` | DOM: [读] `button` name=`Cancel`；弹层关；endpoint: [读] `abortCall`/`giveUp`（信令，非 start REST 回滚）`[待渲染实测]`；persist: 无进行中呼叫 | `callId` | `room.toolbox.start-video-call` | `OutgoingPopup.tsx:67`；`VideoConfManager.ts:378-384` |
+| room.chrome.call.start.confirm | 确认开始视频会议 | 点 `Video_call` 后 `Start_a_call` 弹层 → `Start_call` | 非 receiving/calling；`!loading` `StartCallPopup.tsx:100` | DOM: [读] `button` name=`Start_call`；弹层变 Calling 或直接进会；endpoint: [读] `POST /v1/video-conference.start` `{roomId,allowRinging:true}`；persist: Calls 刷新 | `rid` | `room.toolbox.start-video-call` | `StartCallPopup.tsx:49-102`；`VideoConfManager.ts:140-174` |
+| room.chrome.call.start.toggle-cam | 开始前开关摄像头 | Start 弹层 → `Cam_on`/`Cam_off` | `useVideoConfCapabilities().cam` | DOM: [读] 双态；endpoint: 无 REST；persist: 写入 preferences 后 start | capabilities | `room.chrome.call.incoming.toggle-cam` | `StartCallPopup.tsx:76-83` |
+| room.chrome.call.start.toggle-mic | 开始前开关麦克风 | 同上 → `Mic_on`/`Mic_off` | `capabilities.mic` | DOM: [读] 双态；endpoint: 无 REST；persist: 同 cam | capabilities | `room.chrome.call.incoming.toggle-mic` | `StartCallPopup.tsx:84-90` |
+| room.chrome.call.start.dismiss | 不开始、关掉 Start 弹层 | Start 弹层外点 **或** Escape | `!loading` 才响应 outside click `StartCallPopup.tsx:35` | DOM: [读] 弹层消失；endpoint: `dismissOutgoing` 无 REST；persist: 无会议 | — | `room.chrome.call.start.confirm` | `StartCallPopup.tsx:35,61-64`；`TimedVideoConfPopup.tsx:76` |
+| room.chrome.omni.back | 从目录/当前会话进 live 房后回到该页 | live 头左 → title=`Back` | `previousRouteName` ∈ `{omnichannel-directory,omnichannel-current-chats}` `OmnichannelRoomHeader.tsx:23-27` | DOM: [读] `HeaderToolbarAction` title=`Back`；回 directory/current-chats 且 `tab=chats&context=info`；endpoint: none 路由；persist: URL | previous route | `omni.agent.directory.chats.open` | `BackButton.tsx:12-38` |
+| room.chrome.omni.unverified-tag | 点未验证标签打开高级联系人 upsell | live 头标题旁 `Unverified` Tag | `!verified` 且有 onClick；已验证则不可点 `OmnichannelVerificationTag.tsx:14-19` | DOM: [读] Tag name=`Unverified`；dialog `Advanced_contact_profile`；Confirm=订阅 / Cancel=`Learn_more` 或关；endpoint: [读] 打开可 `POST /v1/statistics.telemetry` upsell 计数；persist: 无房间字段 | license `contact-id-verification` | `omni.agent.unknown-contact` | `OmnichannelRoomHeaderTag.tsx:14`；`AdvancedContactModal.tsx:16-49` |
+| room.chrome.voip.toggle-chat | 进行中语音条里显隐聊天 | 1:1 DM 且 ongoing + screen-share 能力 → 条上 `ActionToggleChat` | `MediaCallRoom`：`state==='ongoing'` 且 peer 在 `room.uids` 且 features 含 `screen-share` `MediaCallRoom.tsx:40-47` | DOM: [读] section `aria-label=Voice_call`；聊天体消失/再现；endpoint: none；persist: **刷新不持久**（useState） | voip session | `room.toolbox.start-voice-call` | `MediaCallRoomActivity.tsx:31-49`；`MediaCallRoomSection.tsx:97` |
+| room.chrome.voip.mute | 房间语音条静音 | 同上 → `Mute`/`Unmute` | 同上 | DOM: [读] ToggleButton 双态；endpoint: voip 信令 `onMute`；persist: 通话中 | session `muted` | `nav.voip.call` | `MediaCallRoomSection.tsx:110` |
+| room.chrome.voip.hold | 房间语音条保持 | 同上 → `Hold`/`Resume` | 同上 | DOM: [读] 双态；endpoint: `onHold`；persist: 通话中 | `held` | `room.chrome.voip.mute` | `MediaCallRoomSection.tsx:111-117` |
+| room.chrome.voip.share-screen | 房间语音条共享屏幕 | 同上 → `Share_screen`/`Stop_sharing_screen` | 同上（本条出现的前提就是 screen-share） | DOM: [读] 双态；endpoint: `onToggleScreenSharing`；persist: 通话中 | `localScreen.active` | `room.chrome.voip.toggle-chat` | `MediaCallRoomSection.tsx:118-124` |
+| room.chrome.voip.forward | 房间语音条转接 | 同上 → `Forward` | disabled 当 connecting/reconnecting | DOM: [读] `button` name=`Forward`；转接 UI `[待渲染实测]`；endpoint: `onForward`；persist: 视转接结果 | connectionState | `room.chrome.voip.hangup` | `MediaCallRoomSection.tsx:125` |
+| room.chrome.voip.popout | 语音条弹出/收回独立窗 | 同上 → `Open_in_new_window`/`Return_to_main_window` | 同上 | DOM: [读] 双态；popout 时条换成 `PopoutDockPrompt`；endpoint: `onOpenPopout`/`onClosePopout`；persist: 通话中 | `currentViews.has('popout')` | `room.chrome.voip.toggle-chat` | `MediaCallRoomSection.tsx:98-105,88` |
+| room.chrome.voip.hangup | 房间语音条挂断 | 同上 → `Voice_call__user__hangup` | 同上 | DOM: [读] danger phone-off；整条 `Voice_call` 消失；endpoint: `onEndCall`；persist: Call_history 可重放 `[待渲染实测]` | peer displayName | `room.toolbox.start-voice-call` | `MediaCallRoomSection.tsx:126` |
+
+本表数据行：**26**。计数见附录验算。
+
+## 表 B — `room.banner.*`
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+|---|---|---|---|---|---|---|---|
+| room.banner.abac-classification | 展示 ABAC 分类条（只读，无按钮） | 打开 `abacAttributes` 非空且 banner 配置启用的房间 → 看 header 上 `role=region` | `ABAC_Classification_Banners_Enabled` + `useIsABACManagedRoom` + config.`enabled` `ClassificationBanner.tsx:14-25` | DOM: [读] `region` `aria-label=ABAC_Room_Attributes` 文案=engine 拼接；**无 button**；endpoint: none；persist: 随房间属性刷新仍在 | `room.abacAttributes`；setting JSON | 06 `RoomInfoABACSection`（面板内） | `ClassificationBanner.tsx:31-50`；`Room.tsx:58` |
+
+本表数据行：**1**。计数见附录验算。
+
+## 表 C — `room.join.*`
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+|---|---|---|---|---|---|---|---|
+| room.join.preview-blocked | 未加入且无预览权时挡住时间线 | 打开公开频道、无订阅、无 `preview-c-room`、匿名读关 → 看列表区 | `room.t==='c'` 且 `!subscribed` 且 `!Accounts_AllowAnonymousRead` 且 `!preview-c-room` `RoomBody.tsx:71-85` | DOM: [读] 文案 `You_must_join_to_view_messages_in_this_channel`（非 button）；Join 仍在 composer；endpoint: none（看）；persist: 加入前刷新仍挡 | `canPreview` | `composer.join` | `RoomBody.tsx:193-197` |
+| room.join.invite.accept | 接受房间/联邦邀请 | 打开 `isInviteSubscription` 的房 → `Accept` | Header 走 `RoomInviteHeader`（toolbox 藏）；body `RoomInviteBody` `Room.tsx:42-46` | DOM: [读] `button` name=`Accept`；States `Message_request` 消失，进正常房间；endpoint: [读] `POST /v1/rooms.invite` `{roomId,action:'accept'}`；persist: 订阅不再是 invite，刷新可聊天 | `subscription.inviter` | `room.join.invite.reject` | `RoomInvite.tsx:26,53`；`useRoomInvitation.ts:10-11`；`rooms.ts:1544-1565` |
+| room.join.invite.reject | 拒绝邀请（先确认） | 同上 → `Reject` → dialog `Reject_invitation` 确认 | 同上；确认后才 mutate | DOM: [读] `button` name=`Reject`；danger modal title=`Reject_invitation`；确认后回 `/home`（`useGoToHomeOnRemoved`）；endpoint: [读] `POST /v1/rooms.invite` `{action:'reject'}`；persist: 邀请刷新不在 | room.t 决定文案 DM vs channel | `room.join.invite.accept` | `RoomInviteBody.tsx:33-35`；`useRoomRejectInvitationModal.tsx:30-47` |
+| room.join.invite.federation-learn | 联邦邀请页打开联邦文档 | 联邦邀请 States → `Learn_more_about_Federation` | `isRoomFederated(room)` 才传 `infoLink` `RoomInvite.tsx:28` | DOM: [读] `StatesLink` 该 i18n；新标签 `links.go.matrixFederation`；endpoint: 无 RC REST；persist: 无 | federated | `composer.variant.federation.*` | `RoomInvite.tsx:28`；`RoomInviteBody.tsx:40` |
+
+本表数据行：**4**。计数见附录验算。
+
+## 分册 14 — 账号操作缺口
+
+canonical = PR #12（12 个 `account.gap.*`）。§3b = PR #16 unique（7 个 `acct.gap.*`）。
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `account.gap.profile.username.required` | 用户名为空被拦（Username 始终 required） | 顶栏头像→`Profile` → 清空 `Username` → `Save_changes` | `Accounts_AllowUserProfileChange` 才能进页；字段 `required: t('Required_field', { field: t('Username') })` `[读]` | 界面: `[待渲染实测]` `Required_field(Username)` ／ 导航: 不离开 `[读]` ／ 持久化: 无 `updateOwnBasicInfo` `[读]` | core | `page.account.profile.username` `page.account.profile.name.required` | `AccountProfileForm.tsx:236-239` `[读]` |
+| `account.gap.profile.email.required` | 邮箱为空被拦（Email 始终 required） | Profile → 清空 `Email` → Save | 同上；`required: t('Required_field', { field: t('Email') })` `[读]` | 界面: `[待渲染实测]` `Required_field(Email)` ／ 导航: 不离开 `[读]` ／ 持久化: 无 `[读]` | core | `page.account.profile.email` `page.account.profile.email.invalid` | `AccountProfileForm.tsx:415-416` `[读]` |
+| `account.gap.profile.delete.confirm.required` | 删号确认框空密码/空用户名被拦 | Profile → `Delete_my_account` → 确认框不填 → `Delete_account` | `Accounts_AllowDeleteOwnAccount`；有本地密码则密码框否则用户名框 `[读]` | 界面: `[待渲染实测]` `error-the-field-is-required`（Password 或 Username）／ 导航: 仍在模态 `[读]` ／ 持久化: 无 `deleteOwnAccount` `[读]` | core | `page.account.profile.delete` | `ActionConfirmModal.tsx:53-55,80-84` `[读]` |
+| `account.gap.security.totp.backup-copy` | 把备份码复制到剪贴板 | Security → 开 TOTP 并 `Verify`（或已启用→`Regenerate_codes`）→ `BackupCodesModal` → `Copy` | TOTP 设置开；刚 verify 或 regenerate 才出模态 `[读]` | 界面: `[待渲染实测]` 按钮文案变 `Copied` 且 disabled ／ 导航: 模态仍开；`Close` 才关 `[读]` ／ 持久化: **无** HTTP；`useClipboard` 本地复制空格拼接的 codes `[读]` | core | `page.account.security.totp.verify` `page.account.security.totp.regenerate` | `BackupCodesModal.tsx:15-25` `[读]` |
+| `account.gap.security.e2e-enter-password` | 在「输入当前 E2E 口令」模态里填口令 | Security → E2E → 密钥未 READY → hint「enter your current E2EE password」→ 模态 `Enter_E2E_password` → `Please_enter_E2EE_password` | `E2E_Enable`；`keysExist===false` 才出链；`decodePrivateKeyFlow` 要求 `db_private_key` `[读]` | 界面: `[待渲染实测]` PasswordInput ／ 导航: 模态叠在 security `[读]` ／ 持久化: 仅本地至确认 `[读]` | core | `page.account.security.e2e-enter-current` | `EnterE2EPasswordModal.tsx:71-119` `ChangePassphrase.tsx:145-157` `[读]` |
+| `account.gap.security.e2e-enter-submit` | 提交当前 E2E 口令并解码私钥 | 同上 → `Enable_encryption` | 口令非空 `[读]` | 界面: `[待渲染实测]` toast `E2E_encryption_enabled`；链消失，改口令框解除 disabled `[待渲染实测]` ／ 导航: 关模态仍在 security `[读]` ／ 持久化: 本地 `keychain.decryptKey`；无 REST 改密 `[读]` | core | `account.gap.security.e2e-enter-password` `page.account.security.e2e-save` | `EnterE2EPasswordModal.tsx:36-47,78` `rocketchat.e2e.ts:539-542,586` `[读]` |
+| `account.gap.security.e2e-enter-later` | 推迟输入当前 E2E 口令 | 同上模态 → `Do_It_Later` | 模态开着 `[读]` | 界面: `[待渲染实测]` toast `End_To_End_Encryption_Not_Enabled`；模态关；改口令仍 disabled `[读]` ／ 导航: 仍在 security `[读]` ／ 持久化: 无；`failedToDecodeKey=false` `[读]` | core | `account.gap.security.e2e-enter-password` | `EnterE2EPasswordModal.tsx:77,80` `rocketchat.e2e.ts:534-538` `[读]` |
+| `account.gap.security.e2e-enter-invalid` | 当前 E2E 口令错误被拦 | 模态填错口令 → `Enable_encryption` | `decryptKey` 抛 `DOMException` `OperationError` `[读]` | 界面: `[待渲染实测]` `Incorrect_encryption_password`（不关模态）／ 导航: 仍在模态 `[读]` ／ 持久化: 无私钥解码 `[读]` | core | `account.gap.security.e2e-enter-password` | `EnterE2EPasswordModal.tsx:10,39-42` `[读]` |
+| `account.gap.security.e2e-forgot` | 从输入口令模态走「忘记 E2E 口令」 | 模态 → `Forgot_E2EE_Password` | 模态开着 `[读]` | 界面: `[待渲染实测]` 切到 warning 模态 `Reset_E2EE_password` ／ 导航: 仍叠在 security `[读]` ／ 持久化: 尚未 POST `[读]` | core | `page.account.security.e2e-reset` | `EnterE2EPasswordModal.tsx:108-117,55-68` `[读]` |
+| `account.gap.security.e2e-forgot-confirm` | 在忘记口令二次确认里重置并登出 | Forgot 后的模态 → `Reset_E2EE_password` | 同上 | 界面: `[待渲染实测]` toast `E2EE_password_reset` ／ 导航: `logout()` `[读]` ／ 持久化: `POST /v1/users.resetE2EKey`（与页内 reset **同一 mutation**）`[读]` | core | `page.account.security.e2e-reset` | `EnterE2EPasswordModal.tsx:22,64` `ResetPassphrase.tsx:8,17` `[读]` |
+| `account.gap.sessions.empty` | 无登录设备时看空态 | 账号侧栏 `Manage_Devices` 且 `sessions.length===0` | EE `device-management` `[读]` | 界面: `[待渲染实测]` `GenericNoResults` ／ 导航: 仍在 `/account/manage-devices` `[读]` ／ 持久化: `GET /v1/sessions/list` 只读 `[读]` | EE:device-management | `page.account.sessions.pagination` `page.account.tokens.empty` | `DeviceManagementTable.tsx:59` `[读]` |
+| `account.gap.sessions.retry` | 设备列表加载失败后重试 | Manage_Devices → 查询 error → `Retry` | EE；`isError` `[读]` | 界面: `[待渲染实测]` `Something_went_wrong` / `We_Could_not_retrive_any_data` ／ 导航: 仍在页 `[读]` ／ 持久化: `refetch` `GET /v1/sessions/list` `[读]` | EE:device-management | `page.account.tokens.retry` | `DeviceManagementTable.tsx:41-54` `[读]` |
+
+本表数据行：**12**。计数见附录验算。
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `acct.gap.e2e.save-modal.copy` | 复制系统刚生成的 E2E 口令 | **不在** Account Security 页。加密房 `SAVE_PASSWORD` 或顶栏钥匙 banner `Click_here_to_view_and_save_your_new_E2EE_password` → 模态 `Save_your_new_E2EE_password` → `Copy` | 本地存有 `E2EE_RANDOM_PASSWORD` `[读]` | 界面: `[待渲染实测]` 按钮变 `Copied`；`CodeSnippet` 显示 randomPassword ／ 导航: 模态仍开 `[读]` ／ 持久化: **无 HTTP**；剪贴板 `[读]` | core | `page.account.security.e2e-passphrase` | `SaveE2EPasswordModal.tsx:18-52` `rocketchat.e2e.ts:324-342,403-413` `[读]` |
+| `acct.gap.e2e.save-modal.confirm` | 确认已保存生成的 E2E 口令 | 同上模态 → `I_Saved_My_Password` | 同上 | 界面: `[待渲染实测]` toast `E2E_encryption_enabled`，banner 关 ／ 导航: 回当前房/页 `[读]` ／ 持久化: 删 `E2EE_RANDOM_PASSWORD`，状态 `READY`；无 REST `[读]` | core | `acct.gap.e2e.save-modal.copy` | `SaveE2EPasswordModal.tsx:29` `rocketchat.e2e.ts:334-340` `[读]` |
+| `acct.gap.e2e.save-modal.later` | 推迟保存生成的 E2E 口令 | 同上模态 → `Do_It_Later` | 同上 | 界面: `[待渲染实测]` 模态关，banner 可仍在 `[读]` ／ 导航: 回前页 `[读]` ／ 持久化: 口令仍在 local storage `[读]` | core | `acct.gap.e2e.save-modal.copy` | `SaveE2EPasswordModal.tsx:28` `rocketchat.e2e.ts:330-332` `[读]` |
+| `acct.gap.e2e.reset.2fa` | 重置 E2E 前通过 REST 2FA 挑战 | 账号侧栏 `Security` → `Reset_E2EE_password`（或 Forgot 确认）→ `TwoFactorModal` 填码 | `E2E_Enable`；`users.resetE2EKey` `twoFactorRequired: true` `disableRememberMe` `[读]` | 界面: `[待渲染实测]` 2FA 模态；通过后才 reset ／ 导航: 成功后 `logout()` `[读]` ／ 持久化: 挑战过 → `POST /v1/users.resetE2EKey` `[读]` | core | `page.account.security.e2e-reset` `route.2fa` | `users.ts:1767-1771` `process2faReturn.ts:125-141` `ResetPassphrase.tsx:8-17` `[读]` |
+| `acct.gap.tokens.add.2fa` | 创建 PAT 前通过 2FA 挑战 | 账号侧栏 `Personal_Access_Tokens` → 填名 → `Add` → `TwoFactorModal` | `create-personal-access-tokens`；`users.generatePersonalAccessToken` `twoFactorRequired: true` `[读]` | 界面: `[待渲染实测]` 2FA 模态；通过后才出 Generated 模态 ／ 导航: 仍在 tokens `[读]` ／ 持久化: 挑战过 → `POST /v1/users.generatePersonalAccessToken` `[读]` | core | `page.account.tokens.add` | `users.ts:1278-1281` `AddToken.tsx:42-45` `process2faReturn.ts` `[读]` |
+| `acct.gap.tokens.regenerate.2fa` | 再生 PAT 前通过 2FA 挑战 | 行 `Refresh` → 警告确认 → `TwoFactorModal` | 同上；`users.regeneratePersonalAccessToken` `twoFactorRequired` `[读]` | 界面: `[待渲染实测]` 2FA 后 Generated 模态出新 token ／ 导航: 仍在页 `[读]` ／ 持久化: `POST /v1/users.regeneratePersonalAccessToken` `[读]` | core | `page.account.tokens.regenerate` | `users.ts:1297-1300` `AccountTokensTable.tsx:66-71` `[读]` |
+| `acct.gap.tokens.remove.2fa` | 撤销 PAT 前通过 2FA 挑战 | 行 `Remove` → danger 确认 → `TwoFactorModal` | 同上；`users.removePersonalAccessToken` `twoFactorRequired` `[读]` | 界面: `[待渲染实测]` 2FA 后 toast `Token_has_been_removed` ／ 导航: 仍在页 `[读]` ／ 持久化: `POST /v1/users.removePersonalAccessToken` `[读]` | core | `page.account.tokens.remove` | `users.ts:1371-1374` `AccountTokensTable.tsx:103-107` `[读]` |
+
+本表数据行：**7**。计数见附录验算。
+
+## 分册 15 — i18n VERB 反查（无 8 列功能行）
+
+源：[PR #17](https://github.com/jianwyao01/Rocket.Chat/pull/17)。EXTRACTED 258 = HIT 90 + MISS 60 + OOS 108。必须补行 6 条；本文件不发明 8 列行。裁决见文末「i18n 必须补行裁决」与 16。NEW 功能 id：**0**。
+
+## 分册 16 — i18n 必须补行
+
+源：[PR #18](https://github.com/jianwyao01/Rocket.Chat/pull/18)。6 条裁决里 B) NEW = 2。`## 仍必须补` empty。
+
+## 3. NEW 8 列行
+
+| 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `fill.join.channel.fullpage` | 未订阅且无预览权时，在整页空态点 Join 加入公开频道 | 已登录 → 打开公开频道 URL / Directory 进未加入的 `c` 房（无订阅、无 `preview-c-room`）→ 整页 States `Channel_not_joined` → `Join_channel` | `user && !sub && !hasPreviewPermission && isPublicRoom(room)` 才抛 `NotSubscribedToRoomError` `useOpenRoom.ts:134-135`。`RoomOpener.tsx:50-51` 与 `RoomOpenerEmbedded.tsx:71-72` 挂本页。有 `preview-c-room` 时走房间+发送栏 Join，**不是**本行 | `[读]` ①`StatesAction` name=`Join_channel` loading（`handleJoinClick.isPending`）后整页换成正常 `Room` `[待渲染实测]` role。②`POST /v1/rooms.join` `{roomId}` `useJoinRoom.ts:16-21`。③`invalidateQueries` 房间引用；刷新后已是订阅者 | core | `composer.join`；`room.join.preview-blocked` | `NotSubscribedRoom.tsx:36-38`；`useJoinRoom.ts:13-33`；`RoomOpener.tsx:50-51` `[读]` |
+| `fill.unread.clear-all.confirm` | Shift/Ctrl+Esc 弹出确认后清空全部已开房间未读 | 已登录壳内（任意页）→ `Shift+Escape` 或 `Ctrl+Escape` → 确认框 title=`Clear_all_unreads_question` → `Yes_clear_all` | `AppLayout.tsx:56` 挂 `useEscapeKeyStroke`。`event.code==='Escape' && (shiftKey \|\| ctrlKey)` `useEscapeKeyStroke.ts:23-25`。帮助 modal 写的是这条和弦（`KeyboardShortcutsModal` `markAllAsRead`），不是裸 Esc | `[读]` ①warning `GenericModal` 关；各房未读条/侧栏角标按 server 清 `[待渲染实测]` 精确 name。②对每个 `open && (alert \|\| unread>0)` 的 subscription：`POST /v1/subscriptions.read` `{rid, readThreads:true}` `useClearUnreadAllMessagesMutation.ts:12-20`。③刷新后这些房已读 | core | `shortcut.global.markAllAsRead.documented-unbound`（03 **写反**，勿当负向）；`room.chrome.escape-mark-read`（裸 Esc，当前房）；`implicit.unread.markAllRead` | `useEscapeKeyStroke.ts:21-49`；`useClearUnreadAllMessagesMutation.ts:7-24`；`AppLayout.tsx:56` `[读]` |
+
+本表数据行：**2**。计数见附录验算。
+
 ## [待渲染实测] 汇总清单
 
-UNION：01–11 功能分册 + 05 完备性清单。每条标注 booklet + 相关 id。非空。
+UNION：01–16（05 / 15 无独立功能行待渲染项，仍计入既有清单）。每条标注 booklet + 相关 id。非空。相对先前 00（01–11 = 135）只 **追加** 12–14 / 16。
 
 ### 01 · `01-message-toolbar.md`
 
@@ -3366,9 +3585,58 @@ UNION：01–11 功能分册 + 05 完备性清单。每条标注 booklet + 相�
 9. 联邦 EDU 关时主 SPA 房间指示器是否仍显示本服用户 — booklet 11；id `composer.state.constraint.federation.*`
 10. `composer.popup.mention.not-in-channel` 发送后是否弹出 `Add_them`（服务端 hook，非 popup） — booklet 11；id `composer.popup.mention.not-in-channel`
 
-本清单条数 **135**（01=15，02=24，03=20，04=10，05=8，06=10，07=8，08=10，09=8，10=12，11=10）。
+### 12 · `12-chat-micro-gaps.md`
 
-验算：`15+24=39`；`39+20=59`；`59+10=69`；`69+8=77`；`77+10=87`；`87+8=95`；`95+10=105`；`105+8=113`；`113+12=125`；`125+10=135`。
+1. 多条 quote bar 的可访问结构（是否 `list`/`listitem`） — booklet 12；id `chat.micro.quote.multi`
+2. pending `isPending` / `aria-busy` 是否被读屏读出 — booklet 12；id `chat.micro.send.pending.indicator`
+3. 发送失败后乐观行是否一直 `temp`，toast 精确 name — booklet 12；id `chat.micro.send.error-toast`
+4. 超长转附件模态 confirm 按钮 name — booklet 12；id `chat.micro.send.too-long.as-attachment`
+5. 从消息打开的 Emoji picker 与 composer 是否同一 `role=dialog` — booklet 12；id `chat.micro.reaction.picker.search`
+6. Forward `ModalClose` 可访问名 — booklet 12；id `chat.micro.forward.close`
+7. Pin `GenericModal` Cancel 可见文案 — booklet 12；id `chat.micro.pin.cancel`
+8. 邀请页 `Accept`/`Reject` button name；联邦 `StatesLink` 是否 `role=link` — booklet 12；id `chat.micro.invite.*`
+9. `message-mobile` 是否被仓库外赋值 — booklet 12；id `chat.micro.long-press.absent`
+10. `+:unknown:` 未注册短码是否当普通消息发出 — booklet 12；id `chat.micro.reaction.plus-shortcode`
+11. 联邦房无乐观 `temp` 时发送中指示是否出现 — booklet 12；id `chat.micro.send.pending.indicator`
+12. `Message_QuoteChainLimit=2` 时 chip 嵌套层数 — booklet 12b；id `chat.micro.quote.of-quote`
+13. 点 error toast 是关条还是无响应 — booklet 12b；id `chat.micro.send.toast.click.absent`
+14. `/join` 已在房是否先闪错误再跳 `/open` — booklet 12b；id `chat.micro.slash.join.already-member`
+
+### 13 · `13-room-chrome-gaps.md`
+
+1. `room.chrome.topic-link`：主题截断后链接是否仍可点 — booklet 13
+2. `room.chrome.parent-team`：公开团队非成员是否隐藏按钮 — booklet 13
+3. `room.chrome.sidebar.open-marks-read`：未读 divider 不在视口时是否不立刻已读 — booklet 13
+4. `room.chrome.escape-mark-read`：焦点在 textarea 时 Esc 是否被 composer 吃掉 — booklet 13
+5. VideoConf 弹层 `Accept`/`Decline`/`Start_call` 精确 role+name — booklet 13；id `room.chrome.call.*`
+6. `Mute_and_dismiss` 之后侧栏来电钮是否仍在 — booklet 13；id `room.chrome.call.incoming.mute`
+7. `room.chrome.omni.unverified-tag`：已验证 Tag 是否不可点 — booklet 13
+8. `room.join.invite.*`：Accept 后 toolbox；Reject 取消是否留在邀请页 — booklet 13
+9. `MediaCallRoomActivity` 各 ToggleButton accessible name — booklet 13；id `room.chrome.voip.*`
+10. `room.join.preview-blocked` 文案容器 role — booklet 13
+
+### 14 · `14-account-gaps.md`
+
+1. Profile 空用户名/空邮箱/空删号确认的校验文案 — booklet 14；id `account.gap.profile.*`
+2. TOTP `BackupCodesModal` Copy → `Copied` — booklet 14；id `account.gap.security.totp.backup-copy`
+3. Enter E2E 模态 password / Enable / Later / 错密 / Forgot — booklet 14；id `account.gap.security.e2e-enter-*` `e2e-forgot*`
+4. Manage_Devices 空态 / Retry States — booklet 14；id `account.gap.sessions.*`
+5. `SaveE2EPasswordModal` Copy / `I_Saved_My_Password` / `Do_It_Later` — booklet 14；id `acct.gap.e2e.save-modal.*`
+6. Reset E2E 的 `TwoFactorModal` — booklet 14；id `acct.gap.e2e.reset.2fa`
+7. PAT add / regenerate / remove 的 2FA 模态 — booklet 14；id `acct.gap.tokens.*.2fa`
+
+### 15 · `15-i18n-chat-room-account.md`
+
+无独立功能行待渲染项（HIT/MISS 只证明三列字符串）。必须补行 6 条的 UI 核在 13/14/16。
+
+### 16 · `16-i18n-must-fill.md`
+
+1. 整页 `Join_channel` StatesAction 的精确 role — booklet 16；id `fill.join.channel.fullpage`
+2. Shift/Ctrl+Esc 确认框 title / `Yes_clear_all` name — booklet 16；id `fill.unread.clear-all.confirm`
+
+本清单条数 **168**（先前 135 + 12=14 + 13=10 + 14=7 + 16=2；15=0）。
+
+验算：`135+14=149`；`149+10=159`；`159+7=166`；`166+2=168`。先前 01–11：`15+24=39`；`39+20=59`；`59+10=69`；`69+8=77`；`77+10=87`；`87+8=95`；`95+10=105`；`105+8=113`；`113+12=125`；`125+10=135`。
 
 ## 完备性自查记录
 
@@ -3469,8 +3737,8 @@ rg -c "registerOmnichannelRoute\(" apps/meteor/client/views/omnichannel/routes.t
 
 ## 与现行 atlas 的 id 集合差
 
-先前本分支 `00-blueprint.md`（PR #5）已列出 01–04 的 NEW id（01=26，02=107，03=117，04=64）。
-本节 **只列 06–11 相对那份 00 的 NEW id**。禁止用一个虚荣总行数当标题数字。
+先前本分支 `00-blueprint.md`（PR #11）已列出 01–11 的 NEW id（01–04 在更早的 00；06–11 见上）。
+本节 **只追加 12–16 相对那份 00 的 NEW id**。15 = 0 功能 id。禁止用一个虚荣总行数当标题数字。
 
 ### 各表行数（命令）
 
@@ -4846,6 +5114,126 @@ rg -c '^\| `composer\.(state|fmt|popup)\.' docs/qa/pm-feature-atlas/11-composer-
 
 分册 11 NEW id 条数：**133**（`sort -u` 自该分册首次出现的稳定语义 id 列）。
 
+#### 分册 12
+
+- `chat.micro.quote.multi` — 出处：分册 12 表行「已有一条引用时再 Quote 另一条，堆到 composer 上方」；`createComposerAPI.ts:113-116`；`MessageBoxReplies.tsx:14-26` `[读]`
+- `chat.micro.quote.more.absent` — 出处：分册 12 表行「More 菜单**没有** Quote」；`MessageToolbarActionMenu.tsx:46-77`（无 quote hook）；`DefaultItems.tsx:18` `[读]`
+- `chat.micro.quote.keyboard.absent` — 出处：分册 12 表行「**没有** Quote 快捷键」；`KeyboardShortcutsModal.tsx:17-66`；`MessageBox.tsx:216-278` `[读]`
+- `chat.micro.quote.from-search.absent` — 出处：分册 12 表行「搜索结果工具栏**不能** Quote」；`SearchItems.tsx:11-16` `[读]`
+- `chat.micro.quote.collapse.absent` — 出处：分册 12 表行「已发出消息上的引用块**不能**折叠/展开」；`QuoteAttachment.tsx:46-82` `[读]`
+- `chat.micro.reply.thread.more.absent` — 出处：分册 12 表行「More **没有** Reply_in_thread（它是工具栏图标）」；`MessageToolbarActionMenu.tsx:46-77`；`DefaultItems.tsx:19`；`ThreadsItems.tsx:14-21` `[读]`
+- `chat.micro.reply.thread.from-search.absent` — 出处：分册 12 表行「搜索结果**不能** Reply in thread」；`SearchItems.tsx:11-16` `[读]`
+- `chat.micro.reply.dm.from-search.absent` — 出处：分册 12 表行「搜索结果**不能** Reply in DM」；`useReplyInDMAction.ts:71`；`SearchItems.tsx:11-16` `[读]`
+- `chat.micro.delete.cancel` — 出处：分册 12 表行「关掉删除确认、不删」；`DeleteMessageConfirmModal.tsx:54-64`；`requestMessageDeletion.ts:31-41` `[读]`
+- `chat.micro.delete.last-hotkey.absent` — 出处：分册 12 表行「**没有**「一键删上一条」热键」；`KeyboardShortcutsModal.tsx:17-66`；`MessageBox.tsx:216-278` `[读]`
+- `chat.micro.send.pending.indicator` — 出处：分册 12 表行「刚发出的自己的消息呈发送中（不可点）」；`sendMessage.ts:49-59`；`app/lib/client/methods/sendMessage.ts:34-44`；`RoomMessage.tsx:113,120`；`ThreadMessage.tsx:41` `[读]`
+- `chat.micro.send.error-toast` — 出处：分册 12 表行「发送 REST 失败出 error toast，**不**在气泡上提供 Retry」；`sendMessage.ts:72-77,122-123,145-146` `[读]`
+- `chat.micro.send.retry.absent` — 出处：分册 12 表行「失败/pending 消息上**没有** Retry」；`sendMessage.ts:113-124`；`RoomMessage.tsx:102-148` `[读]`
+- `chat.micro.send.cancel-pending.absent` — 出处：分册 12 表行「**不能**取消已乐观发出、仍 pending 的消息」；`sendMessage.ts:48-49`；`RoomMessage.tsx:113` `[读]`
+- `chat.micro.send.queued-ui.absent` — 出处：分册 12 表行「**没有**离线队列/queued 气泡」；`sendMessage.ts` 全文无 queue；`client/components/message` 无 queued `[读]`
+- `chat.micro.send.too-long.as-attachment` — 出处：分册 12 表行「超长文本改以 txt 附件发出」；`processTooLongMessage.ts:10-39,47-57` `[读]`
+- `chat.micro.send.too-long.toast` — 出处：分册 12 表行「不能转附件时只 toast，文本留在 composer」；`processTooLongMessage.ts:19-22` `[读]`
+- `chat.micro.send.too-long.cancel` — 出处：分册 12 表行「关掉超长转附件模态，不发」；`processTooLongMessage.ts:42-54` `[读]`
+- `chat.micro.copy.text.from-body.absent` — 出处：分册 12 表行「消息体（非代码块、非 More）**没有** Copy text」；`useCopyAction.ts:14-38`；`RoomMessageContent` 无 copy `[读]`
+- `chat.micro.copy.link.from-body.absent` — 出处：分册 12 表行「消息体/时间戳**没有** Copy link」；`MessageHeader.tsx:74-76`；`usePermalinkAction.ts:10-50` `[读]`
+- `chat.micro.long-press.absent` — 出处：分册 12 表行「Web **没有**独立长按消息菜单；`message-mobile` 未赋值」；`MessageToolbarHolder.tsx:17-53`；`MobileItems.tsx:15-24` `[读]`
+- `chat.micro.reaction.plus-shortcode` — 出处：分册 12 表行「在 composer 发送 `+:smile:` 给**房间最后一条**加反应（不是发消息）」；`processSetReaction.ts:9-34`；`sendMessage.ts:21-22`；`data.ts:51-55` `[读]`
+- `chat.micro.reaction.picker.search` — 出处：分册 12 表行「从**消息**打开的 picker 里搜索再选（01 只写「选一个」）」；`ReactionMessageAction.tsx:78-83`；`MessageListProvider.tsx:111-116`；`EmojiPicker.tsx:139-205` `[读]`
+- `chat.micro.reaction.picker.tone` — 出处：分册 12 表行「从**消息**打开的 picker 改肤色」；`EmojiPicker.tsx:240-241`；`EmojiPickerProvider.tsx:23,116` `[读]`
+- `chat.micro.forward.close` — 出处：分册 12 表行「关掉转发模态、不发」；`ForwardMessageModal.tsx:96,45-47`；`ForwardMessageAction.tsx:45-47` `[读]`
+- `chat.micro.forward.comment.absent` — 出处：分册 12 表行「转发模态**没有**附加评论框」；`ForwardMessageModal.tsx:51-59,98-136` `[读]`
+- `chat.micro.pin.cancel` — 出处：分册 12 表行「关掉钉选确认、不钉」；`usePinMessageAction.tsx:35`；`PinMessageModal.tsx:29` `[读]`
+- `chat.micro.star.confirm.absent` — 出处：分册 12 表行「Star **没有**确认模态」；`useStarMessageAction.ts:28-29` `[读]`
+- `chat.micro.read-receipt.tick.click.absent` — 出处：分册 12 表行「气泡上的单/双勾**不可点**（详情只在 More）」；`ReadReceiptIndicator.tsx:14-23` `[读]`
+- `chat.micro.invite.accept` — 出处：分册 12 表行「接受房间/DM 邀请，进入时间线」；`RoomInviteBody.tsx:36-38`；`useRoomInvitation.ts:7-11`；`RoomInvite.tsx:49-54` `[读]`
+- `chat.micro.invite.reject` — 出处：分册 12 表行「点 Reject 打开拒绝确认」；`RoomInviteBody.tsx:33-35`；`useRoomInvitation.ts:12-14` `[读]`
+- `chat.micro.invite.reject.confirm` — 出处：分册 12 表行「确认拒绝邀请并离开」；`useRoomRejectInvitationModal.tsx:31-39`；`useRoomInvitation.ts:12-14` `[读]`
+- `chat.micro.invite.reject.cancel` — 出处：分册 12 表行「关掉拒绝确认、仍留在邀请页」；`useRoomRejectInvitationModal.tsx:40-43` `[读]`
+- `chat.micro.invite.learn-federation` — 出处：分册 12 表行「联邦邀请页打开联邦文档」；`RoomInvite.tsx:28`；`RoomInviteBody.tsx:40` `[读]`
+- `chat.micro.list.reload` — 出处：分册 12 表行「时间线 React 崩溃后整页重载」；`MessageListErrorBoundary.tsx:15-30` `[读]`
+- `chat.micro.quote.of-quote` — 出处：分册 12 表行「Quote 一条本身带引用链的消息时按链长截断嵌套」；`createComposerAPI.ts:114`；`limitQuoteChain.ts:8-37` `[读]`
+- `chat.micro.quote.same-readd` — 出处：分册 12 表行「对同一条再点 Quote **不会**关掉引用，只是挪到数组末尾」；`createComposerAPI.ts:113-116` `[读]`
+- `chat.micro.quote.bar.jump.absent` — 出处：分册 12 表行「composer 引用 chip **没有**时间线上的 jump / 作者链」；`MessageBoxReply.tsx:30-51`；`QuoteAttachment.tsx:59-67` `[读]`
+- `chat.micro.send.toast.click.absent` — 出处：分册 12 表行「发送失败 toast **不是**重试入口」；`toast.ts:22-25`；`ToastMessagesProvider.tsx:50-69` `[读]`
+- `chat.micro.composer.resize.absent` — 出处：分册 12 表行「composer **没有**用户可拖的高度手柄」；`useAutoGrow.ts:11-62`；`RoomBody.tsx:237-238` `[读]`
+- `chat.micro.composer.md-preview.absent` — 出处：分册 12 表行「composer **没有** Markdown 预览开关」；`messageBoxFormatting.ts:34-106`；`RoomBody.tsx:242-243` `[读]`
+- `chat.micro.otr.absent` — 出处：分册 12 表行「本仓库 **没有** OTR 房间动作 / 消息动作」；全 `client`/`app`/`ee` 无匹配 `[读]`
+- `chat.micro.thread.title.jump.absent` — 出处：分册 12 表行「线程栏标题 **不是**跳回父消息的控件」；`ThreadTitle.tsx:11-16`；`Thread.tsx:111-115` `[读]`
+- `chat.micro.slash.join.already-member` — 出处：分册 12 表行「`/join` 已在该房时客户端改写成 `/open` 并跳转」；`slashcommands-join/client/client.ts:3-16`；`slashcommands-open/client/client.ts:9-42` `[读]`
+
+分册 12 NEW id 条数：**44**（PR #13 = 35；PR #15 unique / 12b = 9；`35+9=44`）。
+
+#### 分册 13
+
+- `room.chrome.topic-link` — 出处：分册 13 表行「已有主题时点主题里的 markdown 链接」；`RoomTopic.tsx:36`；`MarkdownTextInner.tsx:35,119-143` `[读]`
+- `room.chrome.parent-team` — 出处：分册 13 表行「从团队子房回到团队主房」；`ParentTeam.tsx:45-63`；`ParentRoom.tsx:13-14` `[读]`
+- `room.chrome.foreword.user-link` — 出处：分册 13 表行「DM 前言点对方名进其 1:1」；`RoomForewordUsernameList.tsx:15-19`；`RoomForewordUsernameListItem.tsx:17` `[读]`
+- `room.chrome.sidebar.open-marks-read` — 出处：分册 13 表行「打开（或聚焦）未读房并在未读线可见时标已读」；`readStateManager.ts:59-61,120-157`；`SidebarItemTemplateWithData.tsx:117-127` `[读]`
+- `room.chrome.escape-mark-read` — 出处：分册 13 表行「在已开房间按 Esc 标已读」；`readStateManager.ts:97-101,149-157`；`useReadMessageWindowEvents.ts:7-10` `[读]`
+- `room.chrome.sidebar.call-accept` — 出处：分册 13 表行「侧栏行接听来电」；`SidebarItemTemplateWithData.tsx:99-108`；V2 `SidebarItemWithData.tsx:52-56` `[读]`
+- `room.chrome.sidebar.call-reject` — 出处：分册 13 表行「侧栏行拒接来电」；`RoomListRow.tsx:36`；`VideoConfManager.ts:219-228` `[读]`
+- `room.chrome.call.incoming.accept` — 出处：分册 13 表行「房间来电弹层接听」；`IncomingPopup.tsx:48-86`；`VideoConfManager.ts:176-216,342-375` `[读]`
+- `room.chrome.call.incoming.decline` — 出处：分册 13 表行「房间来电弹层拒绝」；`IncomingPopup.tsx:87-90`；`TimedVideoConfPopup.tsx:50-53` `[读]`
+- `room.chrome.call.incoming.mute` — 出处：分册 13 表行「静音并关掉来电提示（不拒接）」；`IncomingPopup.tsx:92`；`TimedVideoConfPopup.tsx:59-61` `[读]`
+- `room.chrome.call.incoming.toggle-cam` — 出处：分册 13 表行「接听前开关摄像头偏好」；`IncomingPopup.tsx:60-66` `[读]`
+- `room.chrome.call.incoming.toggle-mic` — 出处：分册 13 表行「接听前开关麦克风偏好」；`IncomingPopup.tsx:68-74` `[读]`
+- `room.chrome.call.outgoing.cancel` — 出处：分册 13 表行「取消正在呼出的视频」；`OutgoingPopup.tsx:67`；`VideoConfManager.ts:378-384` `[读]`
+- `room.chrome.call.start.confirm` — 出处：分册 13 表行「确认开始视频会议」；`StartCallPopup.tsx:49-102`；`VideoConfManager.ts:140-174` `[读]`
+- `room.chrome.call.start.toggle-cam` — 出处：分册 13 表行「开始前开关摄像头」；`StartCallPopup.tsx:76-83` `[读]`
+- `room.chrome.call.start.toggle-mic` — 出处：分册 13 表行「开始前开关麦克风」；`StartCallPopup.tsx:84-90` `[读]`
+- `room.chrome.call.start.dismiss` — 出处：分册 13 表行「不开始、关掉 Start 弹层」；`StartCallPopup.tsx:35,61-64`；`TimedVideoConfPopup.tsx:76` `[读]`
+- `room.chrome.omni.back` — 出处：分册 13 表行「从目录/当前会话进 live 房后回到该页」；`BackButton.tsx:12-38` `[读]`
+- `room.chrome.omni.unverified-tag` — 出处：分册 13 表行「点未验证标签打开高级联系人 upsell」；`OmnichannelRoomHeaderTag.tsx:14`；`AdvancedContactModal.tsx:16-49` `[读]`
+- `room.chrome.voip.toggle-chat` — 出处：分册 13 表行「进行中语音条里显隐聊天」；`MediaCallRoomActivity.tsx:31-49`；`MediaCallRoomSection.tsx:97` `[读]`
+- `room.chrome.voip.mute` — 出处：分册 13 表行「房间语音条静音」；`MediaCallRoomSection.tsx:110` `[读]`
+- `room.chrome.voip.hold` — 出处：分册 13 表行「房间语音条保持」；`MediaCallRoomSection.tsx:111-117` `[读]`
+- `room.chrome.voip.share-screen` — 出处：分册 13 表行「房间语音条共享屏幕」；`MediaCallRoomSection.tsx:118-124` `[读]`
+- `room.chrome.voip.forward` — 出处：分册 13 表行「房间语音条转接」；`MediaCallRoomSection.tsx:125` `[读]`
+- `room.chrome.voip.popout` — 出处：分册 13 表行「语音条弹出/收回独立窗」；`MediaCallRoomSection.tsx:98-105,88` `[读]`
+- `room.chrome.voip.hangup` — 出处：分册 13 表行「房间语音条挂断」；`MediaCallRoomSection.tsx:126` `[读]`
+- `room.banner.abac-classification` — 出处：分册 13 表行「展示 ABAC 分类条（只读，无按钮）」；`ClassificationBanner.tsx:31-50`；`Room.tsx:58` `[读]`
+- `room.join.preview-blocked` — 出处：分册 13 表行「未加入且无预览权时挡住时间线」；`RoomBody.tsx:193-197` `[读]`
+- `room.join.invite.accept` — 出处：分册 13 表行「接受房间/联邦邀请」；`RoomInvite.tsx:26,53`；`useRoomInvitation.ts:10-11`；`rooms.ts:1544-1565` `[读]`
+- `room.join.invite.reject` — 出处：分册 13 表行「拒绝邀请（先确认）」；`RoomInviteBody.tsx:33-35`；`useRoomRejectInvitationModal.tsx:30-47` `[读]`
+- `room.join.invite.federation-learn` — 出处：分册 13 表行「联邦邀请页打开联邦文档」；`RoomInvite.tsx:28`；`RoomInviteBody.tsx:40` `[读]`
+
+分册 13 NEW id 条数：**31**（`26+1+4=31`）。
+
+#### 分册 14
+
+- `account.gap.profile.username.required` — 出处：分册 14 表行「用户名为空被拦（Username 始终 required）」；`AccountProfileForm.tsx:236-239` `[读]`
+- `account.gap.profile.email.required` — 出处：分册 14 表行「邮箱为空被拦（Email 始终 required）」；`AccountProfileForm.tsx:415-416` `[读]`
+- `account.gap.profile.delete.confirm.required` — 出处：分册 14 表行「删号确认框空密码/空用户名被拦」；`ActionConfirmModal.tsx:53-55,80-84` `[读]`
+- `account.gap.security.totp.backup-copy` — 出处：分册 14 表行「把备份码复制到剪贴板」；`BackupCodesModal.tsx:15-25` `[读]`
+- `account.gap.security.e2e-enter-password` — 出处：分册 14 表行「在「输入当前 E2E 口令」模态里填口令」；`EnterE2EPasswordModal.tsx:71-119` `ChangePassphrase.tsx:145-157` `[读]`
+- `account.gap.security.e2e-enter-submit` — 出处：分册 14 表行「提交当前 E2E 口令并解码私钥」；`EnterE2EPasswordModal.tsx:36-47,78` `rocketchat.e2e.ts:539-542,586` `[读]`
+- `account.gap.security.e2e-enter-later` — 出处：分册 14 表行「推迟输入当前 E2E 口令」；`EnterE2EPasswordModal.tsx:77,80` `rocketchat.e2e.ts:534-538` `[读]`
+- `account.gap.security.e2e-enter-invalid` — 出处：分册 14 表行「当前 E2E 口令错误被拦」；`EnterE2EPasswordModal.tsx:10,39-42` `[读]`
+- `account.gap.security.e2e-forgot` — 出处：分册 14 表行「从输入口令模态走「忘记 E2E 口令」」；`EnterE2EPasswordModal.tsx:108-117,55-68` `[读]`
+- `account.gap.security.e2e-forgot-confirm` — 出处：分册 14 表行「在忘记口令二次确认里重置并登出」；`EnterE2EPasswordModal.tsx:22,64` `ResetPassphrase.tsx:8,17` `[读]`
+- `account.gap.sessions.empty` — 出处：分册 14 表行「无登录设备时看空态」；`DeviceManagementTable.tsx:59` `[读]`
+- `account.gap.sessions.retry` — 出处：分册 14 表行「设备列表加载失败后重试」；`DeviceManagementTable.tsx:41-54` `[读]`
+- `acct.gap.e2e.save-modal.copy` — 出处：分册 14 表行「复制系统刚生成的 E2E 口令」；`SaveE2EPasswordModal.tsx:18-52` `rocketchat.e2e.ts:324-342,403-413` `[读]`
+- `acct.gap.e2e.save-modal.confirm` — 出处：分册 14 表行「确认已保存生成的 E2E 口令」；`SaveE2EPasswordModal.tsx:29` `rocketchat.e2e.ts:334-340` `[读]`
+- `acct.gap.e2e.save-modal.later` — 出处：分册 14 表行「推迟保存生成的 E2E 口令」；`SaveE2EPasswordModal.tsx:28` `rocketchat.e2e.ts:330-332` `[读]`
+- `acct.gap.e2e.reset.2fa` — 出处：分册 14 表行「重置 E2E 前通过 REST 2FA 挑战」；`users.ts:1767-1771` `process2faReturn.ts:125-141` `ResetPassphrase.tsx:8-17` `[读]`
+- `acct.gap.tokens.add.2fa` — 出处：分册 14 表行「创建 PAT 前通过 2FA 挑战」；`users.ts:1278-1281` `AddToken.tsx:42-45` `process2faReturn.ts` `[读]`
+- `acct.gap.tokens.regenerate.2fa` — 出处：分册 14 表行「再生 PAT 前通过 2FA 挑战」；`users.ts:1297-1300` `AccountTokensTable.tsx:66-71` `[读]`
+- `acct.gap.tokens.remove.2fa` — 出处：分册 14 表行「撤销 PAT 前通过 2FA 挑战」；`users.ts:1371-1374` `AccountTokensTable.tsx:103-107` `[读]`
+
+分册 14 NEW id 条数：**19**（PR #12 `account.gap.*` = 12；PR #16 unique `acct.gap.*` = 7；`12+7=19`）。
+
+#### 分册 15
+
+15 不新建 8 列功能 id。EXTRACTED 258 = HIT 90 + MISS 60 + OOS 108。必须补行 6 条由 16 裁决，不在本册发明行。NEW 功能 id：**0**。
+
+#### 分册 16
+
+- `fill.join.channel.fullpage` — 出处：分册 16 表行「未订阅且无预览权时，在整页空态点 Join 加入公开频道」；`NotSubscribedRoom.tsx:36-38`；`useJoinRoom.ts:13-33`；`RoomOpener.tsx:50-51` `[读]`
+- `fill.unread.clear-all.confirm` — 出处：分册 16 表行「Shift/Ctrl+Esc 弹出确认后清空全部已开房间未读」；`useEscapeKeyStroke.ts:21-49`；`useClearUnreadAllMessagesMutation.ts:7-24`；`AppLayout.tsx:56` `[读]`
+
+分册 16 NEW id 条数：**2**。
+
 ## 验算
 
 只把**各表行数**相加，证明拼接没有丢表；**不用一个总功能数当标题**。
@@ -4866,9 +5254,19 @@ rg -c '^\| `composer\.(state|fmt|popup)\.' docs/qa/pm-feature-atlas/11-composer-
 
 NEW（06–11）表体行/去重 id 逐步：`306+623=929`；`929+136=1065`；`1065+29=1094`；`1094+72=1166`；`1166+133=1299`。
 
-写入本蓝图的 8 列表体（含 01 B/C 复行）：`481+306=787`；`787+623=1410`；`1410+136=1546`；`1546+29=1575`；`1575+72=1647`；`1647+133=1780`。这只证明没丢表，**不是**对外总功能数。
+写入先前 00 的 8 列表体（含 01 B/C 复行）：`481+306=787`；`787+623=1410`；`1410+136=1546`；`1546+29=1575`；`1575+72=1647`；`1647+133=1780`。
 
-删除行：0（无）。精确 id 跨册碰撞：0（未改分册文件）。
+12 表体：`35+9=44`（A–I 35 + J/12b 9）。去重 id = 44。
+13 表体：`26+1=27`；`27+4=31`。去重 id = 31。
+14 表体：`12+7=19`。去重 id = 19。
+15 表体功能行：0。
+16 表体：2。去重 id = 2。
+
+NEW（12–16）表体行/去重 id 逐步：`44+31=75`；`75+19=94`；`94+0=94`；`94+2=96`。
+
+写入本蓝图相对先前 00 新拼的 8 列表体：`1780+44=1824`；`1824+31=1855`；`1855+19=1874`；`1874+2=1876`。这只证明没丢表，**不是**对外总功能数。
+
+删除行：0（无）。精确 id 跨册字符串碰撞：0。等价动作 alias 见下（12/15 两份 12；12/16 两份 14；12 邀请页 vs 13）。
 
 ## i18n 动词反查
 
@@ -4913,6 +5311,29 @@ NEW（06–11）表体行/去重 id 逐步：`306+623=929`；`929+136=1065`；`1
 
 相对先前 00（HIT 6 / MISS 24）新翻成 HIT 的 key：`Send_anyway` `Enable` `Show_mentions` `delete-user` `delete-livechat-contact` `Select_period` `Save_Mobile_Bandwidth` `Add_users` `Mute_Focused_Conversations` `archive-room` `Custom_User_Status_Add` `Send_Test_Email` `Remove_custom_oauth` `clear_history`（14）。原 HIT 6 条仍 HIT。原 MISS 中 10 条仍 MISS。
 
+同一 30 keys **不**因 12–16 重抽。12–16 未把上表仍 MISS 的 10 条翻成 HIT（那些仍是设置 / voip / 权限文案 / 后果列）。
+
+## i18n 必须补行裁决（15 → 16）
+
+15 在 00–11 UNION 上标了 **6** 条「必须补行」。16 给出 A / B / C。对照域现含 12–16。
+
+| # | key | 15 按钮 | 裁决 | 去向 / canonical |
+| --- | --- | --- | --- | --- |
+| 1 | `Join_channel` | `NotSubscribedRoom.tsx:37` | **B) NEW** | `fill.join.channel.fullpage`（16）。异于 03 `composer.join` / 13 `room.join.preview-blocked` |
+| 2 | `Clear_all_unreads_question` | `useEscapeKeyStroke.ts:36` | **B) NEW** | `fill.unread.clear-all.confirm`（16）。03 `shortcut.global.markAllAsRead.documented-unbound` **写反**；13 `room.chrome.escape-mark-read` 是裸 Esc 当前房 |
+| 3 | `Forgot_E2EE_Password` | `EnterE2EPasswordModal.tsx:116` | **A) 已覆盖** | `account.gap.security.e2e-forgot`（14 / PR #12）。别名 `acct.gap.e2e.enter.forgot`（PR #16，不复行） |
+| 4 | `Start_call` | `StartCallPopup.tsx:101` | **A) 已覆盖** | `room.chrome.call.start.confirm`（13） |
+| 5 | `Mute_and_dismiss` | `IncomingPopup.tsx:92` | **A) 已覆盖** | `room.chrome.call.incoming.mute`（13） |
+| 6 | `Hide_chat` | `ActionToggleChat.tsx:12` | **A) 已覆盖** | `room.chrome.voip.toggle-chat`（13） |
+
+无 **C)**。`4+2+0=6`。15 剩余 MISS 54 不升格（16 §5：标题/toast/未绑定 key）。
+
+## 仍必须补
+
+empty
+
+15 的 6 个 chat/room/account 动词已清。不停称产品总掌握：待渲染 UNION 仍非空；Admin settings 仍是组级。
+
 ## 分册冲突 / canonical aliases
 
 精确 id 无跨册碰撞（未改任何分册文件）。下列是**等价用户动作**（同一控件或同一提交）。门控/后果实质不同则两行都留；否则留 canonical，另一条标 alias。
@@ -4953,5 +5374,40 @@ NEW（06–11）表体行/去重 id 逐步：`306+623=929`；`929+136=1065`；`1
 
 回放时：抽到 alias 行，按 canonical 的入口+三件套执行，并记「同源」。抽到「都留」行，按该行自己的入口走（入口层 vs 内部层）。
 
-分册文件未改（无精确 id 需改名）。机械碰撞修复：无。
+### 12 vs 15（两份 `12-chat-micro-gaps.md`：PR #13 canonical / PR #15 unique-only）
+
+同字符串且同动作（保留 PR #13 原文，不另建）：`chat.micro.quote.multi` `chat.micro.quote.keyboard.absent` `chat.micro.quote.more.absent` `chat.micro.send.retry.absent`。
+
+| 关系 | canonical | alias / 对照 | 决议 | 理由 |
+| --- | --- | --- | --- | --- |
+| 取消 pending 发送 | `chat.micro.send.cancel-pending.absent`（12 / PR #13） | `chat.micro.send.cancel.absent`（PR #15，**未收录**） | alias → PR #13 | 同一负向：乐观行无 Cancel |
+
+PR #15 unique 已并入 12b，不是 alias：`quote.of-quote` `quote.same-readd` `slash.join.already-member` `quote.bar.jump.absent` `send.toast.click.absent` `composer.resize.absent` `composer.md-preview.absent` `otr.absent` `thread.title.jump.absent`。
+
+### 12 vs 16（两份 `14-account-gaps.md`：PR #12 canonical / PR #16 unique-only）
+
+| 关系 | canonical | alias / 对照 | 决议 | 理由 |
+| --- | --- | --- | --- | --- |
+| Forgot E2EE 链 | `account.gap.security.e2e-forgot`（14 / PR #12） | `acct.gap.e2e.enter.forgot`（PR #16，**未收录**） | alias → PR #12 | 同一 `Forgot_E2EE_Password` FieldLink |
+| Forgot 二次确认 | `account.gap.security.e2e-forgot-confirm`（14 / PR #12） | `acct.gap.e2e.enter.reset-confirm`（PR #16，**未收录**） | alias → PR #12 | 同一 warning 模态 `Reset_E2EE_password` |
+| TOTP 备份码 Copy | `account.gap.security.totp.backup-copy`（14 / PR #12） | `acct.gap.totp.backup-copy`（PR #16，**未收录**） | alias → PR #12 | 同一 `BackupCodesModal` Copy |
+| Enter E2E 口令框 | `account.gap.security.e2e-enter-password`（14） | `acct.gap.e2e.enter.password`（PR #16，**未收录**） | alias → PR #12 | 同一模态输入 |
+| Enter E2E 提交 | `account.gap.security.e2e-enter-submit`（14） | `acct.gap.e2e.enter.enable`（PR #16，**未收录**） | alias → PR #12 | 同一 `Enable_encryption` |
+| Enter E2E Later | `account.gap.security.e2e-enter-later`（14） | `acct.gap.e2e.enter.later`（PR #16，**未收录**） | alias → PR #12 | 同一 `Do_It_Later` |
+| Sessions 空态 | `account.gap.sessions.empty`（14） | `acct.gap.sessions.empty`（PR #16，**未收录**） | alias → PR #12 | 同一 GenericNoResults |
+| Sessions Retry | `account.gap.sessions.retry`（14） | `acct.gap.sessions.retry`（PR #16，**未收录**） | alias → PR #12 | 同一 refetch |
+
+PR #16 unique 已并入 14 §3b，不是 alias：`acct.gap.e2e.save-modal.copy` `confirm` `later`；`acct.gap.e2e.reset.2fa`；`acct.gap.tokens.add.2fa` `regenerate.2fa` `remove.2fa`。
+
+### 12 vs 13 邀请页（同控件两套 id）
+
+| 关系 | canonical | alias / 对照 | 决议 | 理由 |
+| --- | --- | --- | --- | --- |
+| 接受邀请 | `room.join.invite.accept`（13） | `chat.micro.invite.accept`（12） | alias → 13 | 同一 `RoomInviteBody` Accept；13 是房间 chrome 猎取 |
+| 拒绝邀请 | `room.join.invite.reject`（13） | `chat.micro.invite.reject` + `.confirm`（12） | alias → 13 | 13 把确认捆在一行；12 拆开 |
+| 联邦文档 | `room.join.invite.federation-learn`（13） | `chat.micro.invite.learn-federation`（12） | alias → 13 | 同一 `StatesLink` |
+
+12 `chat.micro.invite.reject.cancel` 无 13 对应行（13 未拆 Cancel）→ **都留**。
+
+分册 12 / 14 因 unique 合并改过；01–11 / 13 / 15 / 16 未改精确 id。机械碰撞改名：无。
 
