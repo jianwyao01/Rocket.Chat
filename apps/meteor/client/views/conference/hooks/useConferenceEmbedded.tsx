@@ -162,8 +162,8 @@ export const useConferenceEmbedded = (callId: string) => {
 				members.some((member) => member._id !== uid && isUnaskedConferenceMember(member)),
 		} as const,
 		room: {
-			rid: chatMode === 'thread' ? info?.rid : info?.discussionRid || info?.rid,
-			tmid: chatMode === 'thread' ? info?.messages.started : undefined,
+			rid: info?.discussionRid || info?.rid,
+			tmid: !info?.discussionRid && chatMode === 'thread' ? info?.messages.started : undefined,
 			name: info?.chatAccess.name,
 			type: info?.chatAccess.type,
 			loading: isInfoPending,
