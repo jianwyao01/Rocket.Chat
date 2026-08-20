@@ -495,7 +495,28 @@ and it is shown only on the screen where confirming *creates* the call, since a 
 with its answer and a switch wired to nothing is worse than no switch. Adding people to a call in progress asks the
 same question, and remembers the same answer: it is one habit, not two.
 
-## 9. Known limitations
+## 9. Discussion navigation in conference chat
+
+When a member lacks read access to the call's room, the server creates a discussion and sets `discussionRid` on
+the video conference record. The conference chat panel must navigate to that discussion so the member can
+participate.
+
+`useConferenceEmbedded` resolves the chat target as:
+
+```
+rid:  info.discussionRid  ||  info.rid
+tmid: (no discussionRid  &&  chatMode === 'thread')  ?  info.messages.started  :  undefined
+```
+
+`discussionRid` takes priority regardless of `VideoConf_Persistent_Chat_Mode`. When a discussion exists, the
+panel shows the discussion room directly — `tmid` is cleared so the panel does not try to render a thread inside
+the discussion. When no discussion exists, the behaviour depends on the chat mode: `thread` opens the started
+message as a thread in the parent room; `main_room` shows the parent room's timeline.
+
+The `video-conference/${callId}/updated` stream event fires when `discussionRid` is set, which invalidates the
+conference query and causes the panel to re-resolve its target — the navigation is reactive, not polled.
+
+## 10. Known limitations
 
 - **Single-process worker**. Supervisor only respawns one. No horizontal scaling story yet — for many concurrent rooms in a single workspace, you'd want multiple worker processes or external workers.
 
