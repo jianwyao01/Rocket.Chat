@@ -477,11 +477,8 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 	// participant gets the large view. Falls back to the first remote
 	// participant when nobody is speaking.
 	const audioParticipants = useMemo(
-		() => [
-			{ id: localParticipant.id, audioStream: localParticipant.audioStream },
-			...remoteParticipants.map((p) => ({ id: p.id, audioStream: p.audioStream })),
-		],
-		[localParticipant.id, localParticipant.audioStream, remoteParticipants],
+		() => remoteParticipants.map((p) => ({ id: p.id, audioStream: p.audioStream })),
+		[remoteParticipants],
 	);
 	const activeSpeakerId = useActiveSpeakerId(audioParticipants, remoteParticipants[0]?.id ?? localParticipant.id);
 
@@ -567,7 +564,7 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 	}, [stageSize, spotlightOrientation]);
 
 	const sidebarOthers = useMemo(() => {
-		const featured = allTiles.find((t) => t.id === activeSpeakerId) ?? allTiles[0];
+		const featured = allTiles.find((t) => t.id === activeSpeakerId) ?? allTiles.find((t) => t.id !== localParticipant.id) ?? allTiles[0];
 		const others = allTiles.filter((t) => t.id !== featured?.id);
 		if (others.length <= sidebarCapacity) {
 			return { visible: others, hidden: [] as typeof others };
@@ -621,11 +618,9 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 	// Spotlight layout: active speaker fills the stage, local user's self-view
 	// floats as a small PiP in the bottom-right corner.
 	if (layout === 'spotlight') {
-		const featured = allTiles.find((t) => t.id === activeSpeakerId) ?? allTiles[0];
+		const featured = allTiles.find((t) => t.id === activeSpeakerId) ?? allTiles.find((t) => t.id !== localParticipant.id) ?? allTiles[0];
 		const selfTile = allTiles.find((t) => t.id === localParticipant.id);
-		// When the local user is the active speaker, show the first remote instead.
-		const mainTile =
-			featured.id === localParticipant.id && allTiles.length > 1 ? allTiles.find((t) => t.id !== localParticipant.id)! : featured;
+		const mainTile = featured;
 		return (
 			<Box className={stageStyles}>
 				<Box display='flex' width='full' height='full' position='relative'>
@@ -647,7 +642,7 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 	// spotlight, but with a camera feed instead of a screen.
 	if (layout === 'sidebar') {
 		const isSideBySide = spotlightOrientation === 'side-by-side';
-		const featured = allTiles.find((t) => t.id === activeSpeakerId) ?? allTiles[0];
+		const featured = allTiles.find((t) => t.id === activeSpeakerId) ?? allTiles.find((t) => t.id !== localParticipant.id) ?? allTiles[0];
 		const { visible: sidebarVisible, hidden: sidebarHidden } = sidebarOthers;
 		return (
 			<Box className={stageStyles} ref={stageRefCallback}>
