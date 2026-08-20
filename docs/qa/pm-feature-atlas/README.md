@@ -18,6 +18,7 @@
 | [09-marketplace-product.md](09-marketplace-product.md) | 市场列表与每应用动作（同 PR #8） |
 | [10-message-timeline.md](10-message-timeline.md) | 消息时间线正文（非工具栏）（[PR #7](https://github.com/jianwyao01/Rocket.Chat/pull/7)） |
 | [11-composer-states.md](11-composer-states.md) | Composer 状态机（把 03 入口炸开）（[PR #6](https://github.com/jianwyao01/Rocket.Chat/pull/6)） |
+| [12-chat-micro-gaps.md](12-chat-micro-gaps.md) | 聊天微交互缺口：quote / reply / edit-last / retry（本册） |
 
 05 不新建功能 id。分册原文除机械碰撞外未改（本合并精确 id 碰撞为 0）。
 
@@ -54,6 +55,7 @@
 | 09 | 29 | 29 | `rg -c '^\| `mkt\.explore\.[a-z]' …/09-marketplace-product.md` → 5；`installed` 5；`request` 1；`app` 18；`5+5+1+18=29` |
 | 10 | 72 | 72 | `rg -c '^\| tl\.' docs/qa/pm-feature-atlas/10-message-timeline.md` → 72 |
 | 11 | 133 | 133 | `rg -c '^\| `composer\.(state\|fmt\|popup)\.' docs/qa/pm-feature-atlas/11-composer-states.md` → 133 |
+| 12 | 14 | 14 | `rg -c '^\| chat\.micro\.' docs/qa/pm-feature-atlas/12-chat-micro-gaps.md` → 14 |
 
 ### 验算（只证明没丢表，不是对外总功能数）
 
