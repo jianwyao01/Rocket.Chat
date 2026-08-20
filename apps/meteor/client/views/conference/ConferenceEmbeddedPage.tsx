@@ -1,10 +1,10 @@
-import { isInVideoConference } from '@rocket.chat/core-typings';
+import { isInVideoConference, isRingingVideoConferenceMember } from '@rocket.chat/core-typings';
 import { Box } from '@rocket.chat/fuselage';
 import { useBreakpoints } from '@rocket.chat/fuselage-hooks';
 import { useUserDisplayName } from '@rocket.chat/ui-client';
-import { useUser, useUserAvatarPath, useUserSubscription } from '@rocket.chat/ui-contexts';
+import { useCustomSound, useUser, useUserAvatarPath, useUserSubscription } from '@rocket.chat/ui-contexts';
 import { MediaCallRoomSection, useMediaCallView } from '@rocket.chat/ui-voip';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import CallMembersPanel from './CallMembersPanel';
@@ -164,6 +164,24 @@ const ConferenceEmbeddedPage = ({ callId }: ConferenceEmbeddedPageProps) => {
 	// Who is actually in the call — the faces worth glancing at, and how many there are altogether.
 	const present = useMemo(() => call.members.filter(isInVideoConference), [call.members]);
 	const presentCount = present.length;
+
+	// A DM caller should hear a ringback tone while the other side's phone is still ringing.
+	const { callSounds } = useCustomSound();
+	const someoneRinging = useMemo(
+		() =>
+			call.canRing &&
+			conference.joined &&
+			call.members.some((m) => m._id !== user?._id && !isInVideoConference(m) && isRingingVideoConferenceMember(m)),
+		[call.canRing, conference.joined, call.members, user?._id],
+	);
+	useEffect(() => {
+		if (someoneRinging) {
+			callSounds.playDialer();
+		} else {
+			callSounds.stopDialer();
+		}
+		return () => callSounds.stopDialer();
+	}, [someoneRinging, callSounds]);
 
 	// Where the call puts its own controls — see `actionsContainer`. Created up front rather than captured from
 	// a ref, so it is non-null on the very first render: a ref would still be empty then, and the call would
