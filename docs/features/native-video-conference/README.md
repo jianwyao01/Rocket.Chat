@@ -426,9 +426,31 @@ shows, and both were invisible in exactly the calls where they matter most.
 
 - **Reactions popover** — stays open for multiple clicks; outside-click to dismiss.
 - **Hand-raise** — auto-lowers after 3s of continuous speech (driven by `useAudioLevel`).
-
+- **Speaking-while-muted indicator** — a pulsing warning dot on the mic button, shown when the user is talking with their microphone muted. See *Speaking-while-muted detection* below.
 
 Camera tiles fall back to the avatar when `track.enabled && !track.muted && track.readyState === 'live'` is false (`useStreamHasLiveVideo` hook). For remote LK tracks, also check `publication.isMuted`.
+
+### Member presence in the call panel
+
+`CallMemberItem` shows each member's online/away/offline status via `ReactiveUserStatus` regardless of whether they have joined, are ringing, or were invited. The presence dot appears for all members, not only joined ones, so the caller can see whether an invited person is online before they pick up.
+
+### Speaking-while-muted detection
+
+LiveKit stops the microphone track when the user mutes, so its own `isSpeaking` / `audioLevel` go silent. The `useSpeakingWhileMuted` hook (`apps/meteor/client/views/videoConference/livekit/useSpeakingWhileMuted.ts`) works around this by opening a parallel `getUserMedia` capture from the same device while muted. It samples the raw audio level via an `AnalyserNode` at 100ms intervals and reports `true` when speech exceeds the threshold for 400ms continuously — long enough to filter out bumps and coughs. The capture is torn down the moment the mic is unmuted or the component unmounts.
+
+The hook is wired through `LiveKitVideoConfProvider` into `MediaCallViewContext.speakingWhileMuted`. The mic button in `MediaCallRoomSection` responds by showing a pulsing dot and changing its tooltip to "You are muted — click to unmute".
+
+### Active speaker and layout
+
+`useActiveSpeakerId` samples audio from remote participants only — the local participant is excluded so the user can never promote themselves to the spotlight or the sidebar's featured tile. When no one is speaking, the spotlight and sidebar fall back to the first remote participant rather than defaulting to the local user.
+
+This applies to both layout modes in `CallStage`:
+- **Spotlight**: the featured tile is the active speaker, falling back to the first remote participant.
+- **Sidebar**: the large tile is the active speaker, with the remaining participants in a scrollable strip. The local participant only appears in the strip, never as the featured tile.
+
+### Ringback tone for the caller
+
+When the caller is in a DM-style call and at least one invited member's phone is ringing, a dialtone plays in a loop (`dialtone.mp3` via `useCustomSound().callSounds.playDialer()`). The effect lives in `ConferenceEmbeddedPage` and checks `isRingingVideoConferenceMember` on each member, filtering out the caller themselves. The tone stops when everyone has either joined or stopped ringing.
 
 ---
 
