@@ -476,10 +476,7 @@ const CallStage = ({ localParticipant, remoteParticipants, onStopLocalScreenShar
 	// Active speaker: used by spotlight and sidebar layouts to decide which
 	// participant gets the large view. Falls back to the first remote
 	// participant when nobody is speaking.
-	const audioParticipants = useMemo(
-		() => remoteParticipants.map((p) => ({ id: p.id, audioStream: p.audioStream })),
-		[remoteParticipants],
-	);
+	const audioParticipants = useMemo(() => remoteParticipants.map((p) => ({ id: p.id, audioStream: p.audioStream })), [remoteParticipants]);
 	const activeSpeakerId = useActiveSpeakerId(audioParticipants, remoteParticipants[0]?.id ?? localParticipant.id);
 
 	// Grid pagination: show at most MAX_VISIBLE_TILES tiles. When there are
