@@ -12,6 +12,7 @@
 | [03-composer-implicit.md](03-composer-implicit.md) | Composer + 房间隐式交互（[PR #4](https://github.com/jianwyao01/Rocket.Chat/pull/4)） |
 | [04-routes-and-shell.md](04-routes-and-shell.md) | 路由目的地与壳层页（[PR #3](https://github.com/jianwyao01/Rocket.Chat/pull/3)） |
 | [05-completeness.md](05-completeness.md) | views/ 完备性、i18n 抽样方法、OOS 量级（同 PR #3） |
+| [07-page-interiors.md](07-page-interiors.md) | 把 02/04 入口炸开成页内每一个可操作控件（Create/Account/Directory/Home/Admin/Audit） |
 
 ## 如何回放（随机 10 行）
 
@@ -31,8 +32,9 @@
 | 02 | 107 | 107 | `rg -c '^\| (room\|user\|nav\|sidebar)\.' docs/qa/pm-feature-atlas/02-room-user-nav.md` → 107 |
 | 03 | 117 | 117 | `rg -c '^\| `' docs/qa/pm-feature-atlas/03-composer-implicit.md` → 117 |
 | 04 | 64 | 64 | `rg -c '^\| `route\.' 04` → 50；`account` 9；`directory` 4；`team` 1；`50+9+4+1=64` |
+| 07 | 见 [07 §H](07-page-interiors.md#h-验算按页禁止虚荣总功能数) 按命名空间 | 同左（去重） | `rg -c '^\| \`page\.' docs/qa/pm-feature-atlas/07-page-interiors.md`；**禁止**把各命名空间相加成对外总功能数 |
 
-验算（只证明没丢表）：`193+107=300`；`300+117=417`；`417+64=481` 表体行写入 00。去重 id：`26+107=133`；`133+117=250`；`250+64=314`（附录算术，不是对外总功能数）。
+验算（只证明没丢表）：`193+107=300`；`300+117=417`；`417+64=481` 表体行写入 00。去重 id：`26+107=133`；`133+117=250`；`250+64=314`（附录算术，不是对外总功能数）。07 不并入 00 总和。
 
 05 不新建功能 id。`ls -1 apps/meteor/client/views/ | wc -l` → 27，00 完备性表 27 行立场。
 
