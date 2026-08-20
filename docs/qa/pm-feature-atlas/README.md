@@ -18,6 +18,7 @@
 | [09-marketplace-product.md](09-marketplace-product.md) | 市场列表与每应用动作（同 PR #8） |
 | [10-message-timeline.md](10-message-timeline.md) | 消息时间线正文（非工具栏）（[PR #7](https://github.com/jianwyao01/Rocket.Chat/pull/7)） |
 | [11-composer-states.md](11-composer-states.md) | Composer 状态机（把 03 入口炸开）（[PR #6](https://github.com/jianwyao01/Rocket.Chat/pull/6)） |
+| [14-account-gaps.md](14-account-gaps.md) | 账号操作缺口：对照 04 `account.*` + 07 全部 `page.account.*`，NEW `account.gap.*` |
 
 05 不新建功能 id。分册原文除机械碰撞外未改（本合并精确 id 碰撞为 0）。
 
