@@ -264,8 +264,9 @@ export class VideoConferenceRaw extends BaseRaw<VideoConference> implements IVid
 				// is that they are in the call, and stamping it here saves a second write to say so.
 				$set: { 'users.$[user].joined': true, 'users.$[user].joinedAt': joinedAt, 'users.$[user].lastSeenAt': joinedAt },
 				// Rejoining makes an earlier departure meaningless: leaving it behind would report the member as
-				// gone while they are on the call, and could end the call under them.
-				$unset: { 'users.$[user].leftAt': 1, 'users.$[user].leftReason': 1 },
+				// gone while they are on the call, and could end the call under them.  Clearing ringingAt stops
+				// the caller's ringback tone — the person answered.
+				$unset: { 'users.$[user].leftAt': 1, 'users.$[user].leftReason': 1, 'users.$[user].ringingAt': 1 },
 			},
 			{ arrayFilters: [{ 'user._id': uid }] },
 		);

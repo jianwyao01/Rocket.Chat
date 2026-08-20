@@ -89,7 +89,11 @@ describe('VideoConferenceRaw.setUserJoinedById', () => {
 
 		await model.setUserJoinedById('call-1', 'user-1');
 
-		expect(updateOne.mock.calls[0][1].$unset).toEqual({ 'users.$[user].leftAt': 1, 'users.$[user].leftReason': 1 });
+		expect(updateOne.mock.calls[0][1].$unset).toEqual({
+			'users.$[user].leftAt': 1,
+			'users.$[user].leftReason': 1,
+			'users.$[user].ringingAt': 1,
+		});
 	});
 });
 
