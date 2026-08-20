@@ -97,6 +97,46 @@ const callHeaderTimerStyles = css`
 // The selector sits first, on the inline start, where it is out of the way of
 // the toggle the user actually reaches for — and its chevron points *up*,
 // toward where its menu opens from a bottom bar.
+const speakingWhileMutedTooltip = css`
+	@keyframes swm-fade-in {
+		from {
+			opacity: 0;
+			transform: translate(-50%, 4px);
+		}
+		to {
+			opacity: 1;
+			transform: translate(-50%, 0);
+		}
+	}
+
+	position: absolute;
+	bottom: calc(100% + 8px);
+	left: 50%;
+	transform: translateX(-50%);
+	padding: 6px 12px;
+	border-radius: 4px;
+	background: rgba(245, 69, 69, 0.95);
+	color: #fff;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1.3;
+	white-space: nowrap;
+	pointer-events: auto;
+	cursor: pointer;
+	animation: swm-fade-in 200ms ease-out;
+	z-index: 10;
+
+	&::after {
+		content: '';
+		position: absolute;
+		top: 100%;
+		left: 50%;
+		transform: translateX(-50%);
+		border: 5px solid transparent;
+		border-top-color: rgba(245, 69, 69, 0.95);
+	}
+`;
+
 const deviceControlStyles = css`
 	display: inline-flex;
 	align-items: stretch;
@@ -178,6 +218,7 @@ const MediaCallRoomSection = ({
 		activeReactions,
 		streams: { localScreen, localCamera, localMicrophone, remoteScreen, remoteCamera, remoteMicrophone },
 		sendResolution,
+		speakingWhileMuted,
 		remoteParticipants: remoteParticipantsRaw,
 	} = useMediaCallView();
 	const { currentViews } = useMediaCallInstance();
@@ -348,15 +389,20 @@ const MediaCallRoomSection = ({
 				<Box>
 					<DevicePicker chevron danger={muted} />
 				</Box>
-				<Box>
+				<Box position='relative'>
 					<ToggleButton
 						label={t('Mute')}
 						icons={['mic', 'mic-off']}
-						titles={[t('Mute'), t('Unmute')]}
+						titles={speakingWhileMuted ? [t('You_are_muted'), t('You_are_muted')] : [t('Mute'), t('Unmute')]}
 						pressed={muted}
 						dangerWhenPressed
 						onToggle={onMute}
 					/>
+					{speakingWhileMuted && (
+						<Box className={speakingWhileMutedTooltip} onClick={onMute}>
+							{t('You_are_muted')}
+						</Box>
+					)}
 				</Box>
 			</Box>
 			{onToggleCamera && (

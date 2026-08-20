@@ -26,6 +26,7 @@ import { useLiveKitVideoConf } from './LiveKitVideoConfContext';
 import { useBackgroundBlur } from './useBackgroundBlur';
 import { useNoiseSuppression } from './useNoiseSuppression';
 import { useSendResolution } from './useSendResolution';
+import { useSpeakingWhileMuted } from './useSpeakingWhileMuted';
 import { useVideoQuality } from './useVideoQuality';
 
 /**
@@ -258,6 +259,8 @@ const InnerProvider = ({
 
 	// What the encoder is actually sending, which is not what the camera is capturing.
 	const sendResolution = useSendResolution(localCameraPub?.track as LocalVideoTrack | undefined);
+
+	const speakingWhileMuted = useSpeakingWhileMuted(!micEnabled);
 
 	const onToggleMic = useCallback(() => void localParticipant.setMicrophoneEnabled(!micEnabled), [localParticipant, micEnabled]);
 	const onToggleCamera = useCallback(() => void localParticipant.setCameraEnabled(!camEnabled), [localParticipant, camEnabled]);
@@ -644,6 +647,7 @@ const InnerProvider = ({
 			activeReactions,
 			onVideoInputChange,
 			currentCameraDeviceId,
+			speakingWhileMuted,
 			remoteParticipants,
 			streams: {
 				localCamera: localCameraStream as any,
@@ -673,6 +677,7 @@ const InnerProvider = ({
 			onDeviceChange,
 			onVideoInputChange,
 			currentCameraDeviceId,
+			speakingWhileMuted,
 			remoteParticipants,
 			localCameraStream,
 			localScreenStream,
@@ -771,9 +776,67 @@ const LiveKitVideoConfBridge = ({ children }: { children: ReactNode }) => {
 		};
 	}, [lkPortalTarget]);
 
+	const swm = (ctxValue as any).speakingWhileMuted === true;
+	const [showSwm, setShowSwm] = useState(false);
+	const swmTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+	const [swmRect, setSwmRect] = useState<{ left: number; bottom: number } | null>(null);
+
+	useEffect(() => {
+		if (swm) {
+			if (swmTimer.current) clearTimeout(swmTimer.current);
+			setShowSwm(true);
+		} else if (showSwm) {
+			swmTimer.current = setTimeout(() => setShowSwm(false), 3000);
+		}
+		return () => {
+			if (swmTimer.current) clearTimeout(swmTimer.current);
+		};
+	}, [swm, showSwm]);
+
+	useEffect(() => {
+		if (!showSwm) {
+			setSwmRect(null);
+			return undefined;
+		}
+		const locate = () => {
+			const btn = document.querySelector<HTMLElement>('[title="Unmute"], [title*="muted" i]');
+			if (btn) {
+				const r = btn.getBoundingClientRect();
+				setSwmRect({ left: r.left + r.width / 2, bottom: window.innerHeight - r.top + 8 });
+			}
+		};
+		locate();
+		const id = setInterval(locate, 1000);
+		return () => clearInterval(id);
+	}, [showSwm]);
+
 	return (
 		<MediaCallViewContext.Provider value={ctxValue as any}>
 			{children}
+			{showSwm && swmRect && (
+				<div
+					style={{
+						position: 'fixed',
+						bottom: swmRect.bottom,
+						left: swmRect.left,
+						transform: 'translateX(-50%)',
+						padding: '6px 12px',
+						borderRadius: 4,
+						background: 'rgba(235, 50, 50, 0.95)',
+						color: '#fff',
+						fontSize: 12,
+						fontWeight: 500,
+						lineHeight: 1.3,
+						whiteSpace: 'nowrap' as const,
+						zIndex: 99999,
+						pointerEvents: 'auto' as const,
+						cursor: 'pointer',
+					}}
+					onClick={(ctxValue as any).onMute}
+				>
+					You are muted — click to unmute
+				</div>
+			)}
 			{lkActive && creds && callId && lkPortalTarget
 				? createPortal(
 						// Apply preflight mic/cam preferences from the VC

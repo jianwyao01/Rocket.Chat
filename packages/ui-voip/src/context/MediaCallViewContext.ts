@@ -126,6 +126,8 @@ type MediaCallViewContextValue = {
 	onVideoInputChange?: (deviceId: string) => void;
 	/** Currently-active camera deviceId, used to mark the selected entry in the picker. */
 	currentCameraDeviceId?: string;
+	/** Whether the user is speaking while their microphone is muted. */
+	speakingWhileMuted?: boolean;
 	onOpenPopout: () => void;
 	onClosePopout: () => void;
 	streams: MediaCallStreams;
