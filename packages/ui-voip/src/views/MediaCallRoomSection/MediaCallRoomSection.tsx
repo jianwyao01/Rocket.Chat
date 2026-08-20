@@ -1,5 +1,5 @@
 import { css } from '@rocket.chat/css-in-js';
-import { Box, ButtonGroup } from '@rocket.chat/fuselage';
+import { Box, ButtonGroup, Icon } from '@rocket.chat/fuselage';
 import { useLocalStorage } from '@rocket.chat/fuselage-hooks';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -88,6 +88,23 @@ const callHeaderTimerStyles = css`
 	align-items: center;
 	color: rgba(255, 255, 255, 0.85);
 	font-variant-numeric: tabular-nums;
+`;
+
+const presenterIndicatorStyles = css`
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-inline-start: 12px;
+	padding: 2px 10px;
+	border-radius: 4px;
+	background-color: rgba(255, 255, 255, 0.12);
+	color: rgba(255, 255, 255, 0.85);
+	font-size: 13px;
+	line-height: 1.2;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 240px;
 `;
 
 // A device toggle and its selector, fused into one control: a single rounded
@@ -376,11 +393,32 @@ const MediaCallRoomSection = ({
 		}
 	}, [liveLevel, localHandRaised, onToggleHand]);
 
+	const presenterLabel = useMemo(() => {
+		const names: string[] = [];
+		if (localScreen?.active) {
+			names.push(t('You'));
+		}
+		for (const p of remoteParticipants) {
+			if (p.screenStream) {
+				names.push(p.displayName);
+			}
+		}
+		return names.length > 0 ? names.join(', ') : null;
+	}, [localScreen?.active, remoteParticipants, t]);
+
 	// How long the call has been running. The surface hosting this header owns whatever sits beside it.
 	const callHeader = (
-		<Box className={callHeaderTimerStyles}>
-			<Timer startAt={startedAt} />
-		</Box>
+		<>
+			<Box className={callHeaderTimerStyles}>
+				<Timer startAt={startedAt} />
+			</Box>
+			{presenterLabel && (
+				<Box className={presenterIndicatorStyles} title={t('__name__is_presenting', { name: presenterLabel })}>
+					<Icon name='desktop' size='x16' />
+					{t('__name__is_presenting', { name: presenterLabel })}
+				</Box>
+			)}
+		</>
 	);
 
 	const callControls = (

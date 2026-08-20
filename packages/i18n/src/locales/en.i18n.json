@@ -7491,6 +7491,7 @@
     "one": "{{count}} person in the call",
     "other": "{{count}} people in the call"
   },
+  "__name__is_presenting": "{{name}} is presenting",
   "__name__raised_their_hand": "{{name}} raised their hand",
   "__name__will_be_notified_when_you_start_the_call": "{{name}} will be notified when you start the call",
   "__count__empty_rooms_will_be_removed_automatically": "{{count}} empty rooms will be removed automatically.",
