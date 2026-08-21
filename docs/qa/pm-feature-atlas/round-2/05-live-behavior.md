@@ -172,7 +172,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | msg.apps.action | Apps-Engine `messageAction`（非 AI）注入 More→Apps | `房间消息→悬停工具栏→More→（section Apps）→具体 app 项`；默认 app context 仅 `message`/`message-mobile`/`threads`/`starred`（`IUIActionButtonDescriptor.ts:15-20` + `useMessageActionAppsActionButtons.ts:19-20`）。E2EE 时整节替换为 disabled `Unavailable` `MessageToolbarActionMenu.tsx:126-143`。**不枚举 marketplace 应用。** 若 `data.length===0`（无内置菜单项），More 不渲染，apps 无法单独出现 `MessageToolbarActionMenu.tsx:92-94`。[读] | App `when`：`hasOnePermission`/`hasAllPermissions`/`hasOneRole`/`hasAllRoles`/`roomTypes`/`messageActionContext`；再经 `useApplyButtonFilters('default')` `useApplyButtonFilters.ts:45-56`。hidden 按 `${appId}/${actionId}`。需 `GET /apps/actionButtons` 且连接状态 connected `useAppActionButtons.ts:15-19`。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `GET /apps/actionButtons`；`IUIActionButton.when`；`message.rid` `tmid` `_id`；E2EE | msg.apps.ai | `useMessageActionAppsActionButtons.ts:25-77`；装配 `MessageToolbarActionMenu.tsx:87,98` |
 | msg.apps.ai | Apps-Engine `messageAction` 且 `category==='ai'` 注入星星菜单 | `房间消息→悬停工具栏→AI_Actions（icon=stars）→具体 AI 项`。过滤 `useApplyButtonFilters('ai')` `MessageToolbarStarsActionMenu.tsx:22`。无 AI 按钮则整菜单不渲染 `MessageToolbarStarsActionMenu.tsx:26-28`。E2EE 时 apps 组变为 disabled `Unavailable`。context 默认同样只有 4 个 Apps-Engine 值。 | 同 msg.apps.action，但 `category==='ai'` `useApplyButtonFilters.ts:35-43`。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | 同 msg.apps.action + `category:'ai'` | msg.apps.action | `MessageToolbarStarsActionMenu.tsx:21-80`；`useMessageActionAppsActionButtons.ts:25` |
 
-### `room.*` — 44 个 id（实测 27 / 不可达 0 / 待渲染 17）
+### `room.*` — 44 个 id（实测 28 / 不可达 0 / 待渲染 16）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -193,7 +193,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | room.toolbox.banned-users | 打开房间封禁用户列表 | `房间头→工具栏→Options→Banned_Users` | permission `ban-user` `useBannedUsersRoomAction.ts:12,15-16`；groups∈{channel,group,team} | [实测] ① #atlas-live Options → Banned Users，空态 No banned users。② 无。③ 关栏。shots/shots35/room-toolbox-banned-users.webp | `useBannedUsersRoomAction.ts:19-27` | `BannedUsers` | `ui.ts:54` |
 | room.toolbox.members-list | 打开频道/组/团队成员列表 | `房间头→工具栏→Members` 或 `Teams_members` | broadcast 需 `view-broadcast-member-list`；非原生 federation 隐藏 `useMembersListRoomAction.ts:13-24` | [实测] ① header Members → heading Members，1 owner，Invite Link / Add。② 无写。③ 刷新仍 1 人。shots/14-members.png | `useMembersListRoomAction.ts:27-34` | `MemberListRouter` | `ui.ts:55` |
 | room.toolbox.mentions | 打开本房间提及消息列表 | `房间头→工具栏→Mentions` | hook: none `useMentionsRoomAction.ts:6-18`；groups∈{channel,group,team} | [实测] ① header Mentions → heading Mentions，“No mentions found”。② 无。③ 刷新仍空。shots/13-mentions.png | `useMentionsRoomAction.ts:8-16` | `MentionsTab` | `ui.ts:56` |
-| room.toolbox.omnichannel-external-frame | 打开 Omnichannel 外部 iframe 侧栏 | live `房间头→工具栏→Omnichannel_External_Frame` | setting `Omnichannel_External_Frame_Enabled` `useOmnichannelExternalFrameRoomAction.ts:8,11-12` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `useOmnichannelExternalFrameRoomAction.ts:15-22` | `ExternalFrameContainer` | `ui.ts:57` |
+| room.toolbox.omnichannel-external-frame | 打开 Omnichannel 外部 iframe 侧栏 | live `房间头→工具栏→Omnichannel_External_Frame` | setting `Omnichannel_External_Frame_Enabled` `useOmnichannelExternalFrameRoomAction.ts:8,11-12` | [实测] ① /live/n2u9XXXEfsZdvk7FT 点房间工具栏 Omnichannel External Frame → URL 变为 /live/n2u9XXXEfsZdvk7FT/omnichannel-external-frame。② 无写 REST。③ 刷新该 tab 仍可再开。shots/shots45/room.toolbox.omnichannel-external-frame.webp | `useOmnichannelExternalFrameRoomAction.ts:15-22` | `ExternalFrameContainer` | `ui.ts:57` |
 | room.toolbox.outlook-calendar | 打开 Outlook 日历事件侧栏 | `房间头→工具栏→Outlook_calendar`（order=999） | setting `Outlook_Calendar_Enabled` `useOutlookCalenderRoomAction.ts:8,11-12`；groups∈{channel,group,team} | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `useOutlookCalenderRoomAction.ts:15-22` | `OutlookEventsRoute` | `ui.ts:58` |
 | room.toolbox.pinned-messages | 打开置顶消息列表 | `房间头→工具栏→Pinned_Messages` | setting `Message_AllowPinning` `usePinnedMessagesRoomAction.ts:14,18-19`；federated disabled | [实测] ① #atlas-live Pinned Messages，空态 No pinned messages。② 无。③ 刷新仍空。shots/shots7/16-pinned-messages.webp | `usePinnedMessagesRoomAction.ts:22-34` | `PinnedMessagesTab` | `ui.ts:59` |
 | room.toolbox.push-notifications | 打开本房间通知偏好 | `房间头→工具栏→Notifications_Preferences` | 必须有 subscription `usePushNotificationsRoomAction.ts:9-14` | [实测] ① #atlas-live Notifications Preferences：Turn on、Mute @all、Mark as unread、Desktop/Mobile/Email。② 未保存。③ 关栏。shots/shots9/32-notifications.webp | `usePushNotificationsRoomAction.ts:17-25` | `NotificationPreferences` | `ui.ts:60` |
@@ -1071,7 +1071,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.audit.security.row | 打开一条设置变更详情 | Security Logs → 行单击 | 同上 | [不可达] 已打开 /audit、/admin/audit、/audit-home、/security-logs，均为 heading “Page not found” / “The page does not exist or you may not have access permission”；Administration 侧栏无 Audit 项。hasValidLicense=false 且入口走后控件/页不在。 | EE:auditing | page.audit.security.apply | SecurityLogsTable.tsx [读] |
 | page.audit.security.pagination | 翻页设置日志 | Security Logs → Pagination | 有多页 | [不可达] 已打开 /audit、/admin/audit、/audit-home、/security-logs，均为 heading “Page not found” / “The page does not exist or you may not have access permission”；Administration 侧栏无 Audit 项。hasValidLicense=false 且入口走后控件/页不在。 | EE:auditing | page.audit.security.apply | SecurityLogsTable.tsx [读] |
 
-### `omni.*` — 136 个 id（实测 84 / 不可达 29 / 待渲染 23）
+### `omni.*` — 136 个 id（实测 85 / 不可达 29 / 待渲染 22）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1110,7 +1110,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | omni.agent.transcript.email | 单独发邮件 transcript（非关单附带） | 头 `Send_transcript` → `Send_via_email` → 填邮箱/主题 | `send-omnichannel-chat-transcript` `useQuickActions.tsx:271,290-291`；非 MAC | [实测] ① Wrap up 模态勾选项 Send chat transcript via email。② 未确认关闭。③ Cancel。shots/shots13/06-livechat-transcript-email.webp | visitor email | `omni.agent.close` `account.omnichannel` | `TranscriptModal.tsx:74-132` `[读]` |
 | omni.agent.transcript.pdf | 请求 PDF transcript | 头 → `Export_as_PDF` | `request-pdf-transcript` + **`livechat-enterprise`** `useQuickActions.tsx:272-273,292-293`；PDF 在未关房时 disabled `useTranscriptQuickAction.ts:19-22` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | 房间 closed | `omni.agent.close` | `useTranscriptQuickAction.ts:19-22` `[读]` |
 | omni.agent.file.send | 在可写 live composer 发文件 | 进行中且已订阅 → composer `Upload_file` / 拖放 | `FileUpload_Enabled` `useFileUploadAction.ts:13,50`；inquiry/onHold/closed/MAC/join **替换** `ComposerMessage` 故无上传 `ComposerOmnichannel.tsx:26-75` | [实测] ① Atlas Visitor composer 点纸夹，系统文件选择器打开。② 未上传。③ 关选择器。shots/shots14/04-livechat-file-picker.webp | 媒体黑白名单 | `composer` 他册上传 | `ComposerOmnichannel.tsx:71-75` `[读]` |
-| omni.agent.join | 加入并非自己接待的开房 | 开房且未订阅且非接待人 → composer `Join` | `!isSubscribed && !isSameAgent` `ComposerOmnichannel.tsx:62-67` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `rid` | `omni.agent.queue.take` | `ComposerOmnichannelJoin.tsx:16-28` `[读]` |
+| omni.agent.join | 加入并非自己接待的开房 | 开房且未订阅且非接待人 → composer `Join` | `!isSubscribed && !isSameAgent` `ComposerOmnichannel.tsx:62-67` | [实测] ① /live/AgRvRZ4WaXan8Am5P 预览态 “You are in preview mode of this chat” 点 Take it! → 系统消息 rocketchat.internal.admin.test joined the channel，composer 可输入。② 接会话。③ 刷新仍为已接。shots/shots45/omni.agent.join.webp shots/shots45/omni.agent.join-after.webp | `rid` | `omni.agent.queue.take` | `ComposerOmnichannelJoin.tsx:16-28` `[读]` |
 | omni.agent.status.consequences | 顶栏开关接听后的后果与拒绝态（**不重写入口**） | 入口见 `nav.omnichannel.agent-toggle`（`Turn_on/off_answer_chats`）。本行只写后果 | API `view-l-room` `agent.ts:81`；自己点：营业时间关 → `error-business-hours-are-closed` `:128-129`；停用坐席 `error-user-deactivated` `:99-100`；经理改他人要 `manage-livechat-agents` `:113-114`（BH 关时经理静默不改 `:117-125`） | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `statusLivechat`；BH；`agent.active` | **`nav.omnichannel.agent-toggle`**（入口，勿复） `omni.agent.queue.take` `omni.manager.agents.edit` | `useOmnichannelLivechatToggle.ts:8-27` `agent.ts:79-134` `[读]` |
 | omni.agent.unknown-contact | 处理未知联系人 callout | 未知联系人 live 房 composer 上 → `Add_contact` / `Block` / Dismiss | contact `unknown` 且未 dismiss `ComposerOmnichannelCallout.tsx:35-36` | [实测] ① 会话底栏 “Unknown contact. This contact is not on the contact list.” + Add contact / Block。② 未点 Block。③ 刷新仍未知。 | contact unknown | `omni.agent.directory.contact.new` `omni.agent.directory.contact.block` | `ComposerOmnichannelCallout.tsx:25-57` `[读]` |
 | omni.agent.composer.denied | 六态 composer 谁可写谁拒绝 | 打开任意 live 房看脚注（非独立按钮） | 状态机 `ComposerOmnichannel.tsx:26-76`：关 / MAC / onHold / inquiry / join / 可写 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `open` `onHold` `servedBy` `queuedAt` MAC | `omni.agent.file.send` `omni.agent.take/resume/join` | `ComposerOmnichannel.tsx:14-76` `[读]` |
@@ -1326,10 +1326,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **739** |
+| 本卷 `[实测]` | 见上表 | **741** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **153** |
-| `739+190+153` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **151** |
+| `741+190+151` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
