@@ -141,7 +141,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 
 列：稳定语义 id / 功能一句话 / 完整入口点击序列 / 门控 / 触发后果三件套（本卷只写现场或诚实待渲染） / 供给 / 关联 / 出处。
 
-### `msg.*` — 26 个 id（实测 20 / 不可达 0 / 待渲染 6）
+### `msg.*` — 26 个 id（实测 21 / 不可达 0 / 待渲染 5）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -160,7 +160,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | msg.thread.follow | 跟随该线程以便收到回复通知 | `房间消息（自己不在 replies）→悬停工具栏→More→Follow_message`；`线程 / 联邦 / videoconf / videoconf-threads` 同样。［待渲染实测］ `message-mobile`。pinned/starred/mentions/search/direct **不含**。 | `Threads_enabled`；非 omnichannel；已登录；`replies` 不含自己（可回落到父消息 `tmid`）`useFollowMessageAction.ts:31-48`。hidden id `follow-message`。 | [实测] ① More “Follow message”。② 未点。③ 菜单关。 | \ | _id}` `useToggleFollowingThreadMutation.ts:19,27`。(3) 刷新后 `replies` 含自己，只见 Unfollow。[读] | `Threads_enabled`；`message.replies` `tmid` `_id`；`user._id`；parent in `Messages` store |
 | msg.thread.unfollow | 取消跟随该线程 | `已 follow 的消息→悬停工具栏→More→Unfollow_message`（context 同 follow） | 同 follow，但要求 `replies` **含**自己 `useUnFollowMessageAction.ts:31-48`。hidden id `unfollow-message`。 | [实测] ① #atlas-live 已 follow 的 thread-parent-seed → More → Unfollow message，toast “You unfollowed this message”。② unfollow。③ 刷新后可再 Follow。shots/shots22/msg.thread.unfollow.webp | 同 msg.thread.follow | msg.thread.follow | `useUnFollowMessageAction.ts:10-62` |
 | msg.unread.mark | 从该条开始把房间标为未读并离开 | `他人消息→悬停工具栏→More→Mark_unread`；`线程内他人消息→More→Mark_unread`。［待渲染实测］ `message-mobile`。federated/videoconf/列表类 context **不含**。 | 非 omnichannel；已登录；`subscription`；`message.u._id !== user._id` `useMarkAsUnreadMessageAction.ts:17-27`。hidden id `mark-message-as-unread`。 | [实测] ① seeduser 消息 More → Mark Unread。② 房间未读徽标。③ 进房后未读清。shots/shots16/msg-unread-mark.webp | `message.u._id` `_id`；`subscription`；`user._id`；room omnichannel | （无） | `useMarkAsUnreadMessageAction.ts:8-41` |
-| msg.translate | 请求/展示自动翻译译文 | `他人消息（订阅已开 AutoTranslate 且尚无译文或处于 inverse）→悬停工具栏→More→Translate`；threads 同样。［待渲染实测］ `message-mobile`。 | `AutoTranslate_Enabled`；permission `auto-translate`；已登录；非自己；`subscription.autoTranslate` 或 livechat；且（`autoTranslateShowInverse` **或** 缺译文）`useTranslateAction.ts:31-41`。hidden id `translate`。无直接 license 模块名（设置+权限）。[读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `AutoTranslate_Enabled`；`auto-translate`；`subscription.autoTranslate` `autoTranslateLanguage`；`message.translations` `attachments` `u._id` `autoTranslateShowInverse` | msg.translate.original；msg.quote | `useTranslateAction.ts:11-68` |
+| msg.translate | 请求/展示自动翻译译文 | `他人消息（订阅已开 AutoTranslate 且尚无译文或处于 inverse）→悬停工具栏→More→Translate`；threads 同样。［待渲染实测］ `message-mobile`。 | `AutoTranslate_Enabled`；permission `auto-translate`；已登录；非自己；`subscription.autoTranslate` 或 livechat；且（`autoTranslateShowInverse` **或** 缺译文）`useTranslateAction.ts:31-41`。hidden id `translate`。无直接 license 模块名（设置+权限）。[读] | [实测] ① #atlas-live seeduser 消息 More → Translate。② 未请求译文。③ 菜单关。shots/shots38/msg.translate.webp | `AutoTranslate_Enabled`；`auto-translate`；`subscription.autoTranslate` `autoTranslateLanguage`；`message.translations` `attachments` `u._id` `autoTranslateShowInverse` | msg.translate.original；msg.quote | `useTranslateAction.ts:11-68` |
 | msg.translate.original | 从译文切回原文 | `正在展示译文的他人消息→悬停工具栏→More→View_original`；threads 同样。［待渲染实测］ `message-mobile`。 | 同 translate，但要求 **已有** 译文且 **非** `autoTranslateShowInverse` `useViewOriginalTranslationAction.ts:31-40`。hidden id `view-original`。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | 同 msg.translate | msg.translate | `useViewOriginalTranslationAction.ts:11-68` |
 | msg.reply.dm | 打开与作者的 DM 并引用该消息 | `频道/群组/团队中他人或自己的消息→悬停工具栏→More→Reply_in_direct_message`；`联邦 / threads` 同样。［待渲染实测］ `message-mobile`。房间已是 `t==='d'` 或 livechat 或 embedded layout 则不出现。 | `subscription`；`room.t` 非 `d`/`l`；非 `useEmbeddedLayout`；若无 `create-d` 且目标非自己，须已有 DM 房间+订阅 `useReplyInDMAction.ts:51-64`。`disabled` 当 E2EE 或 ABAC `useReplyInDMAction.ts:86`。hidden id `reply-directly`。 | [实测] ① More “Reply in direct message”。② 未点。③ 菜单关。 | `create-d`；`room.t` `abacAttributes`；`message.u.username` `_id`；`isE2EEMessage`；embedded layout | msg.quote；msg.forward | `useReplyInDMAction.ts:12-88` |
 | msg.copy.text | 把消息文本复制到剪贴板 | `房间消息→悬停工具栏→More→Copy_text`；`联邦 / threads` 同样。［待渲染实测］ `message-mobile`。videoconf 与列表类 **不含**。 | `subscription` `useCopyAction.ts:21-23`。hidden id `copy`。`useCopyAction.ts:21-23` 即 ungated 证明点（仅订阅）。 | [实测] ① More “Copy text”。② 未点。③ 菜单关。 | `message.msg` `attachments[0].description\ | title`；`subscription` | msg.quote；msg.edit |
@@ -172,7 +172,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | msg.apps.action | Apps-Engine `messageAction`（非 AI）注入 More→Apps | `房间消息→悬停工具栏→More→（section Apps）→具体 app 项`；默认 app context 仅 `message`/`message-mobile`/`threads`/`starred`（`IUIActionButtonDescriptor.ts:15-20` + `useMessageActionAppsActionButtons.ts:19-20`）。E2EE 时整节替换为 disabled `Unavailable` `MessageToolbarActionMenu.tsx:126-143`。**不枚举 marketplace 应用。** 若 `data.length===0`（无内置菜单项），More 不渲染，apps 无法单独出现 `MessageToolbarActionMenu.tsx:92-94`。[读] | App `when`：`hasOnePermission`/`hasAllPermissions`/`hasOneRole`/`hasAllRoles`/`roomTypes`/`messageActionContext`；再经 `useApplyButtonFilters('default')` `useApplyButtonFilters.ts:45-56`。hidden 按 `${appId}/${actionId}`。需 `GET /apps/actionButtons` 且连接状态 connected `useAppActionButtons.ts:15-19`。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `GET /apps/actionButtons`；`IUIActionButton.when`；`message.rid` `tmid` `_id`；E2EE | msg.apps.ai | `useMessageActionAppsActionButtons.ts:25-77`；装配 `MessageToolbarActionMenu.tsx:87,98` |
 | msg.apps.ai | Apps-Engine `messageAction` 且 `category==='ai'` 注入星星菜单 | `房间消息→悬停工具栏→AI_Actions（icon=stars）→具体 AI 项`。过滤 `useApplyButtonFilters('ai')` `MessageToolbarStarsActionMenu.tsx:22`。无 AI 按钮则整菜单不渲染 `MessageToolbarStarsActionMenu.tsx:26-28`。E2EE 时 apps 组变为 disabled `Unavailable`。context 默认同样只有 4 个 Apps-Engine 值。 | 同 msg.apps.action，但 `category==='ai'` `useApplyButtonFilters.ts:35-43`。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | 同 msg.apps.action + `category:'ai'` | msg.apps.action | `MessageToolbarStarsActionMenu.tsx:21-80`；`useMessageActionAppsActionButtons.ts:25` |
 
-### `room.*` — 44 个 id（实测 25 / 不可达 0 / 待渲染 19）
+### `room.*` — 44 个 id（实测 26 / 不可达 0 / 待渲染 18）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -214,7 +214,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | room.search.filter-text | 输入搜索 | `…→Search_Messages 框` | provider 已 load | [实测] ① #general 顶栏 Search Messages 框输入 atlas。② 本步 0 结果。③ 关栏后须再开。shots/shots16/room_search_filter_text.webp | `MessageSearchForm.tsx:56-63` |  | `useMessageSearchQuery.ts:20-26` |
 | room.search.encrypted-callout | E2E 房不能搜密文 | 打开搜索且 `room.encrypted` | encrypted | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `MessageSearchForm.tsx:74-78` | `room.info.e2ee` | `MessageSearchForm.tsx:74-78` |
 | room.canned.use-from-list | 从列表行使用 | `…→行 Use` | `!isRoomOverMacLimit` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `CannedResponseList.tsx:118-123` | 03 composer | Item onClickUse |
-| room.chrome.topic-link | 已有主题时点主题里的 markdown 链接 | `房间头→主题 Markdown 内 <a>` | `room.topic` 非空且解析出 href `RoomTopic.tsx:36`；`MarkdownTextInner.tsx:35` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `room.topic` | `room.header.topic-add` | `RoomTopic.tsx:36`；`MarkdownTextInner.tsx:35,119-143` |
+| room.chrome.topic-link | 已有主题时点主题里的 markdown 链接 | `房间头→主题 Markdown 内 <a>` | `room.topic` 非空且解析出 href `RoomTopic.tsx:36`；`MarkdownTextInner.tsx:35` | [实测] ① #atlas-live 房间头主题 markdown general → 同标签到 #general。② 导航。③ 仍在 general。shots/shots38/room.chrome.topic-link.webp | `room.topic` | `room.header.topic-add` | `RoomTopic.tsx:36`；`MarkdownTextInner.tsx:35,119-143` |
 | room.chrome.sidebar.call-accept | 侧栏行接听来电 | 该行有 incoming videoconf → 行内 success `phone` | `useVideoConfIncomingCalls()` 含 `call.rid===item.rid` `RoomListRow.tsx:30-37` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `callId` `rid` | `room.chrome.call.incoming.accept` | `SidebarItemTemplateWithData.tsx:99-108`；V2 `SidebarItemWithData.tsx:52-56` |
 | room.chrome.call.incoming.mute | 静音并关掉来电提示（不拒接） | 同上 → title=`Mute_and_dismiss` | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `callId` | `room.chrome.call.incoming.decline` | `IncomingPopup.tsx:92`；`TimedVideoConfPopup.tsx:59-61` |
 | room.chrome.call.outgoing.cancel | 取消正在呼出的视频 | `Calling__roomName__` 弹层 → `Cancel` | `isCalling` `TimedVideoConfPopup.tsx:72-73` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `callId` | `room.toolbox.start-video-call` | `OutgoingPopup.tsx:67`；`VideoConfManager.ts:378-384` |
@@ -310,7 +310,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | sidebar.sidepanel.unread-toggle | 副栏只看未读 | `副栏顶 heading→Unread ToggleSwitch` | secondarySidebar ON；项 none `SidePanelInternal.tsx:48-51` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `SidePanelInternal.tsx:48-51` | `nav.sort.group.unread` | `SidePanelInternal.tsx:51` |
 | sidebar.sidepanel.back | tablet 关闭副栏 | `副栏顶→Back` | secondarySidebar ON + `isTablet` `SidePanelInternal.tsx:44` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `SidePanelInternal.tsx:44` | `nav.sidebar.toggle` | `SidePanelInternal.tsx:44` |
 
-### `composer.*` — 20 个 id（实测 9 / 不可达 4 / 待渲染 7）
+### `composer.*` — 20 个 id（实测 10 / 不可达 4 / 待渲染 6）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -328,7 +328,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | composer.state.location.prompt | 定位权限未决：先说明再 Continue | More → Share → `Location` | `MapView_Enabled`；geolocation；`MapView_GMapsAPIKey`；`!federated`；`!disableBasicActions` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core+setting | `composer.action.share-location` | `useShareLocationAction.tsx:17-31`；`ShareLocationModal.tsx:70-79` |
 | composer.state.location.denied | 定位拒绝或拿不到坐标 | Continue 后拒 / 无 position | `denied \ | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | !positionData` | `［待渲染实测］` ①modal `Cannot_share_your_location` 仅 Ok。②无 `chat.sendMessage`。③无消息 | core |
 | composer.state.location.share | 预览地图后发出 Point | 允许定位 → `Share` | granted + position | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core+setting | `composer.send` | `ShareLocationModal.tsx:90-93` |
-| composer.state.webdav.add | 添加 WebDAV 账号 | More → Create new → `Add_Server` → 填表提交 | `Webdav_Integration_Enabled`；项 `disabled=!isSuccess` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core+setting | `composer.action.webdav-add` | `useWebdavActions.tsx:12-33` |
+| composer.state.webdav.add | 添加 WebDAV 账号 | More → Create new → `Add_Server` → 填表提交 | `Webdav_Integration_Enabled`；项 `disabled=!isSuccess` | [实测] ① #atlas-live More → Add Server → Add new WebDAV account（URL/Username/Password）。② 未连上真实服务器。③ Cancel。shots/shots38/composer.state.webdav.add.webp | core+setting | `composer.action.webdav-add` | `useWebdavActions.tsx:12-33` |
 | composer.state.webdav.pick | 从已连账户选文件入队 | More → 账户名 → picker 点文件 | query success 且有账户 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core+setting | `composer.action.webdav-upload` | `useWebdavActions.tsx:35-43`；`WebdavFilePickerModal.tsx:128-147` |
 | composer.state.discussion.open | 从 composer 打开创建讨论 | More → Create new → `Discussion` | `Discussion_enabled`；`start-discussion` 或 `start-discussion-other-user`；`!federated` | [实测] ① More → Discussion → Create discussion（parent=general、Name/Topic/Members/Encrypted）。② 未 Create。③ Cancel。shots/shots12/11-create-discussion-modal.webp | core+permission+setting | `composer.action.create-discussion` | `useCreateDiscussionAction.tsx:16-31`；`CreateDiscussion.tsx` |
 | composer.state.discussion.submit | 提交创建并跳进新讨论 | modal 填必填名 → 确认 | 父房加密则首帖 textarea disabled、加密开关 locked | [实测] ① #atlas-live composer More → Discussion 模态 Create。② 未提交。③ Cancel。shots/shots37/composer.state.discussion.submit.webp | core+permission | `composer.action.create-discussion` | `CreateDiscussion.tsx:53,82,190-205` |
@@ -1326,10 +1326,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **723** |
+| 本卷 `[实测]` | 见上表 | **726** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **169** |
-| `723+190+169` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **166** |
+| `726+190+166` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
