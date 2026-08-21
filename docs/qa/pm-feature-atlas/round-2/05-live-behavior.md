@@ -347,7 +347,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | shortcut.global.markAllAsRead.documented-unbound | 帮助里写了标全已读，client 无绑定 | 打开快捷键 modal 看到 Mark_all_as_read → 关掉 → 在房间按 Shift+Esc（Mac）或 Ctrl+Esc（其他） | **无** `tinykeys`/keydown 绑定（全 `client` 仅 modal 文案）。`KeyboardShortcutsModal.tsx:32-34` | [实测] ① 快捷键说明可见 Mark all as read；房间内 Shift+Escape 弹出确认（本轮 Cancel）。② 未执行清空。③ 确认关。shots/shots7/12-keyboard-shortcuts.webp shots/shots7/22-clear-unreads-confirm.webp | core（文档） | `implicit.unread.markAllRead` | `KeyboardShortcutsModal.tsx:32-34` |
 
-### `route.*` — 50 个 id（实测 34 / 不可达 6 / 待渲染 10）
+### `route.*` — 50 个 id（实测 36 / 不可达 6 / 待渲染 8）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -393,12 +393,12 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | route.invite | 用邀请 hash 校验并登录/入房 | 打开 `/invite/:hash` | 公开；校验失败显示过期文案；已登录则 `useInviteTokenMutation` 入房 `[读]` | [实测] ① Guest 打开 /invite/R7LtrP → Create an account / Join your team / Back to Login。② 未注册。③ 邀请仍有效。shots/shots35/route-invite.webp | READ `useInviteTokenMutation`；`/invite/:hash`。许可证/EE 见门控 | `route.login` `route.admin.invites` | `startup/routes.tsx:205-208` `InvitePage.tsx:12-47` `[读]` |
 | route.register-secret-url | 用秘密注册 URL 打开注册 | 打开 `/register/:hash` | 已登录立刻去 `/home`；注册模式须为 Secret URL `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `/home`；`RegistrationPageRouter`；`secret-register`；`/register/:hash`。许可证/EE 见门控 | `route.register` | `startup/routes.tsx:200-203` `SecretURLPage.tsx:5-19` `[读]` |
 | route.conference | 打开会议落地页（允许访客） | 打开 `/conference/:id?callUrl=…` | `AuthenticationCheck guest`；缺 `callUrl` 的失败 UI `［待渲染实测］` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `AuthenticationCheck guest`；`callUrl`；`ConferencePage`；`/conference/:id`。许可证/EE 见门控 | — | `startup/routes.tsx:210-213` `ConferenceRoute.tsx:4-8` `[读]` |
-| route.mailer-unsubscribe | 邮件一键退订工作区群发 | 打开 `/mailer/unsubscribe/:_id/:createdAt` | 公开；参数齐全即 POST `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `POST /v1/mailer.unsubscribe`。接口 POST /v1/mailer.unsubscribe。许可证/EE 见门控 | `route.admin.mailer` | `startup/routes.tsx:220-223` `MailerUnsubscriptionPage.tsx:8-46` `[读]` |
+| route.mailer-unsubscribe | 邮件一键退订工作区群发 | 打开 `/mailer/unsubscribe/:_id/:createdAt` | 公开；参数齐全即 POST `[读]` | [实测] ① 地址栏打开 /mailer/unsubscribe/vol5id/123 → 绿勾 “You have successfully unsubscribed from our Mailing List.”。② 无写 REST。③ 刷新同 URL 仍成功退订页。shots/shots42/route.mailer-unsubscribe.webp | READ `POST /v1/mailer.unsubscribe`。接口 POST /v1/mailer.unsubscribe。许可证/EE 见门控 | `route.admin.mailer` | `startup/routes.tsx:220-223` `MailerUnsubscriptionPage.tsx:8-46` `[读]` |
 | route.terms-of-service | 打开服务条款 CMS 页 | 直达 `/terms-of-service`（注册/页脚链 `［待渲染实测］`） | 公开 | [实测] ① 未登录 /terms-of-service 默认 CMS。② 无。③ 刷新仍在。shots/shots26/terms-of-service.webp | READ `CMSPage`；`Layout_Terms_of_Service`；`/terms-of-service`。许可证/EE 见门控 | `route.privacy-policy` `route.legal-notice` | `startup/routes.tsx:186-188` `[读]` |
 | route.privacy-policy | 打开隐私政策 CMS 页 | 直达 `/privacy-policy` | 公开 | [实测] ① 未登录 /privacy-policy 默认 CMS。② 无。③ 刷新仍在。shots/shots26/privacy-policy.webp | READ `CMSPage`；`Layout_Privacy_Policy`；`/privacy-policy`。许可证/EE 见门控 | `route.terms-of-service` | `startup/routes.tsx:191-193` `[读]` |
 | route.legal-notice | 打开法律声明 CMS 页 | 直达 `/legal-notice` | 公开 | [实测] ① 未登录 /legal-notice 默认 CMS。② 无。③ 刷新仍在。shots/shots26/legal-notice.webp | READ `CMSPage`；`Layout_Legal_Notice`；`/legal-notice`。许可证/EE 见门控 | `route.terms-of-service` | `startup/routes.tsx:196-198` `[读]` |
 | route.oauth-authorize | 第三方应用 OAuth 授权同意 | 外站重定向 `/oauth/authorize?client_id=&redirect_uri=` | 未登录先登录壳；已登录拉 OAuth app 后同意/拒绝 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `/oauth/authorize`。许可证/EE 见门控 | `route.admin.third-party-login` | `startup/routes.tsx:235-238` `OAuthAuthorizationPage.tsx:10-31` `[读]` |
-| route.oauth-error | 显示 OAuth 错误页 | 失败回跳 `/oauth/error/:error` | 公开 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `/oauth/error/:error`。许可证/EE 见门控 | `route.oauth-authorize` | `startup/routes.tsx:240-243` `[读]` |
+| route.oauth-error | 显示 OAuth 错误页 | 失败回跳 `/oauth/error/:error` | 公开 | [实测] ① 地址栏打开 /oauth/error/invalid_request → Error + “Oops! Something went wrong. Please reload the page or contact an administrator.”。② 无。③ 刷新同 URL 仍 Error 页。shots/shots42/route.oauth-error.webp | READ `/oauth/error/:error`。许可证/EE 见门控 | `route.oauth-authorize` | `startup/routes.tsx:240-243` `[读]` |
 | route.saml | SAML IdP 回调后登录 | IdP 重定向 `/saml/:token` | 公开；`Meteor.loginWithSamlToken`；可能再跟邀请 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `Meteor.loginWithSamlToken`；`/saml/:token`。许可证/EE 见门控 | `route.login` `route.invite` | `startup/routes.tsx:245-248` `SAMLLoginRoute.tsx` `[读]` |
 | route.2fa | OAuth/现代登录流的 2FA 挑战 | 登录流送到 `/2fa/:method/:challengeId` | 公开挑战页 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `/2fa/:method/:challengeId`。许可证/EE 见门控 | `route.login` `account.security` | `startup/routes.tsx:144-147` `OAuthTwoFactorAuthenticationRouter.tsx` `[读]` |
 
@@ -1071,7 +1071,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.audit.security.row | 打开一条设置变更详情 | Security Logs → 行单击 | 同上 | [不可达] 已打开 /audit、/admin/audit、/audit-home、/security-logs，均为 heading “Page not found” / “The page does not exist or you may not have access permission”；Administration 侧栏无 Audit 项。hasValidLicense=false 且入口走后控件/页不在。 | EE:auditing | page.audit.security.apply | SecurityLogsTable.tsx [读] |
 | page.audit.security.pagination | 翻页设置日志 | Security Logs → Pagination | 有多页 | [不可达] 已打开 /audit、/admin/audit、/audit-home、/security-logs，均为 heading “Page not found” / “The page does not exist or you may not have access permission”；Administration 侧栏无 Audit 项。hasValidLicense=false 且入口走后控件/页不在。 | EE:auditing | page.audit.security.apply | SecurityLogsTable.tsx [读] |
 
-### `omni.*` — 136 个 id（实测 82 / 不可达 29 / 待渲染 25）
+### `omni.*` — 136 个 id（实测 84 / 不可达 29 / 待渲染 23）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1083,7 +1083,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | omni.agent.directory.chats.filter | 打开筛条并 Apply（日期/接待/状态/部门/标签/Units/自定义字段） | `Chats` → `Filters` → 填 → `Apply`；`Clear_filters` 清空 | Units：许可证 `livechat-enterprise` `ChatsFiltersContextualBar.tsx:34,161`；`Served_By`：`view-livechat-rooms` `:32,101`；自定义字段：`view-livechat-room-customfields` `:33,177` | [实测] ① Chats Filters 按钮可见。② 未改筛选结果。③ 刷新仍空。 | 状态选项 `All` `Closed` `Room_Status_Open` `On_Hold_Chats` `Queued` | `omni.agent.directory.chats.search` | `ChatsFiltersContextualBar.tsx:73-224` `[读]` |
 | omni.agent.directory.chats.open | 看历史并进 `/live` | `Chats` 行 → 栏 `Conversation` → `Open_chat` | 同 chats tab | [实测] ① Contact Center Chats 点 Atlas Visitor 行 → /live/… 会话。② 读。③ 刷新仍开。shots/shots11/12-livechat-room.webp | `rid` | `omni.agent.queue.take` | `ChatsContextualBar.tsx:13-21` `ContactHistoryMessagesList.tsx:146` `[读]` |
 | omni.agent.directory.chats.remove | 删除一条已关会话 | 已关行 → 垃圾桶 `Remove` → `Delete` | `remove-closed-livechat-room` `ChatsTable.tsx:27,66` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | 房间 `closed` | `omni.manager.current.chats.remove` | `RemoveChatButton.tsx:27-37` `[读]` |
-| omni.agent.directory.chats.remove-all-closed | 批量删全部已关会话 | `Chats` → `More` → 删全部已关 → `Delete` | `remove-closed-livechat-rooms` `ChatsTableFilter.tsx:20,40` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | — | `omni.agent.directory.chats.remove` | `ChatsTableFilter.tsx:40-53` `[读]` |
+| omni.agent.directory.chats.remove-all-closed | 批量删全部已关会话 | `Chats` → `More` → 删全部已关 → `Delete` | `remove-closed-livechat-rooms` `ChatsTableFilter.tsx:20,40` | [实测] ① 同上 Contact Center / current chats kebab “Remove all closed chats” 确认框 Are you sure? Cancel/Delete；Cancel。② 未删。③ 表仍在。shots/shots42/omni.chats.remove-all.webp | — | `omni.agent.directory.chats.remove` | `ChatsTableFilter.tsx:40-53` `[读]` |
 | omni.agent.directory.contacts.search | 搜联系人表 | `Contacts` → `Search` | 子页 `view-l-room` `ContactTab.tsx:7-13` | [实测] ① Contacts 页空态 No contacts yet。② 无。③ 刷新仍空。shots/003-omni-contact-center-contacts.webp | 列 `Name` `Last_channel` `Contact_Manager` `Last_Chat` | `omni.manager.current.contacts.search` | `ContactTable.tsx:32-124` `[读]` |
 | omni.agent.directory.contact.new | 新建联系人 | `Contacts` → `New_contact` → 填 `Name`/邮箱/电话/`Contact_Manager` → `Save` | API `create-livechat-contact`；第 2 个邮箱/电话无许可证 `contact-id-verification` → `AdvancedContactModal` `EditContactInfo.tsx:76,241,283` | [实测] ① New contact → Name(required)/Email/Phone/Contact Manager/Cancel/Save；Cancel。② 未建联系人。③ 列表仍空。shots/004-omni-new-contact-form.webp | 自定义字段（`view-livechat-room-customfields`） | `omni.agent.unknown-contact` | `ContactTable.tsx:45-99` `EditContactInfo.tsx:81-289` `[读]` |
 | omni.agent.directory.contact.edit | 改已有联系人 | 行 `More_actions`→`Edit` 或详情铅笔 `Edit` → `Save` | 菜单：`update-livechat-contact` `ContactItemMenu.tsx:22,38-43`；铅笔：`edit-omnichannel-contact` 且无 conflicts `ContactInfo.tsx:35,62-66` | [实测] ① /live/.../contact-profile/edit Name/Email/Phone/Contact Manager + Cancel/Save。② 未保存。③ 联系人未改。shots/shots21/07-live-contact-edit.webp | contact id | `omni.agent.contact.edit` | `ContactItemMenu.tsx:37-43` `[读]` |
@@ -1119,7 +1119,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | omni.manager.current.chats.filter | 经理侧 Apply 筛 | `Filters` → From/To/Served_By/Status/Department/Tags/Units → `Apply` | Units：`livechat-enterprise` `ChatsFiltersContextualBar.tsx:34,161`；`Served_By`：`view-livechat-rooms`；自定义字段：`view-livechat-room-customfields` | [实测] ① Chats Filters。② 无写。③ 仍空。 | 状态/部门/标签 | `omni.agent.directory.chats.filter` | `ChatsFiltersContextualBar.tsx` `[读]` |
 | omni.manager.current.chats.open | 经理侧打开会话历史 | 行 → `Open_chat` | `view-l-room` | [实测] ① 同 Contact Center 打开 Atlas Visitor。② 读。③ 仍开。 | `rid` | `omni.agent.directory.chats.open` | `ChatsContextualBar.tsx` `[读]` |
 | omni.manager.current.chats.remove | 经理删一条已关 | 已关行 `Remove` | `remove-closed-livechat-room` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | 房间 closed | `omni.agent.directory.chats.remove` | `RemoveChatButton.tsx` `[读]` |
-| omni.manager.current.chats.remove-all | 经理批量删已关 | `More` → 删全部已关 | `remove-closed-livechat-rooms` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | — | `omni.agent.directory.chats.remove-all-closed` | `ChatsTableFilter.tsx:40-53` `[读]` |
+| omni.manager.current.chats.remove-all | 经理批量删已关 | `More` → 删全部已关 | `remove-closed-livechat-rooms` | [实测] ① /omnichannel/current/chats 点 kebab → Remove all closed chats → “Are you sure?” Cancel/Delete；点 Cancel。② 未删会话。③ 刷新表仍在，无批量删除。shots/shots42/omni.chats.remove-all.webp | — | `omni.agent.directory.chats.remove-all-closed` | `ChatsTableFilter.tsx:40-53` `[读]` |
 | omni.manager.current.contacts.search | 经理侧搜联系人 | `Contacts` → `Search` / 排序 / 分页 | `view-l-room` | [实测] ① Contacts 页。② 无。③ 仍空。 | text | `omni.agent.directory.contacts.search` | `ContactTable.tsx` `[读]` |
 | omni.manager.current.contact.new | 经理新建联系人 | `New_contact` → `Save` | `create-livechat-contact`；多邮箱/电话要 `contact-id-verification` | [实测] ① 同 New contact 模态后 Cancel。② 未保存。③ 仍空。 | name/email | `omni.agent.directory.contact.new` | `useCreateContact.ts:10` `[读]` |
 | omni.manager.current.contact.edit | 经理改联系人 | `Edit` → `Save` | `update-livechat-contact` / `edit-omnichannel-contact` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | contact id | `omni.agent.directory.contact.edit` | `useEditContact.ts:10` `[读]` |
@@ -1326,10 +1326,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **732** |
+| 本卷 `[实测]` | 见上表 | **736** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **160** |
-| `732+190+160` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **156** |
+| `736+190+156` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
