@@ -443,7 +443,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | team.create | 用顶栏「新建」打开创建团队模态并建出团队主房间 | 顶栏 `+`（Create new）→ `Team` → 填名称等 → 提交 | 菜单项：`create-team` **且** (`create-c` OR `create-p`)；提交按钮再检 `create-team` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `create-team`；`create-c`；`create-p`；`CreateTeamModal`；`channel`；`group`。许可证/EE 见门控 | `directory.teams` | `useCreateNewItems.ts:13-76` `CreateTeamModal.tsx:54,118+` `[读]` |
 
-### `page.*` — 623 个 id（实测 430 / 不可达 114 / 待渲染 79）
+### `page.*` — 623 个 id（实测 431 / 不可达 114 / 待渲染 78）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -771,7 +771,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.users.action.reset-e2e | 重置用户 E2E 密钥 | info → Reset E2E | 权限 [读] | [实测] ① kebab Reset E2EE password。② 未执行。③ 菜单关。 | core | page.account.security.e2e-reset | useResetE2EEKeyAction.tsx [读] |
 | page.admin.users.action.reset-totp | 重置用户 TOTP | info → Reset TOTP | 权限 [读] | [实测] ① kebab Reset TOTP。② 未执行。③ 菜单关。 | core | page.account.security.totp.toggle | useResetTOTPAction.tsx [读] |
 | page.admin.users.action.delete | 删除用户 | info → Delete | delete-user [读] | [实测] ① kebab Delete（红色）。② 未执行。③ 菜单关。 | core | page.admin.users.row | useDeleteUserAction.tsx [读] |
-| page.admin.ai-center.view-options | 无 AI 许可时去看订阅选项 | 管理侧栏 AI_Center → Callout → View_options | view/edit-privileged-setting 或 manage-selected-settings；无 AI 许可模块才渲染 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | EE:ai | page.admin.subscription.checkout | AICenterOverview.tsx [读] |
+| page.admin.ai-center.view-options | 无 AI 许可时去看订阅选项 | 管理侧栏 AI_Center → Callout → View_options | view/edit-privileged-setting 或 manage-selected-settings；无 AI 许可模块才渲染 [读] | [实测] ① /admin/ai-center 无 AI 许可 callout View options（链到订阅）。② 无写。③ 刷新仍在。shots/shots33/task-b1-llm-providers.webp | EE:ai | page.admin.subscription.checkout | AICenterOverview.tsx [读] |
 | page.admin.ai-center.search | 配置智能搜索 | AI Center 卡 Intelligent_Search → Configure | 同上；无许可卡标 Locked [读] | [实测] ① /admin/ai-center alert 需 chat.rocket.rc~ai；AI Search badge Locked + Configure。② 无。③ 刷新仍 Locked。shots/19-admin-ai-center.webp | EE:ai；组内字段不拆（同 Settings 约定） | page.admin.settings.save | AICenterOverview.tsx AISettingsSection.tsx section=Intelligent_Search [读] |
 | page.admin.ai-center.llm | 管理 LLM 提供方 | 卡 AI_Center_LLM_Providers → Manage | 同上 | [实测] ① LLM Providers badge Locked + Manage。② 无。③ 刷新仍 Locked。 | EE:ai；组内字段不拆 | page.admin.settings.save | AICenterOverview.tsx AISettingsSection.tsx section=AI_LLM_Provider [读] |
 | page.admin.ai-center.mcp | 配置 MCP | 卡 MCP → Configure | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | EE:ai；组内字段不拆 | page.admin.settings.save | AICenterOverview.tsx AISettingsSection.tsx section=MCP [读] |
@@ -1326,10 +1326,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **689** |
+| 本卷 `[实测]` | 见上表 | **690** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **203** |
-| `689+190+203` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **202** |
+| `690+190+202` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
