@@ -1245,7 +1245,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | mkt.app.releases | 看版本发布说明 | 详情 tab `Releases` | context≠private `AppDetailsPageTabs.tsx:54-58` | [不可达] 已打开 Marketplace Explore：heading Explore，“0 apps enabled”，“No app matches”。应用级控件未出现。本实例管理员无法造出 Marketplace 远程目录应用（limits.marketplaceApps 有额度但目录空）。 | versions | `mkt.app.update` | `AppDetailsPageTabs.tsx:54-58` `[读]` |
 | mkt.app.instances | 看集群实例状态 | 详情 tab `Instances` | **`manage-apps`** + installed + `hasCluster` `AppDetailsPageTabs.tsx:69-73` | [不可达] 已打开 Marketplace Explore：heading Explore，“0 apps enabled”，“No app matches”。应用级控件未出现。本实例管理员无法造出 Marketplace 远程目录应用（limits.marketplaceApps 有额度但目录空）。 | cluster | `mkt.app.logs.filter` | `AppDetailsPageTabs.tsx:69-73` `[读]` |
 
-### `tl.*` — 37 个 id（实测 9 / 不可达 5 / 待渲染 23）
+### `tl.*` — 37 个 id（实测 11 / 不可达 5 / 待渲染 21）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1258,11 +1258,11 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | tl.body.spoiler | 点模糊剧透揭开正文 | `消息行→正文→role=button aria-label=Spoiler_hidden_activate_to_reveal`（或 i18n `Spoiler_hidden_activate_to_reveal`） | spoiler markup。揭开后不可再藏 `SpoilerSpan.tsx:72-79`。 | [不可达] 已打开 #atlas-live 消息 spoiler-seed（\|\|hidden-spoiler-text\|\|），无 spoiler 展开控件。 | md SPOILER | tl.ignored.reveal | `SpoilerSpan.tsx:52-79` |
 | tl.ignored.reveal | 展开被忽略用户的消息正文 | `消息行→role=button 文案 Message_Ignored`（chevron-left） | `ignoredUser`（`subscription.ignored` 含作者）或 `message.ignored`，且尚未 toggle `RoomMessage.tsx:78-79,141-144`。线程预览忽略只显示文本、**无**揭示按钮 `ThreadMessagePreview.tsx:94-96,127-128`。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `subscription.ignored`；`message.ignored` | user.action.ignore | `IgnoredContent.tsx:23-31` |
 | tl.reaction.toggle | 点已有 emoji 芯片切换自己的反应 | `消息行→反应条→aria-label=React_with__reaction__ 的芯片` | `message.reactions` 至少 1 个 key `RoomMessageContent.tsx:107`。mutation 要求已登录 `useToggleReactionMutation.ts:19-20`。**无** omnichannel 门（与工具栏 `msg.reaction.add` 不同）。自己已反应则 `mine` 样式。 | [实测] ① 点已有 😀 反应 → toast “You reacted with :smile:”。② 浏览器 chat.react。③ 刷新后反应条仍在（可再点取消）。shots/54-timeline-reaction-toggle.png | `message._id` `reactions`；`uid`；endpoint `POST /v1/chat.react` | msg.reaction.add | `Reactions.tsx:29-39`；`Reaction.tsx:38-42` |
-| tl.reaction.add | 从消息体「+」打开 picker 再加反应 | `消息行→反应条→title=Add_Reaction` | 反应条已渲染（已有 reactions）；`uid` 才真正打开 picker `MessageListProvider.tsx:111-116`。未登录 `useOpenEmojiPicker` 为空函数。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | 同 tl.reaction.toggle；`chat.emojiPicker` | msg.reaction.add | `Reactions.tsx:41`；`MessageListProvider.tsx:111-116` |
+| tl.reaction.add | 从消息体「+」打开 picker 再加反应 | `消息行→反应条→title=Add_Reaction` | 反应条已渲染（已有 reactions）；`uid` 才真正打开 picker `MessageListProvider.tsx:111-116`。未登录 `useOpenEmojiPicker` 为空函数。 | [实测] ① #atlas-live 点 Add reaction → emoji picker → 选中一枚（heart-eyes），反应条出现 count 1。② 浏览器 chat.react。③ 刷新反应仍在。shots/11-reaction-added.webp | 同 tl.reaction.toggle；`chat.emojiPicker` | msg.reaction.add | `Reactions.tsx:41`；`MessageListProvider.tsx:111-116` |
 | tl.reaction.hover-users | 悬停芯片看谁反应了（不是 More→Reactions 模态） | `消息行→反应条→把指针停在芯片上`（mouseenter，不是 click） | 芯片存在。`showRealName` 且还有他人反应时 `GET /v1/chat.getMessage` 取 `reactions[].names` `ReactionTooltip.tsx:48-72`。仅自己反应则不请求。 | [实测] ① hover 😀 显示 @rocketchat.internal.admin.test。② 无写 REST。③ hover 消失后刷新无持久 UI。 | `message.reactions`；`UI_Use_Real_Name` | msg.reaction.list | `Reaction.tsx:45-64`；`ReactionTooltip.tsx:38-96` |
 | tl.thread.view | 从主消息「View_thread」打开线程栏 | `房间时间线→线程主消息（isThreadMainMessage）→MessageMetricsReply 文案 View_thread` | `chat` 存在且 `isThreadMainMessage` `RoomMessageContent.tsx:109`。`__count__replies` / `__count__replies__date__` 标签 **不可点** `ThreadMetrics.tsx:55-61`。 | [实测] ① #atlas-live 点 thread-parent-seed 的线程入口 → 侧栏/面板打开，可见父消息 + 1 条 thread-reply-seed。② 读线程。③ 刷新 URL 含 tab 则仍在。shots/08-thread-opened.webp | `message.tcount` `tlm` `replies`；`Threads_enabled`（主消息字段仍在） | msg.thread.reply | `ThreadMetrics.tsx:43-52` |
 | tl.thread.follow | 从线程 metrics 铃铛跟随/取消跟随 | `线程主消息→title=Following 或 Not_following 的铃铛` | 线程 metrics 已渲染。铃铛旁未读 badge 看 `unread`/`mention`/`all`（来自 `subscription.tunread*`）。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `message.replies` `_id` `rid`；`uid` | msg.thread.follow；msg.thread.unfollow | `ThreadMetricsFollow.tsx:39-45` |
-| tl.discussion.open | 从讨论计数/Reply 进入讨论房 | `房间时间线→带 drid 的消息→MessageMetricsReply 文案 message_counter 或 Reply` | `isDiscussionMessage` = `!!message.drid` `IMessage.ts:328`。含服务端 `t=discussion-created`（客户端未当系统消息）。`No_messages_yet` 时钟标签 **不可点** `DiscussionMetrics.tsx:33-36`。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `message.drid` `dcount` `dlm` | msg.discussion.start | `DiscussionMetrics.tsx:30-32`；`createDiscussion.ts:26-36` |
+| tl.discussion.open | 从讨论计数/Reply 进入讨论房 | `房间时间线→带 drid 的消息→MessageMetricsReply 文案 message_counter 或 Reply` | `isDiscussionMessage` = `!!message.drid` `IMessage.ts:328`。含服务端 `t=discussion-created`（客户端未当系统消息）。`No_messages_yet` 时钟标签 **不可点** `DiscussionMetrics.tsx:33-36`。 | [实测] ① 侧栏打开 atlas-discussion（父频道 general）。② 读房间。③ 刷新仍在讨论房。shots/12-discussion-opened.webp | `message.drid` `dcount` `dlm` | msg.discussion.start | `DiscussionMetrics.tsx:30-32`；`createDiscussion.ts:26-36` |
 | tl.broadcast.reply | 广播房点他人消息的 Reply 去 DM 引用 | `广播房间时间线→他人消息行→MessageMetricsReply 文案 Reply` | `subscription.broadcast` 且 `message.u._id !== uid` 且作者有 username `RoomMessageContent.tsx:134`。自己的消息 **无** 此钮。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `subscription.broadcast`；`message.u.username` `_id` | msg.reply.dm；msg.quote | `BroadcastMetrics.tsx:17-26` |
 | tl.attach.collapse | 折叠/展开附件或预览内容 | `消息行→附件标题行 title=Collapse 或 Uncollapse` | 文件附件走 `MessageCollapsible`；Slack 式 default 走 `DefaultAttachment`。初始 `useAttachmentIsCollapsedByDefault \ | [不可达] 已悬停附件出现 Download，无 collapse（无展开预览）。 | attachment.collapsed` `useCollapse.ts:6-7`。 | (1) 图标 chevron-down↔chevron-left；子内容消失/出现 ［待渲染实测］ button name。(2) 无 REST。(3) 刷新按默认折叠设置重算。[读] | 偏好 collapse-by-default；`attachment.collapsed` |
 | tl.attach.download | 下载附件文件 | `消息行→附件标题行 title=Download`（disabled 时 `Download_Disabled`） | `hasDownload && link`。加密 `href` 含 `/file-decrypt/` 走 SW `AttachmentDownload.tsx:10-16`。 | [实测] ① 悬停 PNG/文件附件出现 Download。② 下载。③ 刷新附件仍在。shots/10-attachment-download.webp | `title_link` `title_link_download` | msg.webdav.save | `AttachmentDownloadBase.tsx:12-21` |
@@ -1326,10 +1326,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **264** |
+| 本卷 `[实测]` | 见上表 | **266** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **145** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **673** |
-| `264+145+673` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **671** |
+| `266+145+671` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
