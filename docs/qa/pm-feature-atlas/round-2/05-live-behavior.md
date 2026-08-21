@@ -1212,7 +1212,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | omni.widget.minimize | 最小化/恢复/弹出 | 头 `minimize_chat` / `restore_chat` / `expand_chat`；或浮钮 | `!triggered`；expand 还要 `!theme.hideExpandChat && !expanded && !windowed` `Header.tsx:123-134` | [实测] ① /livechat 登记页顶栏向下 chevron（minimize）。② 本步可收起。③ 刷新可再开。shots/shots19/12-livechat-widget-open.webp | theme | `omni.widget.start` | `Header.tsx:110-134` `ScreenProvider.tsx:130-155` `[读]` |
 | omni.widget.sound | 开关通知声 | 头铃 `enable_notifications` / `disable_notifications`（`sound_is_on`/`sound_is_off`） | 头可见即有 | [实测] ① 同页顶栏铃铛通知开关。② 未必须改声。③ 刷新仍在。shots/shots19/12-livechat-widget-open.webp | sound | `omni.widget.send` | `Header.tsx:110-120` `ScreenProvider.tsx:122-128` `[读]` |
 
-### `mkt.*` — 28 个 id（实测 8 / 不可达 18 / 待渲染 2）
+### `mkt.*` — 28 个 id（实测 9 / 不可达 18 / 待渲染 1）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1223,7 +1223,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | mkt.explore.docs | 打开开发文档外链 | 侧栏 `Documentation` | 同 Explore `sidebarItems.tsx:49` | [实测] ① 同侧栏 Documentation（外链图标）。② 未断言外链。③ 刷新仍在。shots/shots25/mkt.explore.webp | externalUrl | `mkt.explore.open` | `sidebarItems.tsx:44-50` `[读]` |
 | mkt.installed.open | 打开已安装列表 | `顶栏→Marketplace→Installed` 或侧栏 `Installed` | 同 Explore `sidebarItems.tsx:28` | [实测] ① 打开 Installed 列表，No Apps Installed。② 无。③ 刷新仍空。shots/shots7/05-marketplace-installed.webp | installed apps | `nav.marketplace.installed` `mkt.app.enable` | `sidebarItems.tsx:24-29` `[读]` |
 | mkt.installed.private | 打开私有 App 列表 | 侧栏 `Private_Apps` | 同 Explore `sidebarItems.tsx:41` | [实测] ① Marketplace 侧栏 Private Apps → /marketplace/private/list「Upgrade to unlock private apps」。② 无写。③ 刷新仍 Private。shots/shots27/mkt.installed.private.webp | private license | `mkt.installed.upload` | `sidebarItems.tsx:37-42` `MarketplaceHeader.tsx:49-56` `[读]` |
-| mkt.installed.upload | 上传私有 .zip（或无许可时升级） | Private 列表头 `Upload_private_app` → 选文件 → `Install`；无许可则头 `Upgrade` | **`manage-apps`** `MarketplaceHeader.tsx:32-39,69`；`page=install` 无此权 → `NotAuthorizedPage` `AppsRoute.tsx:51`；私有许可不足走升级/限制模态 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | file；app count limit | `mkt.app.permissions` `mkt.app.install` | `AppInstallPage.tsx:34-63` `MarketplaceHeader.tsx:69-74` `[读]` |
+| mkt.installed.upload | 上传私有 .zip（或无许可时升级） | Private 列表头 `Upload_private_app` → 选文件 → `Install`；无许可则头 `Upgrade` | **`manage-apps`** `MarketplaceHeader.tsx:32-39,69`；`page=install` 无此权 → `NotAuthorizedPage` `AppsRoute.tsx:51`；私有许可不足走升级/限制模态 | [实测] ① admin /marketplace/private/list 头栏 Upload private app + Upgrade。② 未选 zip。③ 刷新仍 0/0。shots/shots29/mkt-private-upload.webp | file；app count limit | `mkt.app.permissions` `mkt.app.install` | `AppInstallPage.tsx:34-63` `MarketplaceHeader.tsx:69-74` `[读]` |
 | mkt.installed.unlimited | 打开「无限 App」upsell | Explore/Installed 头 `Enable_unlimited_apps`（非 private、未无限） | **`manage-apps`** `MarketplaceHeader.tsx:60-67` | [实测] ① Explore 头 Enable unlimited apps（0/5）。② 未点 upsell。③ 刷新仍 0/5。shots/shots25/mkt.explore.webp | `hasUnlimitedApps` | `mkt.app.enable` | `MarketplaceHeader.tsx:60-67` `[读]` |
 | mkt.installed.update-server | 市集版本不受支持时去升级 RC | 头 `Update`（`Marketplace_Unsupported_Version`） | **`manage-apps`** `MarketplaceHeader.tsx:76` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | 版本旗标 | — | `UpdateRocketChatButton.tsx:10` `[读]` |
 | mkt.app.details | 打开某 App 详情（默认 Details tab） | 任一列表行/`Card[role=link]` `data-qa-type=app-row`（或 Enter） | 该 context 进入权 | [不可达] 已打开 Marketplace Explore：heading Explore，“0 apps enabled”，“No app matches”。应用级控件未出现。本实例管理员无法造出 Marketplace 远程目录应用（limits.marketplaceApps 有额度但目录空）。 | app id/version | `mkt.explore.open` | `AppRow.tsx:21-63` `AppDetailsPage.tsx:110` `[读]` |
@@ -1326,10 +1326,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **672** |
+| 本卷 `[实测]` | 见上表 | **673** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **220** |
-| `672+190+220` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **219** |
+| `673+190+219` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
