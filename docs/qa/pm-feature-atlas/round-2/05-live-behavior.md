@@ -443,7 +443,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | team.create | 用顶栏「新建」打开创建团队模态并建出团队主房间 | 顶栏 `+`（Create new）→ `Team` → 填名称等 → 提交 | 菜单项：`create-team` **且** (`create-c` OR `create-p`)；提交按钮再检 `create-team` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `create-team`；`create-c`；`create-p`；`CreateTeamModal`；`channel`；`group`。许可证/EE 见门控 | `directory.teams` | `useCreateNewItems.ts:13-76` `CreateTeamModal.tsx:54,118+` `[读]` |
 
-### `page.*` — 623 个 id（实测 429 / 不可达 114 / 待渲染 80）
+### `page.*` — 623 个 id（实测 430 / 不可达 114 / 待渲染 79）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -671,7 +671,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.workspace.manage-subscription | 从版本卡去订阅页 | VersionCard → Manage_subscription | view-statistics [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.subscription.sync | VersionCard.tsx [读] |
 | page.admin.workspace.instances | 查看部署实例列表 | DeploymentCard → 实例按钮 → InstancesModal | 多实例部署 [读] | [实测] ① /admin/workspace Deployment → Instances 模态（172.30.0.2 Connected）。② 无写。③ 关模态。shots/shots26/workspace-instances.webp | core | page.admin.workspace.download-info | DeploymentCard.tsx InstancesModal.tsx [读] |
 | page.admin.subscription.sync | 同步许可证状态 | 管理侧栏 Subscription → Sync_license_update | manage-cloud [读] | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | route.admin.subscription | SubscriptionPage.tsx useWorkspaceSync [读] |
-| page.admin.subscription.checkout | 打开购买/升级结账 | Subscription → Manage_subscription / Upgrade | manage-cloud [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.subscription.sync | SubscriptionPage.tsx useCheckoutUrl [读] |
+| page.admin.subscription.checkout | 打开购买/升级结账 | Subscription → Manage_subscription / Upgrade | manage-cloud [读] | [实测] ① /admin/subscription 顶栏 Upgrade（另有 Sync license update）。② 未进结账。③ 刷新仍在。shots/shots33/task-b2-subscription.webp | core | page.admin.subscription.sync | SubscriptionPage.tsx useCheckoutUrl [读] |
 | page.admin.subscription.cancel | 取消订阅 | PlanCard → Cancel_subscription → 确认 | 有有效许可证 [读] | [实测] ① 同模态 Cancel。② 未改许可。③ 关模态。shots/shots18/10_subscription.webp | core | page.admin.subscription.sync | useCancelSubscriptionModal.tsx [读] |
 | page.admin.subscription.license-text | 粘贴许可证密钥 | ManageLicenseModal → textarea | manage-cloud [读] | [实测] ① /admin/subscription Manage license → License key textarea。② 未贴密钥。③ 关模态仍 Community。shots/shots18/10_subscription.webp | core；提交见 apply | page.admin.subscription.apply | ManageLicenseModal.tsx [读] |
 | page.admin.subscription.apply | 应用许可证密钥 | ManageLicenseModal → Apply_license | 文本非空 [读] | [实测] ① 同模态 Apply license（空密钥 disabled）。② 未点。③ 仍 Community。shots/shots18/10_subscription.webp | core | page.admin.subscription.license-text | ManageLicenseModal.tsx useValidateLicense [读] |
@@ -1326,10 +1326,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **688** |
+| 本卷 `[实测]` | 见上表 | **689** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **204** |
-| `688+190+204` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **203** |
+| `689+190+203` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
