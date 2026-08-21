@@ -443,7 +443,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | team.create | 用顶栏「新建」打开创建团队模态并建出团队主房间 | 顶栏 `+`（Create new）→ `Team` → 填名称等 → 提交 | 菜单项：`create-team` **且** (`create-c` OR `create-p`)；提交按钮再检 `create-team` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `create-team`；`create-c`；`create-p`；`CreateTeamModal`；`channel`；`group`。许可证/EE 见门控 | `directory.teams` | `useCreateNewItems.ts:13-76` `CreateTeamModal.tsx:54,118+` `[读]` |
 
-### `page.*` — 623 个 id（实测 327 / 不可达 114 / 待渲染 182）
+### `page.*` — 623 个 id（实测 355 / 不可达 114 / 待渲染 154）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -710,7 +710,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.moderation.delete-message | 删除单条被举报消息 | 详情 → Moderation_Delete_message | manage-moderation-actions [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.moderation.see-messages | useDeleteMessage.tsx [读] |
 | page.admin.rooms.search | 搜索房间 | 管理侧栏 Rooms → Search_rooms | view-room-administration [读] | [实测] ① /admin/rooms Search rooms。② 未筛空。③ 仍 9 行。shots/shots15/09-admin-rooms-list.webp | core | route.admin.rooms | RoomsTableFilters.tsx [读] |
 | page.admin.rooms.filter.type | 按房间类型过滤 | Rooms → Filter_by_room 多选 | 同上 | [实测] ① 下拉 All rooms。② 未改类型。③ 仍全部。 | core | page.admin.rooms.search | RoomsTableFilters.tsx [读] |
-| page.admin.rooms.sort | 排序房间列 | Rooms → 可点列表头 | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.rooms.search | RoomsTable.tsx [读] |
+| page.admin.rooms.sort | 排序房间列 | Rooms → 可点列表头 | 同上 | [实测] ① /admin/rooms 点 Name 列表头，升序 caret。② 只排序。③ 刷新须再点。shots/shots17/002-rooms-sort.webp | core | page.admin.rooms.search | RoomsTable.tsx [读] |
 | page.admin.rooms.pagination | 翻页房间 | Rooms → Pagination | 有多页 [读] | [实测] ① Showing 1–9 of 9，每页 25/50/100。② 无翻页。③ 仍 1 页。 | core | page.admin.rooms.search | RoomsTable.tsx [读] |
 | page.admin.rooms.row | 打开房间编辑面板 | Rooms → 行单击 | 同上 | [实测] ① 点 atlas-live 行 → /admin/rooms/edit/… Room Information。② 读。③ 刷新栏可再开。shots/shots15/10-admin-rooms-edit-atlas-live.webp | core | page.admin.rooms.edit.save | RoomsTable.tsx [读] |
 | page.admin.rooms.edit.avatar | 改房间头像 | 编辑面板 → roomAvatar | edit-room [读] | [实测] ① Edit 上头像 Upload / 删除图标。② 未上传。③ 未改。 | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=roomAvatar [读] |
@@ -718,14 +718,14 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.rooms.edit.owner | 查看房主（只读） | 编辑面板 → Owner | 同上 | [实测] ① Owner=rocketchat.internal.admin.test。② 未改。③ 仍该人。 | core | page.admin.rooms.edit.name | EditRoom.tsx name=roomOwner [读] |
 | page.admin.rooms.edit.description | 改房间描述 | 编辑面板 → Description | 同上 | [实测] ① Description 空。② 未填。③ 仍空。 | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=roomDescription [读] |
 | page.admin.rooms.edit.announcement | 改房间公告 | 编辑面板 → Announcement | 同上 | [实测] ① Announcement 空。② 未填。③ 仍空。 | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=roomAnnouncement [读] |
-| page.admin.rooms.edit.topic | 改房间主题 | 编辑面板 → Topic | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=roomTopic [读] |
-| page.admin.rooms.edit.private | 切换私有/公开 | 编辑面板 → Private | 非 DM [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=roomType [读] |
-| page.admin.rooms.edit.readonly | 切换只读 | 编辑面板 → Read_only | 非 DM [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=readOnly [读] |
+| page.admin.rooms.edit.topic | 改房间主题 | 编辑面板 → Topic | 同上 | [实测] ① /admin/rooms/edit/6a87ab9ad2c5c6066f616826 Room Information → Topic 文本区。② 未保存。③ Reset/Save 未改脏仍 disabled。shots/shots17/001-rooms-edit.webp | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=roomTopic [读] |
+| page.admin.rooms.edit.private | 切换私有/公开 | 编辑面板 → Private | 非 DM [读] | [实测] ① 同面板 Private 开关。② 未保存。③ 仍 off。shots/shots17/001-rooms-edit.webp | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=roomType [读] |
+| page.admin.rooms.edit.readonly | 切换只读 | 编辑面板 → Read_only | 非 DM [读] | [实测] ① 同面板 Read-only 开关。② 未保存。③ 仍 off。shots/shots17/001-rooms-edit.webp | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=readOnly [读] |
 | page.admin.rooms.edit.react-when-readonly | 只读时仍可反应 | 编辑面板 → React_when_read_only | readOnly [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.readonly | EditRoom.tsx name=reactWhenReadOnly [读] |
-| page.admin.rooms.edit.archived | 归档/取消归档 | 编辑面板 → Room_archivation_state_true | 非 DM [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=archived [读] |
-| page.admin.rooms.edit.default | 设为默认房间 | 编辑面板 → Default | 非 DM [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=isDefault [读] |
-| page.admin.rooms.edit.favorite | 默认收藏 | 编辑面板 → Favorite | isDefault [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.default | EditRoom.tsx name=favorite [读] |
-| page.admin.rooms.edit.featured | 精选房间 | 编辑面板 → Featured | 非 DM [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=featured [读] |
+| page.admin.rooms.edit.archived | 归档/取消归档 | 编辑面板 → Room_archivation_state_true | 非 DM [读] | [实测] ① 同面板 Archived 开关。② 未点。③ 仍 off。shots/shots17/001-rooms-edit.webp | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=archived [读] |
+| page.admin.rooms.edit.default | 设为默认房间 | 编辑面板 → Default | 非 DM [读] | [实测] ① 同面板 Default 开关。② 未点。③ 仍 off。shots/shots17/001-rooms-edit.webp | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=isDefault [读] |
+| page.admin.rooms.edit.favorite | 默认收藏 | 编辑面板 → Favorite | isDefault [读] | [实测] ① 同面板 Favorite 开关。② 未点。③ 仍 off。shots/shots17/001-rooms-edit.webp | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.default | EditRoom.tsx name=favorite [读] |
+| page.admin.rooms.edit.featured | 精选房间 | 编辑面板 → Featured | 非 DM [读] | [实测] ① 同面板 Featured 开关。② 未点。③ 仍 off。shots/shots17/001-rooms-edit.webp | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=featured [读] |
 | page.admin.rooms.edit.reset | 重置未保存房间编辑 | 编辑面板 → Reset | dirty [读] | [实测] ① Reset 可见（disabled）。② 未点。③ 未改。 | core | page.admin.rooms.edit.save | EditRoom.tsx [读] |
 | page.admin.rooms.edit.save | 保存房间设置 | 编辑面板 → Save | dirty + edit-room [读] | [实测] ① Save 可见（disabled）。② 未点。③ 未改。 | core | page.admin.rooms.row | EditRoom.tsx [读] |
 | page.admin.rooms.edit.delete | 删除房间 | 编辑面板 → Delete | delete-room [读] | [实测] ① 红色 Delete 可见。② 未点。③ 房间仍在。 | core | page.admin.rooms.row | EditRoom.tsx useDeleteRoom [读] |
@@ -735,7 +735,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.users.tab.deactivated | 看已停用用户 | Users → tab Deactivated | 同上 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | page.admin.users.tab.all | AdminUsersPage.tsx [读] |
 | page.admin.users.search | 搜索用户 | Users → Search_Users | 同上 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | page.admin.users.tab.all | UsersTableFilters.tsx [读] |
 | page.admin.users.filter.role | 按角色过滤用户 | Users → Filter_by_role | 同上 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | page.admin.users.search | UsersTableFilters.tsx [读] |
-| page.admin.users.sort | 排序用户列 | Users → 可点列表头 | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.users.search | UsersTable.tsx [读] |
+| page.admin.users.sort | 排序用户列 | Users → 可点列表头 | 同上 | [实测] ① /admin/users 点 Name 列表头排序。② 只排序。③ 刷新须再点。shots/shots17/003-users-sort.webp | core | page.admin.users.search | UsersTable.tsx [读] |
 | page.admin.users.pagination | 翻页用户 | Users → Pagination | 有多页 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | page.admin.users.search | UsersTable.tsx [读] |
 | page.admin.users.invite | 打开邀请面板 | Users → Invite | bulk-register-user [读] | [实测] ① /admin/users 点 Invite → “SMTP server is not setup yet” + Set up SMTP。② 未发邀请。③ 关模态。shots/03-admin-users-invite.webp | core | page.admin.users.invite.send | UsersPageHeaderContent.tsx [读] |
 | page.admin.users.invite.emails | 填写邀请邮箱列表 | Invite 面板 → 邮箱 textarea | 同上 | [不可达] 已打开 Invite 模态，仅 SMTP 未配置提示 + Set up SMTP，无 emails 输入。 | core；提交 POST /v1/sendInvitationEmail | page.admin.users.invite.send | AdminInviteUsers.tsx [读] |
@@ -744,7 +744,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.users.new | 打开新建用户表单 | Users → New_user | create-user [读] | [实测] ① /admin/users 点 New user → 表单 Email / verified / Name / Username / Set randomly（disabled SMTP）/ Set manually / Password / Confirm / Require password change。② 未保存。③ Cancel 后仍在用户表。shots/02-admin-users-new-form.webp | core | page.admin.users.form.save | UsersPageHeaderContent.tsx [读] |
 | page.admin.users.seats | 购买更多席位 | Users → Buy_more_seats | 席位上限 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.subscription.checkout | UsersPageHeaderContent.tsx SeatsCapUsage [读] |
 | page.admin.users.row | 打开用户详情 | Users → 行单击 | view-user-administration [读] | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | page.admin.users.action.edit | UsersTableRow.tsx [读] |
-| page.admin.users.form.avatar | 设用户头像 | New/Edit → avatar | create-user / edit-other-user-info [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/users.create 或 /v1/users.update | page.admin.users.form.save | AdminUserForm.tsx name=avatar [读] |
+| page.admin.users.form.avatar | 设用户头像 | New/Edit → avatar | create-user / edit-other-user-info [读] | [实测] ① Edit User Profile Picture / Use URL for avatar。② 未改头像。③ 关栏。shots/shots17/005-users-edit.webp | core；共享 POST /v1/users.create 或 /v1/users.update | page.admin.users.form.save | AdminUserForm.tsx name=avatar [读] |
 | page.admin.users.form.email | 填 Email | New/Edit → Email | 同上 | [实测] ① New user 表单 Email 输入框。② 未提交。③ 关模态后无新用户。 | core；共享 POST /v1/users.create 或 /v1/users.update | page.admin.users.form.save | AdminUserForm.tsx name=email [读] |
 | page.admin.users.form.verified | 标记邮箱已验证 | New/Edit → Mark_email_as_verified | 同上 | [实测] ① New user 勾选 Mark email as verified。② 未提交。③ 关模态。 | core；共享 POST /v1/users.create 或 /v1/users.update | page.admin.users.form.email | AdminUserForm.tsx name=verified [读] |
 | page.admin.users.form.name | 填 Name | New/Edit → Name | 同上 | [实测] ① New user Name 输入框。② 未提交。③ 关模态。 | core；共享 POST /v1/users.create 或 /v1/users.update | page.admin.users.form.save | AdminUserForm.tsx name=name [读] |
@@ -763,9 +763,9 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.users.form.bio | 填 Bio | 附加字段 → Bio | 已展开 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/users.create 或 /v1/users.update | page.admin.users.form.save | AdminUserForm.tsx name=bio [读] |
 | page.admin.users.form.nickname | 填 Nickname | 附加字段 → Nickname | 已展开 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/users.create 或 /v1/users.update | page.admin.users.form.save | AdminUserForm.tsx name=nickname [读] |
 | page.admin.users.form.custom-fields | 填自定义字段 | New/Edit → CustomFields | 配置了自定义字段 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/users.create 或 /v1/users.update | page.admin.users.form.save | AdminUserForm.tsx name=customFields.* [读] |
-| page.admin.users.form.save | 保存用户 | New/Edit → Add_user / Save_user | 校验通过 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.users.new | AdminUserForm.tsx [读] |
-| page.admin.users.action.dm | 从详情开直连消息 | 用户 info → Direct_Message | create-d [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.create.dm.submit | useAdminUserInfoActions.ts [读] |
-| page.admin.users.action.edit | 从详情进入编辑 | 用户 info → Edit | edit-other-user-info [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.users.form.save | useAdminUserInfoActions.ts [读] |
+| page.admin.users.form.save | 保存用户 | New/Edit → Add_user / Save_user | 校验通过 [读] | [实测] ① Edit User 底栏 Save user（未打脏为 disabled）。② 未提交。③ 用户未改。shots/shots17/005-users-edit.webp | core | page.admin.users.new | AdminUserForm.tsx [读] |
+| page.admin.users.action.dm | 从详情开直连消息 | 用户 info → Direct_Message | create-d [读] | [实测] ① 从用户详情进与 seeduser 的 DM（6a87c7eed2c5c6066f6169c2）。② 导航。③ 刷新 DM 仍在。shots/shots17/004-users-dm.webp | core | page.create.dm.submit | useAdminUserInfoActions.ts [读] |
+| page.admin.users.action.edit | 从详情进入编辑 | 用户 info → Edit | edit-other-user-info [读] | [实测] ① seeduser → Edit User 侧栏。② 未改保存。③ 关栏仍在用户表。shots/shots17/005-users-edit.webp | core | page.admin.users.form.save | useAdminUserInfoActions.ts [读] |
 | page.admin.users.action.admin | 授予/撤销管理员 | info → Grant/Remove admin | assign-admin-role [读] | [实测] ① Administrator 行 kebab → Remove Admin。② 未执行。③ 菜单关。shots/04-admin-users-actions.webp | core | page.admin.users.row | useChangeAdminStatusAction.ts [读] |
 | page.admin.users.action.deactivate | 停用/启用用户 | info → Activate/Deactivate | 权限 [读] | [实测] ① kebab Deactivate。② 未执行。③ 菜单关。 | core | page.admin.users.tab.deactivated | useChangeUserStatusAction.ts [读] |
 | page.admin.users.action.reset-e2e | 重置用户 E2E 密钥 | info → Reset E2E | 权限 [读] | [实测] ① kebab Reset E2EE password。② 未执行。③ 菜单关。 | core | page.account.security.e2e-reset | useResetE2EEKeyAction.tsx [读] |
@@ -782,10 +782,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.user-status.new | 打开新建自定义状态 | 管理侧栏 User_Status → New_custom_status | manage-user-status [读] | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | page.admin.user-status.save | CustomUserStatusRoute.tsx [读] |
 | page.admin.user-status.presence-service | 去 Presence 服务设置 | User Status → Presence_service | 同上 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | page.admin.settings.open.general | CustomUserStatusRoute.tsx [读] |
 | page.admin.user-status.row | 打开编辑自定义状态 | 表 → 行 | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.user-status.save | CustomUserStatusRoute.tsx [读] |
-| page.admin.user-status.name | 填状态 Name | 表单 → Name | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/custom-user-status.create 或 .update | page.admin.user-status.save | CustomUserStatusForm.tsx name=name [读] |
-| page.admin.user-status.type | 选 Presence 类型 | 表单 → Presence | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 create/update | page.admin.user-status.save | CustomUserStatusForm.tsx name=statusType [读] |
-| page.admin.user-status.cancel | 取消未保存状态 | 表单 → Cancel | dirty 或任意 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.user-status.save | CustomUserStatusForm.tsx [读] |
-| page.admin.user-status.save | 保存自定义状态 | 表单 → Save | 校验通过 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.user-status.name | CustomUserStatusForm.tsx [读] |
+| page.admin.user-status.name | 填状态 Name | 表单 → Name | 同上 | [实测] ① /admin/user-status/new Add Custom User Status → Name。② 未保存。③ 列表仍空。shots/shots17/010-user-status-new.webp | core；共享 POST /v1/custom-user-status.create 或 .update | page.admin.user-status.save | CustomUserStatusForm.tsx name=name [读] |
+| page.admin.user-status.type | 选 Presence 类型 | 表单 → Presence | 同上 | [实测] ① 同表 Presence 下拉。② 未保存。③ 仍空。shots/shots17/010-user-status-new.webp | core；共享 create/update | page.admin.user-status.save | CustomUserStatusForm.tsx name=statusType [读] |
+| page.admin.user-status.cancel | 取消未保存状态 | 表单 → Cancel | dirty 或任意 [读] | [实测] ① 同表 Cancel。② 未建。③ 仍空。shots/shots17/010-user-status-new.webp | core | page.admin.user-status.save | CustomUserStatusForm.tsx [读] |
+| page.admin.user-status.save | 保存自定义状态 | 表单 → Save | 校验通过 [读] | [实测] ① 同表 Save 可见。② 未点。③ 仍空。shots/shots17/010-user-status-new.webp | core | page.admin.user-status.name | CustomUserStatusForm.tsx [读] |
 | page.admin.user-status.delete | 删除自定义状态 | 编辑表单 → Delete | 已有记录 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.user-status.row | CustomUserStatusForm.tsx [读] |
 | page.admin.permissions.tab.permissions | 看权限矩阵 | 管理侧栏 Permissions → tab Permissions | access-permissions 或 access-setting-permissions [读] | [实测] ① /admin/permissions tab Permissions：角色矩阵 Admin…Livechat Manager，882 条。② 未改勾选。③ 刷新仍在。shots/shots9/11-permissions-tab.webp | core | route.admin.permissions | PermissionsPage.tsx [读] |
 | page.admin.permissions.tab.settings | 看设置权限 | Permissions → tab Settings | access-setting-permissions [读] | [实测] ① tab Settings：Accounts 等设置权限勾选格。② 未改。③ 刷新仍在。shots/shots9/12-permissions-settings-tab.webp | core | page.admin.permissions.tab.permissions | PermissionsPage.tsx [读] |
@@ -885,11 +885,11 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.mailer.send | 发送群发邮件 | Mailer → Send_email | 校验通过 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | route.admin.mailer | MailerPage.tsx [读] |
 | page.admin.oauth-apps.new | 打开新建 OAuth App | 管理侧栏 Third_party_login → New | manage-oauth-apps [读] | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | page.admin.oauth-apps.save | OAuthAppsPage.tsx [读] |
 | page.admin.oauth-apps.row | 打开编辑 OAuth App | 表 → 行 | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.oauth-apps.save | OAuthAppsTable.tsx [读] |
-| page.admin.oauth-apps.active | 开关 Active | 表单 → Active | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/oauth-apps.create 或 .update | page.admin.oauth-apps.save | OAuthAddApp.tsx / EditOauthApp.tsx name=active [读] |
-| page.admin.oauth-apps.name | 填 Application_Name | 表单 → Application_Name | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/oauth-apps.create 或 .update | page.admin.oauth-apps.save | name=name [读] |
-| page.admin.oauth-apps.redirect-uri | 填 Redirect_URI | 表单 → Redirect_URI | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/oauth-apps.create 或 .update | page.admin.oauth-apps.save | name=redirectUri [读] |
-| page.admin.oauth-apps.cancel | 取消未保存 OAuth App | 表单 → Cancel | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.oauth-apps.save | OAuthAddApp.tsx EditOauthApp.tsx [读] |
-| page.admin.oauth-apps.save | 保存 OAuth App | 表单 → Save | 校验通过 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.oauth-apps.name | OAuthAddApp.tsx EditOauthApp.tsx [读] |
+| page.admin.oauth-apps.active | 开关 Active | 表单 → Active | 同上 | [实测] ① /admin/third-party-login/new Active 开关。② 未保存。③ Cancel。shots/shots17/009-oauth-new.webp | core；共享 POST /v1/oauth-apps.create 或 .update | page.admin.oauth-apps.save | OAuthAddApp.tsx / EditOauthApp.tsx name=active [读] |
+| page.admin.oauth-apps.name | 填 Application_Name | 表单 → Application_Name | 同上 | [实测] ① 同表 Application Name。② 未保存。③ 无新 app。shots/shots17/009-oauth-new.webp | core；共享 POST /v1/oauth-apps.create 或 .update | page.admin.oauth-apps.save | name=name [读] |
+| page.admin.oauth-apps.redirect-uri | 填 Redirect_URI | 表单 → Redirect_URI | 同上 | [实测] ① 同表 Redirect URI。② 未保存。③ 无新 app。shots/shots17/009-oauth-new.webp | core；共享 POST /v1/oauth-apps.create 或 .update | page.admin.oauth-apps.save | name=redirectUri [读] |
+| page.admin.oauth-apps.cancel | 取消未保存 OAuth App | 表单 → Cancel | 同上 | [实测] ① 同表 Cancel。② 未建。③ 列表无新行。shots/shots17/009-oauth-new.webp | core | page.admin.oauth-apps.save | OAuthAddApp.tsx EditOauthApp.tsx [读] |
+| page.admin.oauth-apps.save | 保存 OAuth App | 表单 → Save | 校验通过 | [实测] ① 同表 Save 可见。② 未点。③ 无新 app。shots/shots17/009-oauth-new.webp | core | page.admin.oauth-apps.name | OAuthAddApp.tsx EditOauthApp.tsx [读] |
 | page.admin.oauth-apps.delete | 删除 OAuth App | 编辑表单 → Delete | 已有记录 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.oauth-apps.row | EditOauthApp.tsx [读] |
 | page.admin.integrations.new | 打开新建集成 | 管理侧栏 Integrations → New | manage-incoming/outgoing 或 own 变体 [读] | [实测] ① New → /admin/integrations/new/incoming Incoming WebHook。② 未保存。③ 列表仍空。shots/shots9/17-integrations-incoming-new.webp | core | page.admin.integrations.incoming.save | IntegrationsPage.tsx [读] |
 | page.admin.integrations.tab.all | 看全部集成 | Integrations → tab All | 同上 | [实测] ① /admin/integrations tab All，空态 No results found。② 无。③ 刷新仍空。shots/shots9/16-integrations-tabs.webp | core | route.admin.integrations | IntegrationsPage.tsx [读] |
@@ -978,10 +978,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.sounds.pagination | 翻页声音 | Sounds → Pagination | 有多页 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.sounds.search | CustomSoundsTable.tsx [读] |
 | page.admin.sounds.new | 打开新建声音 | Sounds → New | 同上 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | page.admin.sounds.save | CustomSoundsPage.tsx [读] |
 | page.admin.sounds.row | 打开编辑声音 | 表 → 行 | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.sounds.save | CustomSoundsTable.tsx [读] |
-| page.admin.sounds.name | 填声音 Name | 表单 → Name | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/custom-sounds.create 或更新 | page.admin.sounds.save | AddCustomSound.tsx EditSound.tsx [读] |
-| page.admin.sounds.file | 上传声音文件 | 表单 → Sound File | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；随 create/update 上传 | page.admin.sounds.save | AddCustomSound.tsx [读] |
-| page.admin.sounds.cancel | 取消未保存声音 | 表单 → Cancel | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.sounds.save | AddCustomSound.tsx [读] |
-| page.admin.sounds.save | 保存自定义声音 | 表单 → Save | Name+文件校验通过 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.sounds.name | AddCustomSound.tsx EditSound.tsx [读] |
+| page.admin.sounds.name | 填声音 Name | 表单 → Name | 同上 | [实测] ① /admin/sounds/new Add Custom Sound → Name。② 未保存。③ Cancel/关栏。shots/shots17/008-sounds-new.webp | core；共享 POST /v1/custom-sounds.create 或更新 | page.admin.sounds.save | AddCustomSound.tsx EditSound.tsx [读] |
+| page.admin.sounds.file | 上传声音文件 | 表单 → Sound File | 同上 | [实测] ① 同表单 Sound File（None）。② 未上传。③ 关栏。shots/shots17/008-sounds-new.webp | core；随 create/update 上传 | page.admin.sounds.save | AddCustomSound.tsx [读] |
+| page.admin.sounds.cancel | 取消未保存声音 | 表单 → Cancel | 同上 | [实测] ① 同表单 Cancel。② 未建声音。③ 列表仍空。shots/shots17/008-sounds-new.webp | core | page.admin.sounds.save | AddCustomSound.tsx [读] |
+| page.admin.sounds.save | 保存自定义声音 | 表单 → Save | Name+文件校验通过 [读] | [实测] ① 同表单 Save 可见。② 未点。③ 列表仍空。shots/shots17/008-sounds-new.webp | core | page.admin.sounds.name | AddCustomSound.tsx EditSound.tsx [读] |
 | page.admin.sounds.delete | 删除自定义声音 | 编辑 → Delete | 已有记录 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.sounds.row | EditSound.tsx [读] |
 | page.admin.emoji.new | 打开新建自定义 emoji | 管理侧栏 Emoji → New | manage-emoji [读] | [实测] ① /admin/emoji New → Add New Emoji。② 未保存。③ Cancel。shots/shots9/15-emoji-new.webp | core | page.admin.emoji.save | CustomEmojiRoute.tsx [读] |
 | page.admin.emoji.row | 打开编辑 emoji | 表 → 行 | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.emoji.save | CustomEmojiRoute.tsx [读] |
@@ -994,8 +994,8 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.feature-preview.allow | 开关允许用户使用功能预览 | 管理侧栏 Feature_preview → Setting Accounts_AllowFeaturePreview | 侧栏：defaultFeaturesPreview.length>0 [读] | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core；共享 settings dispatch | page.admin.feature-preview.save | AdminFeaturePreviewPage.tsx [读] |
 | page.admin.feature-preview.secondary-sidebar | 默认打开二级侧栏预览 | 手风琴 Navigation → Filters_and_secondary_sidebar | allow 开 [读] | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core；共享 Save | page.account.feature-preview.secondary-sidebar | AdminFeaturePreviewPage.tsx useFeaturePreviewList.ts [读] |
 | page.admin.feature-preview.ai-search | 默认打开智能搜索预览 | 手风琴 AI → Intelligent_Search | allow 开 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 Save | page.account.feature-preview.ai-search | AdminFeaturePreviewPage.tsx [读] |
-| page.admin.feature-preview.cancel | 放弃未保存管理端预览 | 页脚 Cancel | dirty 或 allow 脏 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.feature-preview.save | AdminFeaturePreviewPage.tsx [读] |
-| page.admin.feature-preview.save | 保存管理端功能预览默认值 | 页脚 Save_changes | dirty 或 allow 脏 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | route.admin.feature-preview | AdminFeaturePreviewPage.tsx [读] |
+| page.admin.feature-preview.cancel | 放弃未保存管理端预览 | 页脚 Cancel | dirty 或 allow 脏 [读] | [实测] ① 同页脏态 Cancel。② 未改默认。③ 刷新仍原值。shots/shots17/012-feature-preview-dirty.webp | core | page.admin.feature-preview.save | AdminFeaturePreviewPage.tsx [读] |
+| page.admin.feature-preview.save | 保存管理端功能预览默认值 | 页脚 Save_changes | dirty 或 allow 脏 [读] | [实测] ① /admin/feature-preview 打脏后页脚 Save changes。② 未保存。③ 开关仍 off。shots/shots17/012-feature-preview-dirty.webp | core | route.admin.feature-preview | AdminFeaturePreviewPage.tsx [读] |
 | page.admin.settings.search | 搜索设置组卡片 | 管理侧栏 Settings → Search | view-privileged-setting 或 edit 或 manage-selected-settings [读] | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | route.admin.settings | SettingsPage.tsx [读] |
 | page.admin.settings.open.accounts | 打开 Accounts 设置组 | Settings 索引 → 卡 Accounts | 同上；Enterprise 组另要 EE [读] | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core；组内字段共享 page.admin.settings.save | page.admin.settings.save | addGroup('Accounts') SettingsGroupCard [读] |
 | page.admin.settings.open.analytics | 打开 Analytics 设置组 | Settings 索引 → 卡 Analytics | 同上；Enterprise 组另要 EE [读] | [实测] ① /admin/settings Open Analytics：Google Analytics Enable/Tracking ID、Piwik、Features Enabled。② 未保存。③ 刷新仍在组。shots/017-admin-settings-analytics.webp | core；组内字段共享 page.admin.settings.save | page.admin.settings.save | addGroup('Analytics') SettingsGroupCard [读] |
@@ -1326,10 +1326,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **529** |
+| 本卷 `[实测]` | 见上表 | **557** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **363** |
-| `529+190+363` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **335** |
+| `557+190+335` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
