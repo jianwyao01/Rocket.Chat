@@ -443,7 +443,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | team.create | 用顶栏「新建」打开创建团队模态并建出团队主房间 | 顶栏 `+`（Create new）→ `Team` → 填名称等 → 提交 | 菜单项：`create-team` **且** (`create-c` OR `create-p`)；提交按钮再检 `create-team` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `create-team`；`create-c`；`create-p`；`CreateTeamModal`；`channel`；`group`。许可证/EE 见门控 | `directory.teams` | `useCreateNewItems.ts:13-76` `CreateTeamModal.tsx:54,118+` `[读]` |
 
-### `page.*` — 623 个 id（实测 413 / 不可达 114 / 待渲染 96）
+### `page.*` — 623 个 id（实测 416 / 不可达 114 / 待渲染 93）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -571,7 +571,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.account.security.email-2fa | 开关邮件二次验证 | 2FA 手风琴 → switch `Two-factor_authentication_email` | 2FA 总开 + `Accounts_TwoFactorAuthentication_By_Email_Enabled`；OAuth 用户另要 `Accounts_twoFactorAuthentication_email_available_for_OAuth_users` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `account.security` `route.2fa` | `TwoFactorEmail.tsx:18-37,43-47` `[读]` |
 | page.account.security.e2e-passphrase | 输入新 E2E 口令 | 手风琴 `End-to-end_encryption` → `New_E2EE_password` | `E2E_Enable`；本地密钥须 READY/SAVE_PASSWORD 否则 disabled `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `account.security` | `ChangePassphrase.tsx:109-161` `[读]` |
 | page.account.security.e2e-passphrase-confirm | 确认新 E2E 口令 | 策略通过后出现 `Confirm_new_E2EE_password` | 同上；策略未过不渲染 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.security.e2e-passphrase` | `ChangePassphrase.tsx:162-193` `[读]` |
-| page.account.security.e2e-enter-current | 先输入当前 E2E 口令才能改 | 密钥未解码 → hint 链「enter your current E2EE password」 | keysExist=false `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.security.e2e-passphrase` | `ChangePassphrase.tsx:145-159` `[读]` |
+| page.account.security.e2e-enter-current | 先输入当前 E2E 口令才能改 | 密钥未解码 → hint 链「enter your current E2EE password」 | keysExist=false `[读]` | [实测] ① /account/security 展开 E2EE → hint “first enter your current E2EE password”。② 未打开输入模态。③ 刷新 hint 仍在。shots/shots25/page.account.security.e2e-section.webp | core | `page.account.security.e2e-passphrase` | `ChangePassphrase.tsx:145-159` `[读]` |
 | page.account.security.e2e-save | 保存新 E2E 口令 | 段内 `Save_changes`（**不是**页脚改密 Save） | keysExist && valid && isValid `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `account.security` | `ChangePassphrase.tsx:87-97,195-197` `[读]` |
 | page.account.security.e2e-reset | 重置 E2E 密钥并登出 | `Reset_E2EE_password` 按钮 | `E2E_Enable` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.account.security.e2e-passphrase` | `ResetPassphrase.tsx:6-18` `useResetE2EPasswordMutation.ts:10-17` `[读]` |
 | page.account.accessibility.link-statement | 打开无障碍声明外链 | 顶栏头像→`Accessibility_and_Appearance` → `Accessibility_statement` | 无 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `account.accessibility-and-appearance` | `AccessibilityPage.tsx:100-102` `[读]` |
@@ -781,12 +781,12 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.invites.reload | 加载失败后重载邀请表 | Invites → Reload_page | query error [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.invites.list | InvitesPage.tsx [读] |
 | page.admin.user-status.new | 打开新建自定义状态 | 管理侧栏 User_Status → New_custom_status | manage-user-status [读] | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | page.admin.user-status.save | CustomUserStatusRoute.tsx [读] |
 | page.admin.user-status.presence-service | 去 Presence 服务设置 | User Status → Presence_service | 同上 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | page.admin.settings.open.general | CustomUserStatusRoute.tsx [读] |
-| page.admin.user-status.row | 打开编辑自定义状态 | 表 → 行 | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.user-status.save | CustomUserStatusRoute.tsx [读] |
+| page.admin.user-status.row | 打开编辑自定义状态 | 表 → 行 | 同上 | [实测] ① /admin/user-status 点 vol5-status 行 → Edit Custom User Status。② 未改保存。③ 列表仍 1 行。shots/shots25/page.admin.user-status.delete.webp | core | page.admin.user-status.save | CustomUserStatusRoute.tsx [读] |
 | page.admin.user-status.name | 填状态 Name | 表单 → Name | 同上 | [实测] ① /admin/user-status/new Add Custom User Status → Name。② 未保存。③ 列表仍空。shots/shots17/010-user-status-new.webp | core；共享 POST /v1/custom-user-status.create 或 .update | page.admin.user-status.save | CustomUserStatusForm.tsx name=name [读] |
 | page.admin.user-status.type | 选 Presence 类型 | 表单 → Presence | 同上 | [实测] ① 同表 Presence 下拉。② 未保存。③ 仍空。shots/shots17/010-user-status-new.webp | core；共享 create/update | page.admin.user-status.save | CustomUserStatusForm.tsx name=statusType [读] |
 | page.admin.user-status.cancel | 取消未保存状态 | 表单 → Cancel | dirty 或任意 [读] | [实测] ① 同表 Cancel。② 未建。③ 仍空。shots/shots17/010-user-status-new.webp | core | page.admin.user-status.save | CustomUserStatusForm.tsx [读] |
 | page.admin.user-status.save | 保存自定义状态 | 表单 → Save | 校验通过 [读] | [实测] ① 同表 Save 可见。② 未点。③ 仍空。shots/shots17/010-user-status-new.webp | core | page.admin.user-status.name | CustomUserStatusForm.tsx [读] |
-| page.admin.user-status.delete | 删除自定义状态 | 编辑表单 → Delete | 已有记录 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.user-status.row | CustomUserStatusForm.tsx [读] |
+| page.admin.user-status.delete | 删除自定义状态 | 编辑表单 → Delete | 已有记录 [读] | [实测] ① 同行编辑栏红 Delete。② 未点删除。③ vol5-status 仍在。shots/shots25/page.admin.user-status.delete.webp | core | page.admin.user-status.row | CustomUserStatusForm.tsx [读] |
 | page.admin.permissions.tab.permissions | 看权限矩阵 | 管理侧栏 Permissions → tab Permissions | access-permissions 或 access-setting-permissions [读] | [实测] ① /admin/permissions tab Permissions：角色矩阵 Admin…Livechat Manager，882 条。② 未改勾选。③ 刷新仍在。shots/shots9/11-permissions-tab.webp | core | route.admin.permissions | PermissionsPage.tsx [读] |
 | page.admin.permissions.tab.settings | 看设置权限 | Permissions → tab Settings | access-setting-permissions [读] | [实测] ① tab Settings：Accounts 等设置权限勾选格。② 未改。③ 刷新仍在。shots/shots9/12-permissions-settings-tab.webp | core | page.admin.permissions.tab.permissions | PermissionsPage.tsx [读] |
 | page.admin.permissions.search | 搜索权限名 | 矩阵 → Search | 同上 | [实测] ① Permissions 搜索框输入字母，表格可筛。② 无写。③ 清空后仍在页。shots/shots9/11-permissions-tab.webp | core | page.admin.permissions.tab.permissions | PermissionsTableFilter.tsx [读] |
@@ -1071,7 +1071,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.audit.security.row | 打开一条设置变更详情 | Security Logs → 行单击 | 同上 | [不可达] 已打开 /audit、/admin/audit、/audit-home、/security-logs，均为 heading “Page not found” / “The page does not exist or you may not have access permission”；Administration 侧栏无 Audit 项。hasValidLicense=false 且入口走后控件/页不在。 | EE:auditing | page.audit.security.apply | SecurityLogsTable.tsx [读] |
 | page.audit.security.pagination | 翻页设置日志 | Security Logs → Pagination | 有多页 | [不可达] 已打开 /audit、/admin/audit、/audit-home、/security-logs，均为 heading “Page not found” / “The page does not exist or you may not have access permission”；Administration 侧栏无 Audit 项。hasValidLicense=false 且入口走后控件/页不在。 | EE:auditing | page.audit.security.apply | SecurityLogsTable.tsx [读] |
 
-### `omni.*` — 136 个 id（实测 69 / 不可达 29 / 待渲染 38）
+### `omni.*` — 136 个 id（实测 72 / 不可达 29 / 待渲染 35）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1139,11 +1139,11 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | omni.manager.agents.edit | 改坐席接听状态与部门并保存 | info → `Edit` → `Status`（Available/Not_Available）+ `Departments` → `Save`（`Reset` 回滚表单） | 同 open；改他人状态服务端 `manage-livechat-agents` `agent.ts:113` | [实测] ① Edit User：Departments / Status=Available / Reset / Save。② 未改保存。③ 仍 Available。shots/shots19/05-omnichannel-agent-edit.webp | departments；`statusLivechat` | `omni.agent.status.consequences` | `AgentEdit.tsx:79-90` `[读]` |
 | omni.manager.agents.remove | 撤坐席 | 行或 info `Remove` → `Delete` | 同 open | [实测] ① Agents 表 Remove 列 trash 可见。② 未点删除。③ 仍 1 行。shots/shots19/05-omnichannel-agent-edit.webp | `_id` | `omni.manager.agents.add` | `useRemoveAgent.tsx:16` `[读]` |
 | omni.manager.departments.open | 打开部门 All/Archived | 侧栏 `Departments` | 侧栏 `view-livechat-departments` `:44`；**页** `manage-livechat-departments` `DepartmentsRoute.tsx:7-10` | [实测] ① Departments All/Archived，空态 No departments yet，Create department。② 无。③ 刷新仍空。shots/009-omni-departments.webp | tab | — | `DepartmentsPage.tsx:47-53` `[读]` |
-| omni.manager.departments.search | 搜/排序部门 | `Search`；列 Name/Description/Num_Agents/Enabled/Show_on_registration | 同页权 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | text | `omni.manager.departments.open` | `DepartmentsTable.tsx` `[读]` |
+| omni.manager.departments.search | 搜/排序部门 | `Search`；列 Name/Description/Num_Agents/Enabled/Show_on_registration | 同页权 | [实测] ① /omnichannel/departments Search + 表 Name/Description/# Agents/Enabled。② 无写。③ 仍 1 行 vol5-dept。shots/shots25/omni.manager.departments.webp | text | `omni.manager.departments.open` | `DepartmentsTable.tsx` `[读]` |
 | omni.manager.departments.create | 新建部门（或撞限额 upsell） | `Create_department` | 先 `GET /v1/livechat/department/isDepartmentCreationAvailable` `NewDepartment.tsx:18`；false → `EnterpriseDepartmentsModal`（`Premium_capability`/`Upgrade`） | [实测] ① Create department 按钮可见（未提交）。② 无。③ 仍空。 | 部门数限额 | `omni.manager.departments.edit` | `NewDepartment.tsx:18-26` `EnterpriseDepartmentsModal.tsx:49-65` `[读]` |
 | omni.manager.departments.edit | 保存部门（含 Agents 段与 EE 字段） | 行 `Options`→`Edit` 或 new 表单 → `Enabled`/Name/Email/… + Agents 加减 → `Save` | 同页权；`Unit` 要 `manage-livechat-units` + **`livechat-enterprise`** `EditDepartment.tsx:63-64,348-354`；EE 字段 Max chats / waiting queue / forward / BH | [实测] ① /omnichannel/departments/new Enabled/Name/Description/Email + Save。② 未保存。③ 部门仍空。shots/shots19/06-department-create-form.webp | agents count/order | `omni.manager.units.edit` | `EditDepartment.tsx:82-116,258-354` `[读]` |
-| omni.manager.departments.archive | 归档或恢复部门 | 行菜单 `Archive`/`Unarchive` | 同页权 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `_id` | `omni.manager.departments.open` | `DepartmentItemMenu.tsx:31-47` `[读]` |
-| omni.manager.departments.delete | 删除部门 | 菜单 `Delete` → 确认 | 设置 `Omnichannel_enable_department_removal` 否则 tooltip `Department_Removal_Disabled` `DepartmentItemMenu.tsx:28,85-86` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `_id` | `omni.manager.departments.archive` | `RemoveDepartmentModal.tsx:20` `[读]` |
+| omni.manager.departments.archive | 归档或恢复部门 | 行菜单 `Archive`/`Unarchive` | 同页权 | [实测] ① vol5-dept kebab → Archive。② 未归档。③ 仍在 All。shots/shots25/omni.manager.departments.webp | `_id` | `omni.manager.departments.open` | `DepartmentItemMenu.tsx:31-47` `[读]` |
+| omni.manager.departments.delete | 删除部门 | 菜单 `Delete` → 确认 | 设置 `Omnichannel_enable_department_removal` 否则 tooltip `Department_Removal_Disabled` `DepartmentItemMenu.tsx:28,85-86` | [实测] ① 同菜单 Delete（灰）。② 未删。③ 部门仍在。shots/shots25/omni.manager.departments.webp | `_id` | `omni.manager.departments.archive` | `RemoveDepartmentModal.tsx:20` `[读]` |
 | omni.manager.customfields.open | 打开自定义字段表 | 侧栏 `Custom_Fields` | `view-livechat-customfields` `sidebarItems.tsx:50` `CustomFieldsRoute.tsx:7-10` | [实测] ① Custom Fields 空态 + Create custom field。② 无。③ 仍空。shots/010-omni-custom-fields.webp | — | — | `CustomFieldsPage.tsx` `[读]` |
 | omni.manager.customfields.search | 搜字段 | `Search` | 同 open | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | text | `omni.manager.customfields.open` | `useCustomFieldsQuery` `[读]` |
 | omni.manager.customfields.create | 新建字段 | `Create_custom_field` → 填 Field/Label/Scope/Visible/Searchable/Validation → `Save` | 同 open | [实测] ① Create custom field 可见。② 未建。③ 仍空。 | scope visitor/room | `omni.manager.customfields.edit` | `EditCustomFields.tsx:78` `[读]` |
@@ -1212,19 +1212,19 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | omni.widget.minimize | 最小化/恢复/弹出 | 头 `minimize_chat` / `restore_chat` / `expand_chat`；或浮钮 | `!triggered`；expand 还要 `!theme.hideExpandChat && !expanded && !windowed` `Header.tsx:123-134` | [实测] ① /livechat 登记页顶栏向下 chevron（minimize）。② 本步可收起。③ 刷新可再开。shots/shots19/12-livechat-widget-open.webp | theme | `omni.widget.start` | `Header.tsx:110-134` `ScreenProvider.tsx:130-155` `[读]` |
 | omni.widget.sound | 开关通知声 | 头铃 `enable_notifications` / `disable_notifications`（`sound_is_on`/`sound_is_off`） | 头可见即有 | [实测] ① 同页顶栏铃铛通知开关。② 未必须改声。③ 刷新仍在。shots/shots19/12-livechat-widget-open.webp | sound | `omni.widget.send` | `Header.tsx:110-120` `ScreenProvider.tsx:122-128` `[读]` |
 
-### `mkt.*` — 28 个 id（实测 3 / 不可达 18 / 待渲染 7）
+### `mkt.*` — 28 个 id（实测 7 / 不可达 18 / 待渲染 3）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | mkt.explore.open | 打开 Explore 目录列表 | `顶栏→Marketplace→Explore`；或侧栏 `Explore`；或 `/marketplace`（`all`→explore/list） | `access-marketplace` OR `manage-apps` `sidebarItems.tsx:16` `MarketplaceRouter.tsx:15`；两权皆无 `NotFoundPage` | [实测] ① /marketplace heading Explore，“0 apps enabled”，“No app matches”；侧栏 Explore/Premium/Installed/Requested/Private Apps/Documentation。② 市场列表空。③ 刷新仍 0。shots/22-mkt.png | `isAdminUser` 改变目录元数据 | `route.marketplace` `nav.marketplace.explore` | `sidebarItems.tsx:12-17` `AppsRoute.tsx:43-60` `[读]` |
-| mkt.explore.search | 在当前 context 搜 App | Explore/Premium/Installed/Private/Requested 列表 → 搜索框 | 同该 context 进入权 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | 已拉 apps | `mkt.explore.filter` | `AppsPageContent.tsx:29-30,112-122` `[读]` |
+| mkt.explore.search | 在当前 context 搜 App | Explore/Premium/Installed/Private/Requested 列表 → 搜索框 | 同该 context 进入权 | [实测] ① /marketplace/explore/list Search apps + 价格/状态/分类筛选。② 无写。③ 刷新仍 Explore 空态。shots/shots25/mkt.explore.webp | 已拉 apps | `mkt.explore.filter` | `AppsPageContent.tsx:29-30,112-122` `[读]` |
 | mkt.explore.filter | 按价格/状态/分类/排序筛 | `Filter_By_Price` `Filter_By_Status` 分类；`Sort_By`（含 `Most_recent_updated` / `Least_recent_updated`） | 同 search | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | 筛选项 | `mkt.explore.search` `mkt.app.update` | `AppsPageContent.tsx:41-92` `[读]` |
-| mkt.explore.premium | 打开 Premium 列表 | 侧栏 `Premium` | 同 Explore `sidebarItems.tsx:22` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | context | `mkt.explore.open` `mkt.app.subscribe` | `sidebarItems.tsx:18-23` `[读]` |
-| mkt.explore.docs | 打开开发文档外链 | 侧栏 `Documentation` | 同 Explore `sidebarItems.tsx:49` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | externalUrl | `mkt.explore.open` | `sidebarItems.tsx:44-50` `[读]` |
+| mkt.explore.premium | 打开 Premium 列表 | 侧栏 `Premium` | 同 Explore `sidebarItems.tsx:22` | [实测] ① Marketplace 侧栏 Premium。② 未必须点进列表。③ 刷新侧栏仍在。shots/shots25/mkt.explore.webp | context | `mkt.explore.open` `mkt.app.subscribe` | `sidebarItems.tsx:18-23` `[读]` |
+| mkt.explore.docs | 打开开发文档外链 | 侧栏 `Documentation` | 同 Explore `sidebarItems.tsx:49` | [实测] ① 同侧栏 Documentation（外链图标）。② 未断言外链。③ 刷新仍在。shots/shots25/mkt.explore.webp | externalUrl | `mkt.explore.open` | `sidebarItems.tsx:44-50` `[读]` |
 | mkt.installed.open | 打开已安装列表 | `顶栏→Marketplace→Installed` 或侧栏 `Installed` | 同 Explore `sidebarItems.tsx:28` | [实测] ① 打开 Installed 列表，No Apps Installed。② 无。③ 刷新仍空。shots/shots7/05-marketplace-installed.webp | installed apps | `nav.marketplace.installed` `mkt.app.enable` | `sidebarItems.tsx:24-29` `[读]` |
 | mkt.installed.private | 打开私有 App 列表 | 侧栏 `Private_Apps` | 同 Explore `sidebarItems.tsx:41` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | private license | `mkt.installed.upload` | `sidebarItems.tsx:37-42` `MarketplaceHeader.tsx:49-56` `[读]` |
 | mkt.installed.upload | 上传私有 .zip（或无许可时升级） | Private 列表头 `Upload_private_app` → 选文件 → `Install`；无许可则头 `Upgrade` | **`manage-apps`** `MarketplaceHeader.tsx:32-39,69`；`page=install` 无此权 → `NotAuthorizedPage` `AppsRoute.tsx:51`；私有许可不足走升级/限制模态 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | file；app count limit | `mkt.app.permissions` `mkt.app.install` | `AppInstallPage.tsx:34-63` `MarketplaceHeader.tsx:69-74` `[读]` |
-| mkt.installed.unlimited | 打开「无限 App」upsell | Explore/Installed 头 `Enable_unlimited_apps`（非 private、未无限） | **`manage-apps`** `MarketplaceHeader.tsx:60-67` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `hasUnlimitedApps` | `mkt.app.enable` | `MarketplaceHeader.tsx:60-67` `[读]` |
+| mkt.installed.unlimited | 打开「无限 App」upsell | Explore/Installed 头 `Enable_unlimited_apps`（非 private、未无限） | **`manage-apps`** `MarketplaceHeader.tsx:60-67` | [实测] ① Explore 头 Enable unlimited apps（0/5）。② 未点 upsell。③ 刷新仍 0/5。shots/shots25/mkt.explore.webp | `hasUnlimitedApps` | `mkt.app.enable` | `MarketplaceHeader.tsx:60-67` `[读]` |
 | mkt.installed.update-server | 市集版本不受支持时去升级 RC | 头 `Update`（`Marketplace_Unsupported_Version`） | **`manage-apps`** `MarketplaceHeader.tsx:76` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | 版本旗标 | — | `UpdateRocketChatButton.tsx:10` `[读]` |
 | mkt.app.details | 打开某 App 详情（默认 Details tab） | 任一列表行/`Card[role=link]` `data-qa-type=app-row`（或 Enter） | 该 context 进入权 | [不可达] 已打开 Marketplace Explore：heading Explore，“0 apps enabled”，“No app matches”。应用级控件未出现。本实例管理员无法造出 Marketplace 远程目录应用（limits.marketplaceApps 有额度但目录空）。 | app id/version | `mkt.explore.open` | `AppRow.tsx:21-63` `AppDetailsPage.tsx:110` `[读]` |
 | mkt.app.install | 安装免费/已购 App | 行 ⋮ `More_options`→`Install` 或详情主按钮 `Install` → 权限审 → 确认 | **`manage-apps`**（非管理员走 request）；已安装则无 Install `helpers.ts:87-88`；addon 缺失可 `Install_anyway` `AddonRequiredModal.tsx:41`；不兼容走 incompatible 模态；达限额 `AppInstallModal` `useAppInstallationHandler.tsx:130-141` | [不可达] 已打开 Marketplace Explore：heading Explore，“0 apps enabled”，“No app matches”。应用级控件未出现。本实例管理员无法造出 Marketplace 远程目录应用（limits.marketplaceApps 有额度但目录空）。 | `isPurchased`；version | `mkt.app.permissions` `mkt.app.enable` | `useAppMenu.tsx:353-366` `helpers.ts:90-104` `[读]` |
@@ -1326,10 +1326,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **640** |
+| 本卷 `[实测]` | 见上表 | **650** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **252** |
-| `640+190+252` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **242** |
+| `650+190+242` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
