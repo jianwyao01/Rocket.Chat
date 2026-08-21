@@ -310,7 +310,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | sidebar.sidepanel.unread-toggle | 副栏只看未读 | `副栏顶 heading→Unread ToggleSwitch` | secondarySidebar ON；项 none `SidePanelInternal.tsx:48-51` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `SidePanelInternal.tsx:48-51` | `nav.sort.group.unread` | `SidePanelInternal.tsx:51` |
 | sidebar.sidepanel.back | tablet 关闭副栏 | `副栏顶→Back` | secondarySidebar ON + `isTablet` `SidePanelInternal.tsx:44` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `SidePanelInternal.tsx:44` | `nav.sidebar.toggle` | `SidePanelInternal.tsx:44` |
 
-### `composer.*` — 20 个 id（实测 10 / 不可达 4 / 待渲染 6）
+### `composer.*` — 20 个 id（实测 11 / 不可达 4 / 待渲染 5）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -323,7 +323,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | composer.action.more-menu | 打开 + 更多操作菜单 | 点 `data-qa-id=menu-more-actions`（icon=plus，`title=More_actions`） | `disabled={isRecording \ | [实测] ① #atlas-live composer 点 More（+）→ 菜单项 Discussion、Add Server（disabled）、Location（disabled）、Timestamp。② 无写 REST。③ 关菜单后不持久。shots/02-composer-more-menu.webp | !canSend}`。`MessageBoxActionsToolbar.tsx:152` | `［待渲染实测］` ①GenericMenu 分段 Create_new / Share / Insert / Apps。②无 REST。③关闭后不持久 | core |
 | composer.action.apps | 运行 Apps Engine 注册的 messageBox 按钮 | More → Apps → 点 `{appId}/{actionId}` | `GET` actionButtons `context==='messageBoxAction'`；`useApplyButtonFilters` 按房间类型/角色/权限过滤。`useMessageboxAppsActionButtons.ts:13-25` | [不可达] 已打开 composer More 菜单，无 Apps 分段（本实例无 messageBoxAction 应用）。 | app | `composer.action.more-menu` | `useMessageboxAppsActionButtons.ts:12-61` |
 | composer.state.send.disabled.recording | 录音中 textarea/格式/emoji 禁；Send **不**因录音单独禁 | 点 `data-qa-id=audio-message`（或 video）进入录音 | `isRecording = isRecordingAudio \ | [不可达] 已打开 #atlas-live composer 工具栏与 More；Message_AudioRecorderEnabled=true，仍无 mic/record 钮，无法进入录音禁用 Send 态。 | isRecordingVideo`。Send 仍只看 empty/upload 公式 | `[读]` ①`textarea` `disabled`；emoji/format `disabled`；`role=group` `aria-label=Audio_recorder` 或 `role=dialog` `aria-label=Video_record`。②无 send REST。③录音态不 persist。`［待渲染实测］` 若录音前已有字，Send 是否仍可点 | core+setting |
-| composer.state.draft.reload | 整页刷新：server 优先，否则 local | A 打字（未切房、local 已写）→ F5 | `initialValue = serverDraft \ | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | localStorage` | `[读]` ①刷新后预填。②若从未 flush 且 local 还在则恢复；若已 flush 则 server。③`［待渲染实测］` 仅 server、无 local 的跨设备时序 | core |
+| composer.state.draft.reload | 整页刷新：server 优先，否则 local | A 打字（未切房、local 已写）→ F5 | `initialValue = serverDraft \ | [实测] ① #atlas-live composer 输入 vol5-draft-reload（未发送）→ /home → 回 /channel/atlas-live，输入框仍有该文本，侧栏 Draft: vol5-draft-reload。② 无写 REST。③ 刷新前草稿仍在。shots/shots43/composer.state.draft.reload.webp | localStorage` | `[读]` ①刷新后预填。②若从未 flush 且 local 还在则恢复；若已 flush 则 server。③`［待渲染实测］` 仅 server、无 local 的跨设备时序 | core |
 | composer.state.typing.truncated | ≥5 人截成 and others | ≥5 个 username | `maxUsernames=5` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `implicit.typing.display` | `ComposerUserActionIndicator.tsx:7,70-72` |
 | composer.state.location.prompt | 定位权限未决：先说明再 Continue | More → Share → `Location` | `MapView_Enabled`；geolocation；`MapView_GMapsAPIKey`；`!federated`；`!disableBasicActions` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core+setting | `composer.action.share-location` | `useShareLocationAction.tsx:17-31`；`ShareLocationModal.tsx:70-79` |
 | composer.state.location.denied | 定位拒绝或拿不到坐标 | Continue 后拒 / 无 position | `denied \ | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | !positionData` | `［待渲染实测］` ①modal `Cannot_share_your_location` 仅 Ok。②无 `chat.sendMessage`。③无消息 | core |
@@ -1326,10 +1326,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **736** |
+| 本卷 `[实测]` | 见上表 | **737** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **156** |
-| `736+190+156` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **155** |
+| `737+190+155` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
