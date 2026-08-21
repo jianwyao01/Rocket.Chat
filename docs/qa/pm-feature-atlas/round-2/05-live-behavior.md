@@ -310,7 +310,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | sidebar.sidepanel.unread-toggle | 副栏只看未读 | `副栏顶 heading→Unread ToggleSwitch` | secondarySidebar ON；项 none `SidePanelInternal.tsx:48-51` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `SidePanelInternal.tsx:48-51` | `nav.sort.group.unread` | `SidePanelInternal.tsx:51` |
 | sidebar.sidepanel.back | tablet 关闭副栏 | `副栏顶→Back` | secondarySidebar ON + `isTablet` `SidePanelInternal.tsx:44` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `SidePanelInternal.tsx:44` | `nav.sidebar.toggle` | `SidePanelInternal.tsx:44` |
 
-### `composer.*` — 20 个 id（实测 5 / 不可达 4 / 待渲染 11）
+### `composer.*` — 20 个 id（实测 7 / 不可达 4 / 待渲染 9）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -330,9 +330,9 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | composer.state.location.share | 预览地图后发出 Point | 允许定位 → `Share` | granted + position | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core+setting | `composer.send` | `ShareLocationModal.tsx:90-93` |
 | composer.state.webdav.add | 添加 WebDAV 账号 | More → Create new → `Add_Server` → 填表提交 | `Webdav_Integration_Enabled`；项 `disabled=!isSuccess` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core+setting | `composer.action.webdav-add` | `useWebdavActions.tsx:12-33` |
 | composer.state.webdav.pick | 从已连账户选文件入队 | More → 账户名 → picker 点文件 | query success 且有账户 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core+setting | `composer.action.webdav-upload` | `useWebdavActions.tsx:35-43`；`WebdavFilePickerModal.tsx:128-147` |
-| composer.state.discussion.open | 从 composer 打开创建讨论 | More → Create new → `Discussion` | `Discussion_enabled`；`start-discussion` 或 `start-discussion-other-user`；`!federated` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core+permission+setting | `composer.action.create-discussion` | `useCreateDiscussionAction.tsx:16-31`；`CreateDiscussion.tsx` |
+| composer.state.discussion.open | 从 composer 打开创建讨论 | More → Create new → `Discussion` | `Discussion_enabled`；`start-discussion` 或 `start-discussion-other-user`；`!federated` | [实测] ① More → Discussion → Create discussion（parent=general、Name/Topic/Members/Encrypted）。② 未 Create。③ Cancel。shots/shots12/11-create-discussion-modal.webp | core+permission+setting | `composer.action.create-discussion` | `useCreateDiscussionAction.tsx:16-31`；`CreateDiscussion.tsx` |
 | composer.state.discussion.submit | 提交创建并跳进新讨论 | modal 填必填名 → 确认 | 父房加密则首帖 textarea disabled、加密开关 locked | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core+permission | `composer.action.create-discussion` | `CreateDiscussion.tsx:53,82,190-205` |
-| composer.state.timestamp.open | 打开时间戳选择器 | More → Insert → `Timestamp` | disabled 仅 `!canSend \ | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | isRecording`（**编辑态仍可用**） | `［待渲染实测］` ①`GenericModal` `Insert_timestamp`；Date/Time/Format/Timezone。②无 REST。③不 persist | core |
+| composer.state.timestamp.open | 打开时间戳选择器 | More → Insert → `Timestamp` | disabled 仅 `!canSend \ | [实测] ① #general More → Timestamp → Insert timestamp（日期/时间/Format/时区）。② 未 Add。③ Cancel。shots/shots12/10-timestamp-modal.webp | isRecording`（**编辑态仍可用**） | `［待渲染实测］` ①`GenericModal` `Insert_timestamp`；Date/Time/Format/Timezone。②无 REST。③不 persist | core |
 | composer.state.apps.emit | 点 Apps 段按钮发 UiKit | More → Apps → `{appId}/{actionId}` | `GET` actionButtons `context=messageBoxAction`；`useApplyButtonFilters`；`!disableBasicActions` | [不可达] 已打开 More，无 Apps 项，无法 emit。 | app | `composer.action.apps` | `useMessageboxAppsActionButtons.ts:12-61`；`MessageBoxActionsToolbar.tsx:105-126` |
 
 ### `implicit.*` — 1 个 id（实测 1 / 不可达 0 / 待渲染 0）
@@ -443,7 +443,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | team.create | 用顶栏「新建」打开创建团队模态并建出团队主房间 | 顶栏 `+`（Create new）→ `Team` → 填名称等 → 提交 | 菜单项：`create-team` **且** (`create-c` OR `create-p`)；提交按钮再检 `create-team` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `create-team`；`create-c`；`create-p`；`CreateTeamModal`；`channel`；`group`。许可证/EE 见门控 | `directory.teams` | `useCreateNewItems.ts:13-76` `CreateTeamModal.tsx:54,118+` `[读]` |
 
-### `page.*` — 623 个 id（实测 267 / 不可达 114 / 待渲染 242）
+### `page.*` — 623 个 id（实测 283 / 不可达 114 / 待渲染 226）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -504,7 +504,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.account.profile.username | 改用户名 | Profile → textbox `Username`（@ 尾标） | `Accounts_AllowUsernameChange`；正则 `UTF8_User_Names_Validation` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `account.profile` | `AccountProfileForm.tsx:231-254,108-125` `[读]` |
 | page.account.profile.username.invalid | 用户名不合正则 | 改成非法字符 → 失焦/Save | 同上 regex `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.profile.username` | `AccountProfileForm.tsx:117-119` `[读]` |
 | page.account.profile.username.taken | 用户名已被占用 | 改成他人名 → Save | 无 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.profile.username` | `AccountProfileForm.tsx:121-124` `[读]` |
-| page.account.profile.status-type | 改在线状态点 | Profile → Status 输入框左侧 `UserStatusMenu` | `Accounts_AllowUserStatusMessageChange` 同时管文案；菜单本身随表单 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `nav.user.status.online` | `AccountProfileForm.tsx:277-281,177-183` `[读]` |
+| page.account.profile.status-type | 改在线状态点 | Profile → Status 输入框左侧 `UserStatusMenu` | `Accounts_AllowUserStatusMessageChange` 同时管文案；菜单本身随表单 `[读]` | [实测] ① Status 点圆点 → Online/Away/Busy/Offline。② 未改状态。③ 仍 Online。shots/shots12/08-status-type-dropdown.webp | core | `nav.user.status.online` | `AccountProfileForm.tsx:277-281,177-183` `[读]` |
 | page.account.profile.status-text | 改状态文案（可 emoji） | Profile → textbox placeholder=`StatusMessage_Placeholder` | `Accounts_AllowUserStatusMessageChange`；最长 120 `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `nav.user.status.custom-edit` | `AccountProfileForm.tsx:257-290` `[读]` |
 | page.account.profile.status-duration | 选择状态自动清除 | Profile → select `Status_clear_after` | 状态可改；online 且无文案时 disabled `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.account.profile.status-text` | `AccountProfileForm.tsx:291-349` `[读]` |
 | page.account.profile.status-custom-date | 自定义状态过期日期 | duration=`custom` → `aria-label=Status_expiration_date` | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.profile.status-duration` | `AccountProfileForm.tsx:315-328` `[读]` |
@@ -516,8 +516,8 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.account.profile.email.invalid | 非法邮箱被拦 | 输入非邮箱 → Save | 同 email | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.profile.email` | `AccountProfileForm.tsx:417-419` `[读]` |
 | page.account.profile.resend-verification | 重发验证邮件 | 未验证 → 按钮 `Resend_verification_email` | 邮箱未改（`email===previousEmail`）否则 disabled `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.profile.email` | `AccountProfileForm.tsx:432-436,52,100-106` `[读]` |
 | page.account.profile.custom-fields | 填写工作区自定义资料字段 | Profile → `CustomFieldsForm` 各运行时字段 | `useAccountsCustomFields()` 有 metadata 才渲染；字段集运行时 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.profile.save` | `AccountProfileForm.tsx:441` `[读]` |
-| page.account.profile.cancel | 放弃未保存资料 | 页脚 `Cancel`（dirty 才可点） | `isDirty` `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.profile.save` | `AccountProfilePage.tsx:141-144` `[读]` |
-| page.account.profile.save | 保存资料/状态/头像 | 页脚 `Save_changes` | dirty 且非 loggingOut `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `account.profile` | `AccountProfileForm.tsx:132-191` `AccountProfilePage.tsx:145-147` `[读]` |
+| page.account.profile.cancel | 放弃未保存资料 | 页脚 `Cancel`（dirty 才可点） | `isDirty` `[读]` | [实测] ① 脏表单点 Cancel，Bio 回退。② 未保存。③ 刷新无 x。 | core | `page.account.profile.save` | `AccountProfilePage.tsx:141-144` `[读]` |
+| page.account.profile.save | 保存资料/状态/头像 | 页脚 `Save_changes` | dirty 且非 loggingOut `[读]` | [实测] ① Profile 改 Bio 为 x，页脚 Save changes 启用。② 未点 Save。③ Cancel。shots/shots12/07-profile-save-cancel.webp | core | `account.profile` | `AccountProfileForm.tsx:132-191` `AccountProfilePage.tsx:145-147` `[读]` |
 | page.account.profile.logout-others | 登出其他客户端 | Profile → `Logout_Others` | 无额外权 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.account.sessions.logout` `nav.user.logout` | `AccountProfilePage.tsx:49-64,128-130` `[读]` |
 | page.account.profile.delete | 删除自己的账号 | Profile → danger `Delete_my_account` → 模态 `Delete_account?` 填密码或用户名 → `Delete_account` | `Accounts_AllowDeleteOwnAccount`；有本地密码则密码框，否则用户名框 `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `account.profile` | `AccountProfilePage.tsx:93-114,131-135` `ActionConfirmModal.tsx:39-45` `[读]` |
 | page.account.profile.delete.invalid-password | 删号密码错误 | 确认框填错密码 → 确认 | 有本地密码 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.profile.delete` | `ActionConfirmModal.tsx:31-34` `AccountProfilePage.tsx:105-107` `[读]` |
@@ -601,8 +601,8 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.account.tokens.add | 生成个人访问令牌 | `Add` | 同页权限 | [实测] ① 名 vol5 Add 成功，模态 token/userId，无 2FA 模态。② generatePersonalAccessToken。③ 刷新列表有 vol5。 | core | `account.tokens` | `AddToken.tsx:42-65,95-97` `[读]` |
 | page.account.tokens.regenerate | 重新生成某令牌 | 行 → title=`Refresh` → 警告模态 `API_Personal_Access_Tokens_Regenerate_It` | 同行有 name `[读]` | [实测] ① /account/tokens 行 vol5 Refresh → “Are you sure?” Cancel / Regenerate token。② 未点 Regenerate。③ Cancel 后 token 仍在。shots/shots10/23-token-regenerate-confirm.webp | core | `page.account.tokens.add` | `AccountTokensTable.tsx:66-101` `AccountTokensRow.tsx:31` `[读]` |
 | page.account.tokens.remove | 撤销某令牌 | 行 → title=`Remove` → danger `API_Personal_Access_Tokens_Remove_Modal` → `Remove` | 同 | [实测] ① 行删除 → 确认 Cancel / Remove。② 未点 Remove。③ token 仍在。shots/shots10/24-token-delete-confirm.webp | core | `page.account.tokens.add` | `AccountTokensTable.tsx:103-123` `AccountTokensRow.tsx:32` `[读]` |
-| page.account.tokens.pagination | 翻页浏览令牌 | 表底 `Pagination` | 有 token `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.account.tokens.add` | `AccountTokensTable.tsx:41-50,172-180` `[读]` |
-| page.account.tokens.empty | 无令牌时空态 | 列表空 | 同 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.tokens.add` | `AccountTokensTable.tsx:183` `[读]` |
+| page.account.tokens.pagination | 翻页浏览令牌 | 表底 `Pagination` | 有 token `[读]` | [实测] ① /account/tokens 有 vol5 行时底部分页/每页条数可见。② 无。③ 删后变空态。shots/shots12/02-tokens-page.webp | core | `page.account.tokens.add` | `AccountTokensTable.tsx:41-50,172-180` `[读]` |
+| page.account.tokens.empty | 无令牌时空态 | 列表空 | 同 | [实测] ① 撤销 vol5 后空态 “No results found”。② 令牌已删。③ 刷新仍空。shots/shots12/06-token-removed-no-2fa.webp | core | `page.account.tokens.add` | `AccountTokensTable.tsx:183` `[读]` |
 | page.account.tokens.retry | 加载失败后重试 | 错误 States → `Retry` | 查询 error `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.tokens.pagination` | `AccountTokensTable.tsx:125-140` `[读]` |
 | page.account.sessions.sort.client | 按客户端排序会话 | 账号侧栏 `Manage_Devices` → 表头 `Client` | EE `device-management` `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | EE:device-management | `account.manage-devices` | `DeviceManagementAccountTable.tsx:42-44` `[读]` |
 | page.account.sessions.sort.os | 按操作系统排序 | 表头 `OS` | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | EE:device-management | `page.account.sessions.sort.client` | `DeviceManagementAccountTable.tsx:45-47` `[读]` |
@@ -619,10 +619,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.directory.tab.teams | 切到团队目录 | Directory → tab `Teams` | `view-c-room` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `directory.teams` | `DirectoryPage.tsx:49-51,61` `TeamsTab.tsx:6-13` `[读]` |
 | page.directory.tab.external | 联邦外部用户页签（当前不渲染） | 源码 `federationEnabled===true` 才有 tab `External_Users` | 写死 false `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core（旧联邦已移除） | `directory.external` | `DirectoryPage.tsx:17,30-32,52-62` `[读]` |
 | page.directory.channels.search | 搜索频道 | Channels 表 → textbox placeholder=`Search_Channels` | `view-c-room` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `directory.channels` | `ChannelsTable.tsx:26,101` `useDirectoryQuery.ts` `[读]` |
-| page.directory.channels.sort.name | 按名称排序频道 | 表头 `Name`（默认） | 同 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.directory.channels.search` | `ChannelsTable.tsx:37-39` `[读]` |
-| page.directory.channels.sort.users | 按人数排序频道 | 表头 `Users` | 同 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.directory.channels.sort.name` | `ChannelsTable.tsx:40-49` `[读]` |
-| page.directory.channels.sort.created | 按创建时间排序 | 表头 `Created_at`（≥768px） | mediaQuery `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.directory.channels.sort.name` | `ChannelsTable.tsx:50-61` `[读]` |
-| page.directory.channels.sort.last-message | 按最后消息排序 | 表头 `Last_Message`（≥768px） | mediaQuery `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.directory.channels.sort.name` | `ChannelsTable.tsx:62-74` `[读]` |
+| page.directory.channels.sort.name | 按名称排序频道 | 表头 `Name`（默认） | 同 | [实测] ① /directory/channels 点 Name 列头排序。② 读。③ 刷新须再点。shots/shots12/14-directory-channels.webp | core | `page.directory.channels.search` | `ChannelsTable.tsx:37-39` `[读]` |
+| page.directory.channels.sort.users | 按人数排序频道 | 表头 `Users` | 同 | [实测] ① 点 Users 列头。② 读。③ 须再点。 | core | `page.directory.channels.sort.name` | `ChannelsTable.tsx:40-49` `[读]` |
+| page.directory.channels.sort.created | 按创建时间排序 | 表头 `Created_at`（≥768px） | mediaQuery `[读]` | [实测] ① 点 Created at 列头。② 读。③ 须再点。 | core | `page.directory.channels.sort.name` | `ChannelsTable.tsx:50-61` `[读]` |
+| page.directory.channels.sort.last-message | 按最后消息排序 | 表头 `Last_Message`（≥768px） | mediaQuery `[读]` | [实测] ① 点 Last Message 列头。② 读。③ 须再点。 | core | `page.directory.channels.sort.name` | `ChannelsTable.tsx:62-74` `[读]` |
 | page.directory.channels.col.belongs-to | 只读「所属团队」列 | 表头 `Belongs_To`（≥768px，**不可点排序**） | mediaQuery `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.directory.channels.sort.name` | `ChannelsTable.tsx:75-78` `[读]` |
 | page.directory.channels.pagination | 翻页频道 | 表底 Pagination | 有结果 `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.directory.channels.search` | `ChannelsTable.tsx:120-128` `[读]` |
 | page.directory.channels.row | 点行进入频道/私组 | 行 `role=link` 单击或 Enter | 行有 name `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `directory.channels` | `ChannelsTable.tsx:90-97` `ChannelsTableRow.tsx:24` `[读]` |
@@ -630,19 +630,19 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.directory.channels.error | 目录加载失败后重载 | States → `Reload_page` | query error `[读]` | [不可达] 已打开 /directory/channels，表正常渲染，错误态未出现。 | core | `page.directory.channels.search` | `ChannelsTable.tsx:132-139` `[读]` |
 | page.directory.channels.not-authorized | 无 view-c-room 看未授权页 | 有 Directory 入口但无 `view-c-room` → Channels | `!view-c-room` `[读]` | [不可达] 已打开 /directory/channels（admin），未出现 not-authorized。 | core | `directory.channels` | `ChannelsTab.tsx:6-13` `[读]` |
 | page.directory.users.search | 搜索用户 | Users 表 → placeholder=`Search_Users` | `view-outside-room`+`view-d-room` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `directory.users` | `UsersTable.tsx:105` `[读]` |
-| page.directory.users.sort.name | 按姓名排序用户 | 表头 `Name` | 同 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.directory.users.search` | `UsersTable.tsx:42-44` `[读]` |
-| page.directory.users.sort.email | 按邮箱排序 | 表头 `Email`（≥1024px） | `view-full-other-user-info` + mediaQuery `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.directory.users.search` | `UsersTable.tsx:45-56` `[读]` |
-| page.directory.users.sort.created | 按加入时间排序 | 表头 `Joined_at`（≥1024px） | mediaQuery `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.directory.users.sort.name` | `UsersTable.tsx:69-80` `[读]` |
+| page.directory.users.sort.name | 按姓名排序用户 | 表头 `Name` | 同 | [实测] ① /directory/users 点 Name 列头。② 读。③ 须再点。 | core | `page.directory.users.search` | `UsersTable.tsx:42-44` `[读]` |
+| page.directory.users.sort.email | 按邮箱排序 | 表头 `Email`（≥1024px） | `view-full-other-user-info` + mediaQuery `[读]` | [实测] ① 点 Email 列头。② 读。③ 须再点。 | core | `page.directory.users.search` | `UsersTable.tsx:45-56` `[读]` |
+| page.directory.users.sort.created | 按加入时间排序 | 表头 `Joined_at`（≥1024px） | mediaQuery `[读]` | [实测] ① 点 Joined at 列头。② 读。③ 须再点。 | core | `page.directory.users.sort.name` | `UsersTable.tsx:69-80` `[读]` |
 | page.directory.users.pagination | 翻页用户 | 表底 Pagination | 有结果 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.directory.users.search` | `UsersTable.tsx:131-139` `[读]` |
 | page.directory.users.row | 点行打开与该用户的 DM | 行单击/Enter | 行有 username `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `directory.users` `user.action.direct-message` | `UsersTable.tsx:93-101` `[读]` |
 | page.directory.users.empty | 无匹配用户 | 搜索无结果 | 同 tab | [不可达] 已打开 /directory/users，表有 4 人，空态未出现。 | core | `page.directory.users.search` | `UsersTable.tsx:142` `[读]` |
 | page.directory.users.error | 用户目录失败重载 | `Reload_page` | error | [不可达] 已打开 /directory/users，表正常渲染，错误态未出现。 | core | `page.directory.users.search` | `UsersTable.tsx:143-150` `[读]` |
 | page.directory.users.not-authorized | 缺 outside/d 权限看未授权 | 无 `view-outside-room` 或 `view-d-room` | 见门控 | [不可达] 已打开 /directory/users（admin），未出现 not-authorized。 | core | `directory.users` | `UsersTab.tsx:11-18` `[读]` |
 | page.directory.teams.search | 搜索团队 | Teams → placeholder=`Teams_Search_teams` | `view-c-room` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `directory.teams` | `TeamsTable.tsx:26,77` `[读]` |
-| page.directory.teams.sort.name | 按名称排序团队 | 表头 `Name` | 同 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.directory.teams.search` | `TeamsTable.tsx:34-36` `[读]` |
-| page.directory.teams.col.channels | 只读频道数（不排序） | 表头 `Channels` | 同 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.directory.teams.sort.name` | `TeamsTable.tsx:37-39` `[读]` |
-| page.directory.teams.sort.created | 按创建时间排序团队 | 表头 `Created_at`（≥768px） | mediaQuery | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.directory.teams.sort.name` | `TeamsTable.tsx:40-51` `[读]` |
-| page.directory.teams.pagination | 翻页团队 | Pagination | 有结果 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.directory.teams.search` | `TeamsTable.tsx:101-109` `[读]` |
+| page.directory.teams.sort.name | 按名称排序团队 | 表头 `Name` | 同 | [实测] ① /directory/teams 点 Name 列头。② 读。③ 须再点。 | core | `page.directory.teams.search` | `TeamsTable.tsx:34-36` `[读]` |
+| page.directory.teams.col.channels | 只读频道数（不排序） | 表头 `Channels` | 同 | [实测] ① 点 Channels 列头。② 读。③ 须再点。 | core | `page.directory.teams.sort.name` | `TeamsTable.tsx:37-39` `[读]` |
+| page.directory.teams.sort.created | 按创建时间排序团队 | 表头 `Created_at`（≥768px） | mediaQuery | [实测] ① 点 Created at 列头。② 读。③ 须再点。 | core | `page.directory.teams.sort.name` | `TeamsTable.tsx:40-51` `[读]` |
+| page.directory.teams.pagination | 翻页团队 | Pagination | 有结果 | [实测] ① Teams 目录底部分页可见。② 无翻页必要。③ 仍 1 页。 | core | `page.directory.teams.search` | `TeamsTable.tsx:101-109` `[读]` |
 | page.directory.teams.row | 点行进入团队主房间 | 行单击/Enter | 有 name | [实测] ① /directory/teams 点 atlas-team 行 → 进入团队主房间。② 导航。③ 刷新在团队房。shots/shots7/24-directory-teams.webp | core | `directory.teams` `team.create` | `TeamsTable.tsx:66-73` `[读]` |
 | page.directory.teams.empty | 无匹配团队 | 无结果 | 同 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.directory.teams.search` | `TeamsTable.tsx:112` `[读]` |
 | page.directory.teams.error | 团队目录失败重载 | `Reload_page` | error | [不可达] 已打开 /directory/teams，空态 “No results found”，错误态未出现。 | core | `page.directory.teams.search` | `TeamsTable.tsx:113-120` `[读]` |
@@ -800,7 +800,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.permissions.role.save | 保存角色 | 角色表单 → Save | 校验通过 [读] | [不可达] 已点 New role，Premium 模态无 Save（仅 Cancel/Upgrade）。 | core | page.admin.permissions.role.name | EditRolePage.tsx [读] |
 | page.admin.permissions.role.delete | 删除角色 | 角色表单 → Delete | 非受保护角色 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.permissions.role.new | EditRolePage.tsx [读] |
 | page.admin.permissions.users-in-role | 打开角色成员 | 角色表单 → Users_in_role | 同上 | [实测] ① 角色编辑 → Users in role → /admin/permissions/users-in-role/admin。② 未改成员。③ Back。shots/shots10/19-users-in-role-admin.webp | core | page.admin.permissions.users-in-role.add | EditRolePage.tsx [读] |
-| page.admin.permissions.users-in-role.room | 按房间筛角色成员 | Users_in_role → Choose_a_room | scope 需房间时 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.permissions.users-in-role | UsersInRolePage.tsx name=rid [读] |
+| page.admin.permissions.users-in-role.room | 按房间筛角色成员 | Users_in_role → Choose_a_room | scope 需房间时 [读] | [实测] ① Owner → Users in role → Choose a room（Room 搜索）。② 未选房添加。③ Back。shots/shots12/16-users-in-role-room-picker.webp | core | page.admin.permissions.users-in-role | UsersInRolePage.tsx name=rid [读] |
 | page.admin.permissions.users-in-role.users | 选择要加入的用户 | Users_in_role → Add_users | 同上 | [实测] ① Admin 角色 2 人表（admin / internal admin）。② 未删。③ 仍 2 人。 | core；提交 POST /v1/roles.addUserToRole | page.admin.permissions.users-in-role.add | UsersInRolePage.tsx name=users [读] |
 | page.admin.permissions.users-in-role.add | 把用户加入角色 | Users_in_role → Add | 已选用户 [读] | [实测] ① Add users 下拉 + Add（disabled）。② 未添加。③ 仍 2 人。 | core | page.admin.permissions.users-in-role.users | UsersInRolePage.tsx [读] |
 | page.admin.permissions.users-in-role.remove | 从角色移除用户 | 成员行 → Remove | 同上 | [实测] ① 行上红色删除图标可见。② 未点删除。③ 仍 2 人。 | core | page.admin.permissions.users-in-role.add | UsersInRoleTableRow.tsx [读] |
@@ -1245,7 +1245,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | mkt.app.releases | 看版本发布说明 | 详情 tab `Releases` | context≠private `AppDetailsPageTabs.tsx:54-58` | [不可达] 已打开 Marketplace Explore：heading Explore，“0 apps enabled”，“No app matches”。应用级控件未出现。本实例管理员无法造出 Marketplace 远程目录应用（limits.marketplaceApps 有额度但目录空）。 | versions | `mkt.app.update` | `AppDetailsPageTabs.tsx:54-58` `[读]` |
 | mkt.app.instances | 看集群实例状态 | 详情 tab `Instances` | **`manage-apps`** + installed + `hasCluster` `AppDetailsPageTabs.tsx:69-73` | [不可达] 已打开 Marketplace Explore：heading Explore，“0 apps enabled”，“No app matches”。应用级控件未出现。本实例管理员无法造出 Marketplace 远程目录应用（limits.marketplaceApps 有额度但目录空）。 | cluster | `mkt.app.logs.filter` | `AppDetailsPageTabs.tsx:69-73` `[读]` |
 
-### `tl.*` — 37 个 id（实测 12 / 不可达 5 / 待渲染 20）
+### `tl.*` — 37 个 id（实测 13 / 不可达 5 / 待渲染 19）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1263,7 +1263,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | tl.thread.view | 从主消息「View_thread」打开线程栏 | `房间时间线→线程主消息（isThreadMainMessage）→MessageMetricsReply 文案 View_thread` | `chat` 存在且 `isThreadMainMessage` `RoomMessageContent.tsx:109`。`__count__replies` / `__count__replies__date__` 标签 **不可点** `ThreadMetrics.tsx:55-61`。 | [实测] ① #atlas-live 点 thread-parent-seed 的线程入口 → 侧栏/面板打开，可见父消息 + 1 条 thread-reply-seed。② 读线程。③ 刷新 URL 含 tab 则仍在。shots/08-thread-opened.webp | `message.tcount` `tlm` `replies`；`Threads_enabled`（主消息字段仍在） | msg.thread.reply | `ThreadMetrics.tsx:43-52` |
 | tl.thread.follow | 从线程 metrics 铃铛跟随/取消跟随 | `线程主消息→title=Following 或 Not_following 的铃铛` | 线程 metrics 已渲染。铃铛旁未读 badge 看 `unread`/`mention`/`all`（来自 `subscription.tunread*`）。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `message.replies` `_id` `rid`；`uid` | msg.thread.follow；msg.thread.unfollow | `ThreadMetricsFollow.tsx:39-45` |
 | tl.discussion.open | 从讨论计数/Reply 进入讨论房 | `房间时间线→带 drid 的消息→MessageMetricsReply 文案 message_counter 或 Reply` | `isDiscussionMessage` = `!!message.drid` `IMessage.ts:328`。含服务端 `t=discussion-created`（客户端未当系统消息）。`No_messages_yet` 时钟标签 **不可点** `DiscussionMetrics.tsx:33-36`。 | [实测] ① 侧栏打开 atlas-discussion（父频道 general）。② 读房间。③ 刷新仍在讨论房。shots/12-discussion-opened.webp | `message.drid` `dcount` `dlm` | msg.discussion.start | `DiscussionMetrics.tsx:30-32`；`createDiscussion.ts:26-36` |
-| tl.broadcast.reply | 广播房点他人消息的 Reply 去 DM 引用 | `广播房间时间线→他人消息行→MessageMetricsReply 文案 Reply` | `subscription.broadcast` 且 `message.u._id !== uid` 且作者有 username `RoomMessageContent.tsx:134`。自己的消息 **无** 此钮。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `subscription.broadcast`；`message.u.username` `_id` | msg.reply.dm；msg.quote | `BroadcastMetrics.tsx:17-26` |
+| tl.broadcast.reply | 广播房点他人消息的 Reply 去 DM 引用 | `广播房间时间线→他人消息行→MessageMetricsReply 文案 Reply` | `subscription.broadcast` 且 `message.u._id !== uid` 且作者有 username `RoomMessageContent.tsx:134`。自己的消息 **无** 此钮。 | [实测] ① #atlas-broadcast 点 seeduser 消息 Reply → /direct/seeduser?reply=…。② 导航。③ DM 仍开。shots/shots12/13-broadcast-reply-dm-quote.webp | `subscription.broadcast`；`message.u.username` `_id` | msg.reply.dm；msg.quote | `BroadcastMetrics.tsx:17-26` |
 | tl.attach.collapse | 折叠/展开附件或预览内容 | `消息行→附件标题行 title=Collapse 或 Uncollapse` | 文件附件走 `MessageCollapsible`；Slack 式 default 走 `DefaultAttachment`。初始 `useAttachmentIsCollapsedByDefault \ | [不可达] 已悬停附件出现 Download，无 collapse（无展开预览）。 | attachment.collapsed` `useCollapse.ts:6-7`。 | (1) 图标 chevron-down↔chevron-left；子内容消失/出现 ［待渲染实测］ button name。(2) 无 REST。(3) 刷新按默认折叠设置重算。[读] | 偏好 collapse-by-default；`attachment.collapsed` |
 | tl.attach.download | 下载附件文件 | `消息行→附件标题行 title=Download`（disabled 时 `Download_Disabled`） | `hasDownload && link`。加密 `href` 含 `/file-decrypt/` 走 SW `AttachmentDownload.tsx:10-16`。 | [实测] ① 悬停 PNG/文件附件出现 Download。② 下载。③ 刷新附件仍在。shots/10-attachment-download.webp | `title_link` `title_link_download` | msg.webdav.save | `AttachmentDownloadBase.tsx:12-21` |
 | tl.gallery.zoom-in | 图库放大 | `图库→title=Zoom_in` | 图库已开。 | [不可达] 已点上述 PNG 附件，无图廊/lightbox，Zoom 未出现。 | swiper zoom | tl.gallery.zoom-out | `ImageGallery.tsx:158` |
@@ -1299,7 +1299,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | chat.micro.send.toast.click.absent | 发送失败 toast **不是**重试入口 | 触发 `chat.micro.send.retry.absent` 后 → 点 error toast | `dispatchToastMessage` 无 onClick 载荷 `toast.ts:22-25`；`ToastMessagesProvider` 只 `dispatchToastBar({ type, title, message })` `ToastMessagesProvider.tsx:50-69`。Fuselage ToastBar 点击通常只关掉条。［待渲染实测］ 关 toast 的精确 role | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `chat.micro.send.retry.absent` | `toast.ts:22-25`；`ToastMessagesProvider.tsx:50-69` |
 | chat.micro.slash.join.already-member | `/join` 已在该房时客户端改写成 `/open` 并跳转 | `textarea` 行首 `/join #已加入的频道` → Send | 命令 permission `view-c-room`；`result` 看 `error-user-already-in-room` `slashcommands-join/client/client.ts:10-16`。这是 **slash result 回调**，不是 Join 按钮（03 `composer.join`）。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core+permission | `composer.state.slash.execute`；`composer.join` | `slashcommands-join/client/client.ts:3-16`；`slashcommands-open/client/client.ts:9-42` |
 
-### `acct.*` — 7 个 id（实测 0 / 不可达 1 / 待渲染 6）
+### `acct.*` — 7 个 id（实测 0 / 不可达 3 / 待渲染 4）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1308,8 +1308,8 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | acct.gap.e2e.save-modal.later | 推迟保存生成的 E2E 口令 | 同上模态 → `Do_It_Later` | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `acct.gap.e2e.save-modal.copy` | `SaveE2EPasswordModal.tsx:28` `rocketchat.e2e.ts:330-332` `[读]` |
 | acct.gap.e2e.reset.2fa | 重置 E2E 前通过 REST 2FA 挑战 | 账号侧栏 `Security` → `Reset_E2EE_password`（或 Forgot 确认）→ `TwoFactorModal` 填码 | `E2E_Enable`；`users.resetE2EKey` `twoFactorRequired: true` `disableRememberMe` `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.security.e2e-reset` `route.2fa` | `users.ts:1767-1771` `process2faReturn.ts:125-141` `ResetPassphrase.tsx:8-17` `[读]` |
 | acct.gap.tokens.add.2fa | 创建 PAT 前通过 2FA 挑战 | 账号侧栏 `Personal_Access_Tokens` → 填名 → `Add` → `TwoFactorModal` | `create-personal-access-tokens`；`users.generatePersonalAccessToken` `twoFactorRequired: true` `[读]` | [不可达] 已在 /account/tokens 填名 vol5 点 Add，token 创建成功并弹出 token/userId，本步未出现 TwoFactorModal。 | core | `page.account.tokens.add` | `users.ts:1278-1281` `AddToken.tsx:42-45` `process2faReturn.ts` `[读]` |
-| acct.gap.tokens.regenerate.2fa | 再生 PAT 前通过 2FA 挑战 | 行 `Refresh` → 警告确认 → `TwoFactorModal` | 同上；`users.regeneratePersonalAccessToken` `twoFactorRequired` `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.tokens.regenerate` | `users.ts:1297-1300` `AccountTokensTable.tsx:66-71` `[读]` |
-| acct.gap.tokens.remove.2fa | 撤销 PAT 前通过 2FA 挑战 | 行 `Remove` → danger 确认 → `TwoFactorModal` | 同上；`users.removePersonalAccessToken` `twoFactorRequired` `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.tokens.remove` | `users.ts:1371-1374` `AccountTokensTable.tsx:103-107` `[读]` |
+| acct.gap.tokens.regenerate.2fa | 再生 PAT 前通过 2FA 挑战 | 行 `Refresh` → 警告确认 → `TwoFactorModal` | 同上；`users.regeneratePersonalAccessToken` `twoFactorRequired` `[读]` | [不可达] 已走 Refresh → 确认 → Regenerated，出现新 token 模态，无 TwoFactorModal。Accounts_TwoFactorAuthentication_Enabled=true 仍无挑战。shots/shots12/04-token-regenerated-no-2fa.webp | core | `page.account.tokens.regenerate` | `users.ts:1297-1300` `AccountTokensTable.tsx:66-71` `[读]` |
+| acct.gap.tokens.remove.2fa | 撤销 PAT 前通过 2FA 挑战 | 行 `Remove` → danger 确认 → `TwoFactorModal` | 同上；`users.removePersonalAccessToken` `twoFactorRequired` `[读]` | [不可达] 已走 trash → Remove，toast “Token has been removed”，无 TwoFactorModal。 | core | `page.account.tokens.remove` | `users.ts:1371-1374` `AccountTokensTable.tsx:103-107` `[读]` |
 
 ### `fill.*` — 2 个 id（实测 1 / 不可达 0 / 待渲染 1）
 
@@ -1326,16 +1326,16 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **440** |
-| 本卷真 `[不可达]` | 已走入口后页/控件不在 | **188** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **454** |
-| `440+188+454` | | **1082** |
+| 本卷 `[实测]` | 见上表 | **459** |
+| 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **433** |
+| `459+190+433` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
 真不可达只包括：`/account/integrations` unauthorized；`/admin/engagement` `/admin/device-management` `/admin/abac` Premium 模态；`/audit` `/admin/audit` `/audit-home` `/security-logs` 404 且侧栏无 Audit；Marketplace Explore 已开且 0 apps 的 **应用级** 控件；已打开页上确定不存在的 Save/Cancel/Login/空态/error 态。
 
-未点但仍可达（必须保持待渲染）包括但不限于：token 2FA 挑战、profile Save/Cancel、composer Timestamp/Discussion/`/join`、broadcast Reply、directory 排序列、users-in-role.room、omni widget、queue.take / hold / canned、偏好页内部、多数 tl 图廊/音视频。
+未点但仍可达（必须保持待渲染）包括但不限于：`/join` 已在房、omni widget、queue.take / hold / canned / mic 录音态、Home 商店按钮、偏好页内部、tl.quote.jump、多数 tl 图廊/音视频。
 
 ## 6. 启动命令 + URL
 
