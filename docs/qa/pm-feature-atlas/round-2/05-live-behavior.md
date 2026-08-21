@@ -1071,7 +1071,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.audit.security.row | 打开一条设置变更详情 | Security Logs → 行单击 | 同上 | [不可达] 已打开 /audit、/admin/audit、/audit-home、/security-logs，均为 heading “Page not found” / “The page does not exist or you may not have access permission”；Administration 侧栏无 Audit 项。hasValidLicense=false 且入口走后控件/页不在。 | EE:auditing | page.audit.security.apply | SecurityLogsTable.tsx [读] |
 | page.audit.security.pagination | 翻页设置日志 | Security Logs → Pagination | 有多页 | [不可达] 已打开 /audit、/admin/audit、/audit-home、/security-logs，均为 heading “Page not found” / “The page does not exist or you may not have access permission”；Administration 侧栏无 Audit 项。hasValidLicense=false 且入口走后控件/页不在。 | EE:auditing | page.audit.security.apply | SecurityLogsTable.tsx [读] |
 
-### `omni.*` — 136 个 id（实测 74 / 不可达 29 / 待渲染 33）
+### `omni.*` — 136 个 id（实测 76 / 不可达 29 / 待渲染 31）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1088,8 +1088,8 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | omni.agent.directory.contact.new | 新建联系人 | `Contacts` → `New_contact` → 填 `Name`/邮箱/电话/`Contact_Manager` → `Save` | API `create-livechat-contact`；第 2 个邮箱/电话无许可证 `contact-id-verification` → `AdvancedContactModal` `EditContactInfo.tsx:76,241,283` | [实测] ① New contact → Name(required)/Email/Phone/Contact Manager/Cancel/Save；Cancel。② 未建联系人。③ 列表仍空。shots/004-omni-new-contact-form.webp | 自定义字段（`view-livechat-room-customfields`） | `omni.agent.unknown-contact` | `ContactTable.tsx:45-99` `EditContactInfo.tsx:81-289` `[读]` |
 | omni.agent.directory.contact.edit | 改已有联系人 | 行 `More_actions`→`Edit` 或详情铅笔 `Edit` → `Save` | 菜单：`update-livechat-contact` `ContactItemMenu.tsx:22,38-43`；铅笔：`edit-omnichannel-contact` 且无 conflicts `ContactInfo.tsx:35,62-66` | [实测] ① /live/.../contact-profile/edit Name/Email/Phone/Contact Manager + Cancel/Save。② 未保存。③ 联系人未改。shots/shots21/07-live-contact-edit.webp | contact id | `omni.agent.contact.edit` | `ContactItemMenu.tsx:37-43` `[读]` |
 | omni.agent.directory.contact.delete | 删除联系人 | 行 `More_actions`→`Delete` → 键入确认 → `Delete` | `delete-livechat-contact` `ContactItemMenu.tsx:23,50` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | contact id | `omni.manager.current.contact.delete` | `RemoveContactModal.tsx:22-64` `[读]` |
-| omni.agent.directory.contact.details | 看联系人 Details/Channels | 行点击 → tab `Details` / `Channels` | 拉详情要 `view-livechat-room-customfields` 否则 `Contact_not_found` `ContactInfoWithData.tsx:14-20` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | conflicts → `See_conflicts` | `room.toolbox.contact-profile` | `ContactInfo.tsx:46-108` `[读]` |
-| omni.agent.directory.contact.history | 按来源筛并钻取历史会话 | 联系人 → `History` → `Filter` → 点条目 → `Search` / `Open_chat` | 非 `All` 筛无 `contact-id-verification` → `AdvancedContactModal` `ContactInfoHistory.tsx:30-43` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `source` | `omni.agent.directory.chats.open` | `ContactInfoHistory.tsx:28-88` `ContactInfoHistoryMessages.tsx:73-126` `[读]` |
+| omni.agent.directory.contact.details | 看联系人 Details/Channels | 行点击 → tab `Details` / `Channels` | 拉详情要 `view-livechat-room-customfields` 否则 `Contact_not_found` `ContactInfoWithData.tsx:14-20` | [实测] ① 同 Contact 侧栏 tab Details / Channels（Channels 有 Custom API 一条）。② 无写。③ 可再切页签。shots/shots31/contact-channels-tab.webp shots/shots31/contact-history-tab.webp | conflicts → `See_conflicts` | `room.toolbox.contact-profile` | `ContactInfo.tsx:46-108` `[读]` |
+| omni.agent.directory.contact.history | 按来源筛并钻取历史会话 | 联系人 → `History` → `Filter` → 点条目 → `Search` / `Open_chat` | 非 `All` 筛无 `contact-id-verification` → `AdvancedContactModal` `ContactInfoHistory.tsx:30-43` | [实测] ① /live/.../contact-profile/history 页签 History + Filter All，空态 No history yet。② 无写。③ 刷新仍 History。shots/shots31/contact-history-tab.webp | `source` | `omni.agent.directory.chats.open` | `ContactInfoHistory.tsx:28-88` `ContactInfoHistoryMessages.tsx:73-126` `[读]` |
 | omni.agent.directory.contact.block | 拉黑/解除联系人频道 | `Channels` 行 ⋮ → `Block`/`Unblock`；或未知联系人 callout `Block` | 确认要 `contact-id-verification` 否则 upsell `useBlockChannel.tsx:32-34` | [实测] ① 同房 Unknown contact callout 的 Block（另有 Add contact）。② 未点拉黑。③ 横幅仍在。shots/shots30/03-contact-profile-panel.webp | channel id | `omni.agent.unknown-contact` | `useBlockChannel.tsx:18-38` `[读]` |
 | omni.agent.sidepanel.in-progress | 副栏列出进行中 live 房并点进 | `主侧栏 Omnichannel_filters→In_progress` → 行 | V2 `secondarySidebar` + `view-l-room` + omnichannel enabled `OmnichannelFilters.tsx:10-20` | [实测] ① 同上 Chats in progress 分组下列出进行中会话。② 无。③ 仍在。 | rooms `onHold` | `sidebar.filter.in-progress`（只写 tab） | `SidePanelInProgress.tsx:13` `[读]` |
 | omni.agent.sidepanel.on-hold | 副栏列出挂起会话 | `主侧栏→On_Hold` | 许可证 **`livechat-enterprise`**，否则 tab 隐并回 `all` `SidepanelOnHold.tsx:17-21` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `room.onHold` | `sidebar.filter.on-hold` `omni.agent.hold` | `SidepanelOnHold.tsx:17-31` `[读]` |
@@ -1326,10 +1326,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **676** |
+| 本卷 `[实测]` | 见上表 | **678** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **216** |
-| `676+190+216` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **214** |
+| `678+190+214` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
