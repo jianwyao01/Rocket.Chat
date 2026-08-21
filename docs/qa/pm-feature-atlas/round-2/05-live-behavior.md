@@ -411,7 +411,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | directory.teams | 在目录里浏览/搜索团队并打开团队主房间 | `route.directory` → 点 `Teams` 页签 → 表格行 | `view-c-room` `[读]` | [实测] ① /directory/teams 现有 atlas-team 行（早先空态已见过）。② 读。③ 刷新仍有行。shots/shots7/24-directory-teams.webp | READ `view-c-room`；`/directory/teams`；`channel`；`group`。许可证/EE 见门控 | `route.directory` `team.create` | `DirectoryPage.tsx:49-61` `TeamsTab.tsx:6-13` `[读]` |
 | directory.external | 联邦「外部用户」目录页签 | 源码在 `federationEnabled===true` 时才渲染页签；**当前写死 false** | 与 `directory.users` 相同权限，外加联邦开关 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ：门控里的设置/权限/路由参数 [读]（分册原写 core/EE；许可证见门控） | `directory.users` | `DirectoryPage.tsx:17,30-32,52-62` `[读]` |
 
-### `account.*` — 21 个 id（实测 17 / 不可达 2 / 待渲染 2）
+### `account.*` — 21 个 id（实测 18 / 不可达 2 / 待渲染 1）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -425,7 +425,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | account.accessibility-and-appearance | 改主题、字号、时间格式、是否显示角色 | 顶栏头像 → `Accessibility_and_Appearance`；或账号侧栏 | 侧栏无门控；角色显示受 `UI_DisplayRoles` `[读]` | [实测] ① /account/accessibility-and-appearance：Light/Dark/High contrast/Match system、字号、@ mentions、Time Format、Show usernames/roles。② 无写 REST。③ 刷新仍在。shots/06-account-accessibility.png | READ `UI_DisplayRoles`；`/account/accessibility-and-appearance`；`users.setPreferences`。许可证/EE 见门控 | `account.preferences` | `account/routes.tsx:87-89` `sidebarItems.tsx:58-61` `AccessibilityPage.tsx:30-37` `[读]` |
 | account.manage-devices | 查看并登出自己的登录设备/会话 | 账号侧栏 `Manage_Devices`（许可证开启后才注册） | EE 模块 `device-management`（`onToggledFeature` 注册路由+侧栏）`[读]` | [实测] ① /account/manage-devices heading Manage Devices；错误 “Something went wrong - We couldn't retrive any data”；button Retry。② 会话列表请求失败。③ 刷新仍错误+Retry。shots/02-account-manage-devices.webp | READ `device-management`；`/account/manage-devices`。许可证/EE 见门控 | `route.admin.device-management` | `startup/deviceManagement.ts:15-32` `DeviceManagementAccountPage.tsx:6-16` `[读]` |
 | account.gap.profile.username.required | 用户名为空被拦（Username 始终 required） | 顶栏头像→`Profile` → 清空 `Username` → `Save_changes` | `Accounts_AllowUserProfileChange` 才能进页；字段 `required: t('Required_field', { field: t('Username') })` `[读]` | [实测] ① Profile 清空 Username 失焦/保存，出现 required。② 未成功保存。③ 刷新 Username 仍为原值。 | core | `page.account.profile.username` `page.account.profile.name.required` | `AccountProfileForm.tsx:236-239` `[读]` |
-| account.gap.profile.email.required | 邮箱为空被拦（Email 始终 required） | Profile → 清空 `Email` → Save | 同上；`required: t('Required_field', { field: t('Email') })` `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.profile.email` `page.account.profile.email.invalid` | `AccountProfileForm.tsx:415-416` `[读]` |
+| account.gap.profile.email.required | 邮箱为空被拦（Email 始终 required） | Profile → 清空 `Email` → Save | 同上；`required: t('Required_field', { field: t('Email') })` `[读]` | [实测] ① /account/profile 清空 Email → Save changes → 红框 “Email required”。② 未持久清空（邮箱仍为 rocketchat.internal.admin.test@rocket.chat）。③ 刷新 Profile Email 仍在。shots/shots44/account.gap.profile.email.required.webp | core | `page.account.profile.email` `page.account.profile.email.invalid` | `AccountProfileForm.tsx:415-416` `[读]` |
 | account.gap.profile.delete.confirm.required | 删号确认框空密码/空用户名被拦 | Profile → `Delete_my_account` → 确认框不填 → `Delete_account` | `Accounts_AllowDeleteOwnAccount`；有本地密码则密码框否则用户名框 `[读]` | [实测] ① Delete my account → 空密码点 Delete，口令 required。② 账号未删。③ 刷新仍登录。 | core | `page.account.profile.delete` | `ActionConfirmModal.tsx:53-55,80-84` `[读]` |
 | account.gap.security.totp.backup-copy | 把备份码复制到剪贴板 | Security → 开 TOTP 并 `Verify`（或已启用→`Regenerate_codes`）→ `BackupCodesModal` → `Copy` | TOTP 设置开；刚 verify 或 regenerate 才出模态 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.security.totp.verify` `page.account.security.totp.regenerate` | `BackupCodesModal.tsx:15-25` `[读]` |
 | account.gap.security.e2e-enter-password | 在「输入当前 E2E 口令」模态里填口令 | Security → E2E → 密钥未 READY → hint「enter your current E2EE password」→ 模态 `Enter_E2E_password` → `Please_enter_E2EE_password` | `E2E_Enable`；`keysExist===false` 才出链；`decodePrivateKeyFlow` 要求 `db_private_key` `[读]` | [实测] ① 点顶栏 Enter your E2EE password → 模态 Enter E2EE password + Please enter your E2EE password。② 未提交口令。③ 关模态后横幅仍在。shots/shots26/e2e-enter-modal.webp | core | `page.account.security.e2e-enter-current` | `EnterE2EPasswordModal.tsx:71-119` `ChangePassphrase.tsx:145-157` `[读]` |
@@ -443,7 +443,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | team.create | 用顶栏「新建」打开创建团队模态并建出团队主房间 | 顶栏 `+`（Create new）→ `Team` → 填名称等 → 提交 | 菜单项：`create-team` **且** (`create-c` OR `create-p`)；提交按钮再检 `create-team` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `create-team`；`create-c`；`create-p`；`CreateTeamModal`；`channel`；`group`。许可证/EE 见门控 | `directory.teams` | `useCreateNewItems.ts:13-76` `CreateTeamModal.tsx:54,118+` `[读]` |
 
-### `page.*` — 623 个 id（实测 445 / 不可达 114 / 待渲染 64）
+### `page.*` — 623 个 id（实测 446 / 不可达 114 / 待渲染 63）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -493,7 +493,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.create.dm.users.max | 超过人数上限被拦 | 选超过 `maxUsers-1` 人 → `Create` | `DirectMesssage_maxUsers` `[读]` | [实测] ① + → Direct message 选 seeduser+rocket.cat（DirectMesssage_maxUsers=2）→ You cannot add more than 2 users, including yourself。② 未建成。③ Cancel。shots/shots37/page.create.dm.users.max.webp | core | `page.create.dm.users` | `CreateDirectMessage.tsx:75-78` `[读]` |
 | page.create.dm.cancel | 取消不建 DM | `Cancel` 或 `ModalClose` | 无 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `nav.create.dm` | `CreateDirectMessage.tsx:64,101` `[读]` |
 | page.create.dm.submit | 提交创建/打开 DM | `Create` | `create-d`；loading 为 isSubmitting 或 isValidating `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `nav.create.dm` `user.action.direct-message` | `CreateDirectMessage.tsx:30-55,102-104` `[读]` |
-| page.create.dm.submit.error | 服务端拒建（含无权） | 选人 → `Create` → API 错 | 服务端 create-d / 联邦 / 封锁等 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.create.dm.submit` | `CreateDirectMessage.tsx:45-50` `[读]` |
+| page.create.dm.submit.error | 服务端拒建（含无权） | 选人 → `Create` → API 错 | 服务端 create-d / 联邦 / 封锁等 `[读]` | [实测] ① New direct message 不选人点 Create → 红框 “Select at least one person”。② 未建 DM。③ Cancel 后无新会话。shots/shots44/page.create.dm.submit.error.webp | core | `page.create.dm.submit` | `CreateDirectMessage.tsx:45-50` `[读]` |
 | page.account.profile.avatar.upload | 上传本地图作头像 | 顶栏头像→`Profile` → 按钮 title=`Upload` → 选文件 | `Accounts_AllowUserAvatarChange`；否则 disabled `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core；与 `page.account.profile.save` 同保存 | `account.profile` `nav.user.account.profile` | `UserAvatarEditor.tsx:51,121` `useUpdateAvatar.ts` `[读]` |
 | page.account.profile.avatar.url | 输入头像 URL | Profile → textbox `Use_url_for_avatar` | 同上 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.account.profile.avatar.add-url` | `UserAvatarEditor.tsx:124-150` `[读]` |
 | page.account.profile.avatar.add-url | 用 URL 更新头像预览 | URL 非空 → title=`Add_URL` 或 Enter | URL 须 `isSafeAvatarUrl` 且有效图；空则按钮 disabled `[读]` | [实测] ① /account/profile Use URL for avatar 填 https://rocket.chat/favicon.ico → 校验 Invalid image URL + 链接图标。② 未改成有效头像。③ 刷新仍默认 R。shots/shots20/03_avatar_add_url.webp | core | `page.account.profile.avatar.url` | `UserAvatarEditor.tsx:55-74,130-137` `[读]` |
@@ -1326,10 +1326,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **737** |
+| 本卷 `[实测]` | 见上表 | **739** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **155** |
-| `737+190+155` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **153** |
+| `739+190+153` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
