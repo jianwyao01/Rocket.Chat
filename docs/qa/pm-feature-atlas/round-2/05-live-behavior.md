@@ -347,7 +347,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | shortcut.global.markAllAsRead.documented-unbound | 帮助里写了标全已读，client 无绑定 | 打开快捷键 modal 看到 Mark_all_as_read → 关掉 → 在房间按 Shift+Esc（Mac）或 Ctrl+Esc（其他） | **无** `tinykeys`/keydown 绑定（全 `client` 仅 modal 文案）。`KeyboardShortcutsModal.tsx:32-34` | [实测] ① 快捷键说明可见 Mark all as read；房间内 Shift+Escape 弹出确认（本轮 Cancel）。② 未执行清空。③ 确认关。shots/shots7/12-keyboard-shortcuts.webp shots/shots7/22-clear-unreads-confirm.webp | core（文档） | `implicit.unread.markAllRead` | `KeyboardShortcutsModal.tsx:32-34` |
 
-### `route.*` — 50 个 id（实测 25 / 不可达 6 / 待渲染 19）
+### `route.*` — 50 个 id（实测 26 / 不可达 6 / 待渲染 18）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -361,7 +361,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | route.directory | 打开目录页（再按默认 tab 纠正 URL） | 桌面顶栏 Directory 图标；或 Home 卡 `Open directory`；或直达 `/directory` | 页本身无权限门；无 tab / `external` 且联邦关则 replace 到 `Accounts_Directory_DefaultView`（默认 `users`）`[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `external`；`Accounts_Directory_DefaultView`；`users`；`/directory`；`/directory/{defaultTab}`。许可证/EE 见门控 | `directory.users` `directory.channels` `directory.teams` | `startup/routes.tsx:158-165` `NavBarItemDirectoryPage.tsx:10-24` `DirectoryPage.tsx:13-35` `JoinRoomsCard.tsx:11-22` `[读]` |
 | route.search | 打开智能搜索结果页（跨房间来源+可选 AI 摘要） | 顶栏搜索（feature preview `aiSearch`）→ `View all results` → `/search?q=…` | 许可 `AI_LICENSE_MODULE` + preview `aiSearch` + 设置 `AI_Intelligent_Search_Enabled`；缺许可/开关时页上仍有 upsell/警告 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `AI_LICENSE_MODULE`；`aiSearch`；`AI_Intelligent_Search_Enabled`；`/search?q=`。许可证/EE 见门控 | — | `startup/routes.tsx:259-266` `SearchPage.tsx:15-22,68-161` `[读]` |
 | route.call-history | 打开语音通话历史页 | 顶栏 VoIP 组时钟图标 `Call_history`；行点击进 `/call-history/details/:id` | 顶栏组：`useMediaCallAction()` 为空则整组不渲染（EE `teams-voip` + 语音权限）`[读]`；路由始终注册 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `teams-voip`；`/call-history/:tab?/:historyId?`；`GET /v1/call-history.list`。接口 GET /v1/call-history.list。许可证/EE 见门控 | — | `startup/routes.tsx:250-257` `NavBarVoipGroup.tsx:10-23` `CallHistoryPage.tsx` `[读]` |
-| route.not-found | 未匹配路径显示 404 | 访问未注册 path（`*`） | 无 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `NotFoundPage`。许可证/EE 见门控 | — | `startup/routes.tsx:268-271` `[读]` |
+| route.not-found | 未匹配路径显示 404 | 访问未注册 path（`*`） | 无 | [实测] ① 无痕窗口地址栏 /this-page-does-not-exist-vol5 → Page not found + Homepage。② 无。③ 刷新仍 404。shots/shots24/route.not-found.webp | READ `NotFoundPage`。许可证/EE 见门控 | — | `startup/routes.tsx:268-271` `[读]` |
 | route.admin.home | 打开管理后台壳并落到第一个有权侧栏页 | 顶栏 `Manage` → `Workspace` | `useAtLeastOnePermission(ADMIN_PERMISSIONS)` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `useAtLeastOnePermission(ADMIN_PERMISSIONS)`；`/admin`；`/admin/info`。许可证/EE 见门控 | `route.admin.workspace` | `useAdministrationMenu.ts:33-44` `AdministrationRouter.tsx:31-46` `admin/routes.tsx:118-122` `[读]` |
 | route.admin.workspace | 打开工作区统计/信息页 | `route.admin.home` 或管理侧栏 `Workspace` | `view-statistics`；侧栏 href 是 `/admin/info`（deprecated fallback），另有 `/admin/workspace` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `view-statistics`；`/admin/info`；`/admin/workspace`。许可证/EE 见门控 | `route.admin.home` | `sidebarItems.ts:12-17` `admin/routes.tsx:129-137` `[读]` |
 | route.admin.subscription | 打开订阅/Cloud 页 | 管理侧栏 `Subscription` | `manage-cloud` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `manage-cloud`；`/admin/subscription`。许可证/EE 见门控 | — | `sidebarItems.ts:18-23` `admin/routes.tsx:244-246` `[读]` |
@@ -1326,10 +1326,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **639** |
+| 本卷 `[实测]` | 见上表 | **640** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **253** |
-| `639+190+253` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **252** |
+| `640+190+252` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
