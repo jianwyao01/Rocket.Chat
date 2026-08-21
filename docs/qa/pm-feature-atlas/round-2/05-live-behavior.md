@@ -310,7 +310,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | sidebar.sidepanel.unread-toggle | 副栏只看未读 | `副栏顶 heading→Unread ToggleSwitch` | secondarySidebar ON；项 none `SidePanelInternal.tsx:48-51` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `SidePanelInternal.tsx:48-51` | `nav.sort.group.unread` | `SidePanelInternal.tsx:51` |
 | sidebar.sidepanel.back | tablet 关闭副栏 | `副栏顶→Back` | secondarySidebar ON + `isTablet` `SidePanelInternal.tsx:44` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `SidePanelInternal.tsx:44` | `nav.sidebar.toggle` | `SidePanelInternal.tsx:44` |
 
-### `composer.*` — 20 个 id（实测 8 / 不可达 4 / 待渲染 8）
+### `composer.*` — 20 个 id（实测 9 / 不可达 4 / 待渲染 7）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -331,7 +331,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | composer.state.webdav.add | 添加 WebDAV 账号 | More → Create new → `Add_Server` → 填表提交 | `Webdav_Integration_Enabled`；项 `disabled=!isSuccess` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core+setting | `composer.action.webdav-add` | `useWebdavActions.tsx:12-33` |
 | composer.state.webdav.pick | 从已连账户选文件入队 | More → 账户名 → picker 点文件 | query success 且有账户 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core+setting | `composer.action.webdav-upload` | `useWebdavActions.tsx:35-43`；`WebdavFilePickerModal.tsx:128-147` |
 | composer.state.discussion.open | 从 composer 打开创建讨论 | More → Create new → `Discussion` | `Discussion_enabled`；`start-discussion` 或 `start-discussion-other-user`；`!federated` | [实测] ① More → Discussion → Create discussion（parent=general、Name/Topic/Members/Encrypted）。② 未 Create。③ Cancel。shots/shots12/11-create-discussion-modal.webp | core+permission+setting | `composer.action.create-discussion` | `useCreateDiscussionAction.tsx:16-31`；`CreateDiscussion.tsx` |
-| composer.state.discussion.submit | 提交创建并跳进新讨论 | modal 填必填名 → 确认 | 父房加密则首帖 textarea disabled、加密开关 locked | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core+permission | `composer.action.create-discussion` | `CreateDiscussion.tsx:53,82,190-205` |
+| composer.state.discussion.submit | 提交创建并跳进新讨论 | modal 填必填名 → 确认 | 父房加密则首帖 textarea disabled、加密开关 locked | [实测] ① #atlas-live composer More → Discussion 模态 Create。② 未提交。③ Cancel。shots/shots37/composer.state.discussion.submit.webp | core+permission | `composer.action.create-discussion` | `CreateDiscussion.tsx:53,82,190-205` |
 | composer.state.timestamp.open | 打开时间戳选择器 | More → Insert → `Timestamp` | disabled 仅 `!canSend \ | [实测] ① #general More → Timestamp → Insert timestamp（日期/时间/Format/时区）。② 未 Add。③ Cancel。shots/shots12/10-timestamp-modal.webp | isRecording`（**编辑态仍可用**） | `［待渲染实测］` ①`GenericModal` `Insert_timestamp`；Date/Time/Format/Timezone。②无 REST。③不 persist | core |
 | composer.state.apps.emit | 点 Apps 段按钮发 UiKit | More → Apps → `{appId}/{actionId}` | `GET` actionButtons `context=messageBoxAction`；`useApplyButtonFilters`；`!disableBasicActions` | [不可达] 已打开 More，无 Apps 项，无法 emit。 | app | `composer.action.apps` | `useMessageboxAppsActionButtons.ts:12-61`；`MessageBoxActionsToolbar.tsx:105-126` |
 
@@ -443,7 +443,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | team.create | 用顶栏「新建」打开创建团队模态并建出团队主房间 | 顶栏 `+`（Create new）→ `Team` → 填名称等 → 提交 | 菜单项：`create-team` **且** (`create-c` OR `create-p`)；提交按钮再检 `create-team` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `create-team`；`create-c`；`create-p`；`CreateTeamModal`；`channel`；`group`。许可证/EE 见门控 | `directory.teams` | `useCreateNewItems.ts:13-76` `CreateTeamModal.tsx:54,118+` `[读]` |
 
-### `page.*` — 623 个 id（实测 441 / 不可达 114 / 待渲染 68）
+### `page.*` — 623 个 id（实测 443 / 不可达 114 / 待渲染 66）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -490,7 +490,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.create.discussion.submit | 提交创建讨论 | `Create` | 同菜单；mutation pending 时 confirmLoading `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `nav.create.discussion` | `CreateDiscussion.tsx:82-103` `[读]` |
 | page.create.dm.users | 选择私聊对象（可多人） | `顶栏+→Direct_message` → 多选（label=`Direct_message_creation_description`） | 菜单 `create-d`；人数上限 `DirectMesssage_maxUsers`（含自己 +1）`[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `nav.create.dm` | `CreateDirectMessage.tsx:67-96` `[读]` |
 | page.create.dm.users.required | 未选用户被拦 | 空选 → `Create` | 同 users | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.create.dm.users` | `CreateDirectMessage.tsx:74` `[读]` |
-| page.create.dm.users.max | 超过人数上限被拦 | 选超过 `maxUsers-1` 人 → `Create` | `DirectMesssage_maxUsers` `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.create.dm.users` | `CreateDirectMessage.tsx:75-78` `[读]` |
+| page.create.dm.users.max | 超过人数上限被拦 | 选超过 `maxUsers-1` 人 → `Create` | `DirectMesssage_maxUsers` `[读]` | [实测] ① + → Direct message 选 seeduser+rocket.cat（DirectMesssage_maxUsers=2）→ You cannot add more than 2 users, including yourself。② 未建成。③ Cancel。shots/shots37/page.create.dm.users.max.webp | core | `page.create.dm.users` | `CreateDirectMessage.tsx:75-78` `[读]` |
 | page.create.dm.cancel | 取消不建 DM | `Cancel` 或 `ModalClose` | 无 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `nav.create.dm` | `CreateDirectMessage.tsx:64,101` `[读]` |
 | page.create.dm.submit | 提交创建/打开 DM | `Create` | `create-d`；loading 为 isSubmitting 或 isValidating `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `nav.create.dm` `user.action.direct-message` | `CreateDirectMessage.tsx:30-55,102-104` `[读]` |
 | page.create.dm.submit.error | 服务端拒建（含无权） | 选人 → `Create` → API 错 | 服务端 create-d / 联邦 / 封锁等 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.create.dm.submit` | `CreateDirectMessage.tsx:45-50` `[读]` |
@@ -1046,7 +1046,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.settings.ldap.sync-now | LDAP 立即同步 | LDAP → LDAP_Sync_Now | 同上 | [实测] ① Sync Now 可见。② 未点。③ 未改。 | core | page.admin.settings.open.ldap | LDAPGroupPage.tsx [读] |
 | page.admin.settings.oauth.refresh | 刷新 OAuth 服务 | Settings → OAuth → Refresh_oauth_services | OAuth 组 [读] | [实测] ① 同页 Refresh OAuth Services。② 未点执行。③ 刷新仍在。shots/shots32/page.admin.settings.oauth.webp | core | page.admin.settings.open.oauth | OAuthGroupPage.tsx [读] |
 | page.admin.settings.oauth.add-custom | 添加自定义 OAuth | OAuth → Add_custom_oauth | 同上 | [实测] ① /admin/settings/OAuth Add custom OAuth。② 未添加。③ 刷新仍在。shots/shots32/page.admin.settings.oauth.webp | core | page.admin.settings.open.oauth | OAuthGroupPage.tsx [读] |
-| page.admin.settings.oauth.remove-custom | 删除自定义 OAuth | OAuth → 自定义 section → Remove | 已有自定义 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.settings.oauth.add-custom | OAuthGroupPage.tsx [读] |
+| page.admin.settings.oauth.remove-custom | 删除自定义 OAuth | OAuth → 自定义 section → Remove | 已有自定义 [读] | [实测] ① /admin/third-party-login 编辑 vol5-oauth → 红 Delete。② 未删。③ 应用仍在。shots/shots37/page.admin.settings.oauth.remove-custom.webp | core | page.admin.settings.oauth.add-custom | OAuthGroupPage.tsx [读] |
 | page.admin.settings.saml.import-metadata | 导入 SAML metadata | Settings → SAML → SAML_Import_metadata → 贴 XML → Apply | SAML 组 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.settings.open.saml | SAMLGroupPage.tsx SamlMetadataModal.tsx [读] |
 | page.admin.settings.email.send-test | 给自己发 SMTP 测试信 | Settings → Email → Send_a_test_mail_to_my_user | Email 组 + SMTP [读] | [实测] ① /admin/settings/Email SMTP 节 button Send a test mail to my user。② 未必须点出信。③ 刷新按钮仍在。shots/shots18/08_email_settings.webp | core | page.admin.settings.open.email | server/settings/email.ts MethodActionInput [读] |
 | page.account.keyboard.display | 查看键盘快捷键说明（只读） | 顶栏右→`User_menu`→`Keyboard_Shortcuts_Title` 或房间内 `Shift+?`（焦点不在 input/dialog） | 无 | [实测] ① 同用户菜单 Keyboard shortcuts 只读说明。② 无写。③ 关模态。shots/shots7/12-keyboard-shortcuts.webp | core | `nav.user.keyboard` `shortcut.global.showShortcutsModal` `shortcut.global.markAllAsRead.documented-unbound` | `KeyboardShortcutsModal.tsx:17-66,89-132` `[读]` |
@@ -1326,10 +1326,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **720** |
+| 本卷 `[实测]` | 见上表 | **723** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **172** |
-| `720+190+172` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **169** |
+| `723+190+169` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
