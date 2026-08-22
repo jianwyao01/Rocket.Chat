@@ -179,7 +179,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | msg.apps.action | Apps-Engine `messageAction`（非 AI）注入 More→Apps | `房间消息→悬停工具栏→More→（section Apps）→具体 app 项`；默认 app context 仅 `message`/`message-mobile`/`threads`/`starred`（`IUIActionButtonDescriptor.ts:15-20` + `useMessageActionAppsActionButtons.ts:19-20`）。E2EE 时整节替换为 disabled `Unavailable` `MessageToolbarActionMenu.tsx:126-143`。**不枚举 marketplace 应用。** 若 `data.length===0`（无内置菜单项），More 不渲染，apps 无法单独出现 `MessageToolbarActionMenu.tsx:92-94`。[读] | App `when`：`hasOnePermission`/`hasAllPermissions`/`hasOneRole`/`hasAllRoles`/`roomTypes`/`messageActionContext`；再经 `useApplyButtonFilters('default')` `useApplyButtonFilters.ts:45-56`。hidden 按 `${appId}/${actionId}`。需 `GET /apps/actionButtons` 且连接状态 connected `useAppActionButtons.ts:15-19`。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `GET /apps/actionButtons`；`IUIActionButton.when`；`message.rid` `tmid` `_id`；E2EE | msg.apps.ai | `useMessageActionAppsActionButtons.ts:25-77`；装配 `MessageToolbarActionMenu.tsx:87,98` |
 | msg.apps.ai | Apps-Engine `messageAction` 且 `category==='ai'` 注入星星菜单 | `房间消息→悬停工具栏→AI_Actions（icon=stars）→具体 AI 项`。过滤 `useApplyButtonFilters('ai')` `MessageToolbarStarsActionMenu.tsx:22`。无 AI 按钮则整菜单不渲染 `MessageToolbarStarsActionMenu.tsx:26-28`。E2EE 时 apps 组变为 disabled `Unavailable`。context 默认同样只有 4 个 Apps-Engine 值。 | 同 msg.apps.action，但 `category==='ai'` `useApplyButtonFilters.ts:35-43`。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | 同 msg.apps.action + `category:'ai'` | msg.apps.action | `MessageToolbarStarsActionMenu.tsx:21-80`；`useMessageActionAppsActionButtons.ts:25` |
 
-### `room.*` — 44 个 id（实测 28 / 不可达 0 / 待渲染 16）
+### `room.*` — 44 个 id（实测 30 / 不可达 0 / 待渲染 14）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -194,7 +194,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | room.toolbox.clean-history | 打开清理历史（剪枝）侧栏 | `房间头→工具栏→Options→Prune_Messages` | permission `clean-channel-history`（room scoped）`useCleanHistoryRoomAction.ts:14,18-19`；federated disabled | [实测] ① Prune Messages：Newer/Older、users、Inclusive、不剪枝 pinned/discussion/threads、Only files、红色 Prune。② 未剪枝。③ 关栏。shots/shots9/34-prune-messages.webp | `useCleanHistoryRoomAction.ts:22-35` | `PruneMessages` | `ui.ts:48` |
 | room.toolbox.contact-profile | 打开 livechat 联系人资料 | live `房间头→工具栏→Contact_Info` | hook: none `useContactProfileRoomAction.ts:6-17`；groups∈{live} | [实测] ① /live/n2u9XXXEfsZdvk7FT 头栏联系人图标 → Contact 侧栏 Details（Atlas Visitor / atlas-visitor@localhost）。② 无写。③ URL 含 contact-profile/details。shots/shots30/03-contact-profile-panel.webp | `useContactProfileRoomAction.ts:8-15` | `ContactInfoRouter` | `ui.ts:49` |
 | room.toolbox.discussions | 打开讨论列表侧栏 | `房间头→工具栏→Discussions` | setting `Discussion_enabled` 且 `!room.prid` `useDiscussionsRoomAction.ts:14,18-19`；federated disabled | [实测] ① #atlas-live Discussions，空态 No discussions found。② 无。③ 刷新仍空。shots/shots7/19-discussions.webp | `useDiscussionsRoomAction.ts:22-34` | `Discussions` | `ui.ts:50` |
-| room.toolbox.e2e | 开关房间端到端加密（弹窗，无 tab） | `房间头→工具栏→Enable_E2E_encryption` 或 `Disable_E2E_encryption`；常在 Options（type=organization） | setting `E2E_Enable` + (`room.t==='d'` 或 (`edit-room` 且 `toggle-room-e2e-encryption`)) 且 E2EE ready/`room.encrypted` `useE2EERoomAction.ts:17-26,94-95`；groups 无 channel；federated disabled | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `useE2EERoomAction.ts:98-109` | 无 tabComponent；`RoomHeader` Encrypted 徽章 | `ui.ts:51` |
+| room.toolbox.e2e | 开关房间端到端加密（弹窗，无 tab） | `房间头→工具栏→Enable_E2E_encryption` 或 `Disable_E2E_encryption`；常在 Options（type=organization） | setting `E2E_Enable` + (`room.t==='d'` 或 (`edit-room` 且 `toggle-room-e2e-encryption`)) 且 E2EE ready/`room.encrypted` `useE2EERoomAction.ts:17-26,94-95`；groups 无 channel；federated disabled | [实测] ① `#atlas-private` SAVE_PASSWORD/READY 头工具栏 key 图标，hover tooltip “Disable E2E encryption”。② 未点关加密。③ 房间仍 encrypted。shots/shots50/84-disable-hover.png shots/shots50/85-disable-tooltip.png | `useE2EERoomAction.ts:98-109` | 无 tabComponent；`RoomHeader` Encrypted 徽章 | `ui.ts:51` |
 | room.toolbox.export-messages | 打开导出消息侧栏 | `房间头→工具栏→Options→Export_Messages` | permission `mail-messages` `useExportMessagesRoomAction.ts:11,14-15` | [实测] ① Export messages：Method=Send email、HTML、To Users/emails、Subject、Send。② 未导出。③ 关栏。shots/shots9/33-export-messages.webp | `useExportMessagesRoomAction.ts:18-28` | `ExportMessages` | `ui.ts:52` |
 | room.toolbox.game-center | 打开 Game Center 侧栏 | `房间头→工具栏→Apps_Game_Center`（order=-1 靠前） | `GET /apps/externalComponents` 成功且 length>0 `useGameCenterRoomAction.ts:9-14` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `useGameCenterRoomAction.ts:17-24` | `GameCenter` | `ui.ts:53` |
 | room.toolbox.banned-users | 打开房间封禁用户列表 | `房间头→工具栏→Options→Banned_Users` | permission `ban-user` `useBannedUsersRoomAction.ts:12,15-16`；groups∈{channel,group,team} | [实测] ① #atlas-live Options → Banned Users，空态 No banned users。② 无。③ 关栏。shots/shots35/room-toolbox-banned-users.webp | `useBannedUsersRoomAction.ts:19-27` | `BannedUsers` | `ui.ts:54` |
@@ -219,7 +219,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | room.members.action.video-call | 对成员发起视频 | `…→Video_call` | 已有 DM；`!federated`；非自己；`VideoConf_Enable_DMs`；`call-management` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `useVideoCallAction.ts:39-64` | `user.action.video-call` | `useUserInfoActions.ts:96` |
 | room.members.action.voice-call | 对成员发起语音 | `…→Voice_call__user_` | voip 可用；非联邦/拉黑/自己 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `useUserMediaCallAction.ts:42-55` | `user.action.voice-call` | `useUserInfoActions.ts:97` |
 | room.search.filter-text | 输入搜索 | `…→Search_Messages 框` | provider 已 load | [实测] ① #general 顶栏 Search Messages 框输入 atlas。② 本步 0 结果。③ 关栏后须再开。shots/shots16/room_search_filter_text.webp | `MessageSearchForm.tsx:56-63` |  | `useMessageSearchQuery.ts:20-26` |
-| room.search.encrypted-callout | E2E 房不能搜密文 | 打开搜索且 `room.encrypted` | encrypted | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `MessageSearchForm.tsx:74-78` | `room.info.e2ee` | `MessageSearchForm.tsx:74-78` |
+| room.search.encrypted-callout | E2E 房不能搜密文 | 打开搜索且 `room.encrypted` | encrypted | [实测] ① 自建加密私有组 `#atlas-e2e-search-mt4444qb` 头 Search Messages → 黄 callout “Encrypted private group / Encrypted content cannot be searched.”。② 无搜密文。③ 关栏。shots/shots50/88-search-open.png shots/shots50/89-encrypted-search-callout.png | `MessageSearchForm.tsx:74-78` | `room.info.e2ee` | `MessageSearchForm.tsx:74-78` |
 | room.canned.use-from-list | 从列表行使用 | `…→行 Use` | `!isRoomOverMacLimit` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `CannedResponseList.tsx:118-123` | 03 composer | Item onClickUse |
 | room.chrome.topic-link | 已有主题时点主题里的 markdown 链接 | `房间头→主题 Markdown 内 <a>` | `room.topic` 非空且解析出 href `RoomTopic.tsx:36`；`MarkdownTextInner.tsx:35` | [实测] ① #atlas-live 房间头主题 markdown general → 同标签到 #general。② 导航。③ 仍在 general。shots/shots38/room.chrome.topic-link.webp | `room.topic` | `room.header.topic-add` | `RoomTopic.tsx:36`；`MarkdownTextInner.tsx:35,119-143` |
 | room.chrome.sidebar.call-accept | 侧栏行接听来电 | 该行有 incoming videoconf → 行内 success `phone` | `useVideoConfIncomingCalls()` 含 `call.rid===item.rid` `RoomListRow.tsx:30-37` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `callId` `rid` | `room.chrome.call.incoming.accept` | `SidebarItemTemplateWithData.tsx:99-108`；V2 `SidebarItemWithData.tsx:52-56` |
@@ -1333,10 +1333,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **798** |
+| 本卷 `[实测]` | 见上表 | **800** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **94** |
-| `798+190+94` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **92** |
+| `800+190+92` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
