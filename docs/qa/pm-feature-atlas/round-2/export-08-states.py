@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Round 2 / Vol.8 — deterministic UI-state extractor (freeze e519470).
+"""Round 2 / Vol.8 — JSX-only conditional-render extractor (freeze e519470).
 
-Closed-set rule: each conditional-render branch = one state.
-Replay: python3 docs/qa/pm-feature-atlas/round-2/export-08-states.py --count
+Each surviving conditional RENDER branch = one state.
+Replay: python3 docs/qa/pm-feature-atlas/round-2/export-08-states.py --verify
 """
 from __future__ import annotations
 
@@ -24,18 +24,20 @@ SHA = "e519470d35b6caf5b228d81aef41c86aab3051f4"
 EXTS = {".ts", ".tsx", ".js", ".jsx"}
 SKIP_DIR = {"node_modules", "dist", ".turbo", "coverage", ".git"}
 
-AND_RE = re.compile(r"&&\s*(?:\(|<)")
-TERN_RE = re.compile(r"(?<!\?)\?\s*(?:\(|<)")
-IF_LINE_RE = re.compile(r"^(\s*)if\s*\(")
-RETURN_JSX_RE = re.compile(r"\breturn\s+(null|\(|<)")
-SUSPENSE_RE = re.compile(r"<Suspense\b[^>]*\bfallback\s*=")
-COMMENT_LINE_RE = re.compile(r"^\s*(//|/\*|\*| \*)")
+KIND_SUFFIX = {
+    "and-show": "a0",
+    "and-hide": "a1",
+    "tern-then": "t0",
+    "tern-else": "t1",
+    "if-ret": "i",
+    "default": "d",
+    "suspense": "s",
+}
 
-IMPORT_RE = re.compile(
-    r"""(?:import\s+(?:type\s+)?(?:[^'"\n]+?\s+from\s+)?|export\s+(?:type\s+)?\*\s+from\s+|export\s+\{[^}]*\}\s+from\s+)['"]([^'"]+)['"]"""
-    r"""|(?:import|require)\(\s*['"]([^'"]+)['"]\s*\)"""
-    r"""|lazy\(\s*\(\)\s*=>\s*import\(\s*['"]([^'"]+)['"]\s*\)"""
-)
+JSX_TAG_RE = re.compile(r"</?([A-Za-z][A-Za-z0-9.]*)")
+IDENT_RE = re.compile(r"[A-Za-z_$][\w$]*")
+# assignment = but not == / === / != / !== / <= / >= / =>
+ASSIGN_EQ_RE = re.compile(r"(?<![!<>=])=(?![=])")
 
 
 def rel(p: Path) -> str:
@@ -71,9 +73,8 @@ def target_files() -> list[Path]:
         for d in sorted(pkg.iterdir()):
             if d.is_dir() and d.name.startswith("ui-"):
                 out.extend(iter_files(d))
-    # unique, stable
-    seen = set()
-    uniq = []
+    seen: set[str] = set()
+    uniq: list[Path] = []
     for p in out:
         rp = rel(p)
         if rp not in seen:
@@ -168,35 +169,746 @@ def kebab(s: str) -> str:
     return s or "x"
 
 
-def clean_ws(s: str, n: int = 90) -> str:
-    s = re.sub(r"//.*$", "", s)
-    s = re.sub(r"/\*.*?\*/", "", s)
+def line_of(text: str, idx: int) -> int:
+    return text.count("\n", 0, idx) + 1
+
+
+# ----- lexer helpers (skip strings / comments / regex) -----
+
+def skip_ws_comments(text: str, i: int) -> int:
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c in " \t\r\n":
+            i += 1
+            continue
+        if text.startswith("//", i):
+            nl = text.find("\n", i)
+            i = n if nl < 0 else nl + 1
+            continue
+        if text.startswith("/*", i):
+            end = text.find("*/", i + 2)
+            i = n if end < 0 else end + 2
+            continue
+        break
+    return i
+
+
+def skip_string(text: str, i: int) -> int:
+    q = text[i]
+    i += 1
+    n = len(text)
+    if q == "`":
+        while i < n:
+            if text[i] == "\\":
+                i += 2
+                continue
+            if text[i] == "`":
+                return i + 1
+            if text[i] == "$" and i + 1 < n and text[i + 1] == "{":
+                i = skip_balanced(text, i + 1, "{", "}")
+                continue
+            i += 1
+        return i
+    while i < n:
+        if text[i] == "\\":
+            i += 2
+            continue
+        if text[i] == q:
+            return i + 1
+        if text[i] == "\n" and q != "`":
+            return i
+        i += 1
+    return i
+
+
+def skip_regex(text: str, i: int) -> int:
+    """i points at opening / of a regex literal."""
+    i += 1
+    n = len(text)
+    while i < n:
+        if text[i] == "\\":
+            i += 2
+            continue
+        if text[i] == "\n":
+            return i
+        if text[i] == "/":
+            i += 1
+            while i < n and text[i].isalpha():
+                i += 1
+            return i
+        if text[i] == "[":
+            i += 1
+            while i < n and text[i] != "]":
+                if text[i] == "\\":
+                    i += 2
+                    continue
+                i += 1
+            i += 1
+            continue
+        i += 1
+    return i
+
+
+_REGEX_PREV = set("=!([{,;:?&|~^%<>\n\t ")
+
+
+def prev_code(text: str, i: int) -> str:
+    j = i - 1
+    while j >= 0 and text[j] in " \t":
+        j -= 1
+    return text[j] if j >= 0 else "\n"
+
+
+def looks_regex_start(text: str, i: int) -> bool:
+    if text[i] != "/":
+        return False
+    if text.startswith("//", i) or text.startswith("/*", i):
+        return False
+    p = prev_code(text, i)
+    if p in _REGEX_PREV:
+        return True
+    # keyword before /
+    k = i - 1
+    while k >= 0 and text[k] in " \t":
+        k -= 1
+    end = k + 1
+    while k >= 0 and (text[k].isalnum() or text[k] == "_"):
+        k -= 1
+    word = text[k + 1 : end]
+    return word in {"return", "case", "throw", "typeof", "void", "delete", "new", "in", "of", "await"}
+
+
+def skip_balanced(text: str, i: int, open_ch: str, close_ch: str) -> int:
+    """i at opening delimiter; return index after matching close. Strings/comments skipped."""
+    assert text[i] == open_ch
+    depth = 0
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c in "'\"`":
+            i = skip_string(text, i)
+            continue
+        if text.startswith("//", i):
+            nl = text.find("\n", i)
+            i = n if nl < 0 else nl + 1
+            continue
+        if text.startswith("/*", i):
+            end = text.find("*/", i + 2)
+            i = n if end < 0 else end + 2
+            continue
+        if c == "/" and looks_regex_start(text, i):
+            i = skip_regex(text, i)
+            continue
+        if c == open_ch:
+            depth += 1
+            i += 1
+            continue
+        if c == close_ch:
+            depth -= 1
+            i += 1
+            if depth == 0:
+                return i
+            continue
+        i += 1
+    return i
+
+
+def iter_code_indexes(text: str):
+    """Yield indexes of code characters (not string/comment/regex)."""
+    i = 0
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c in "'\"`":
+            i = skip_string(text, i)
+            continue
+        if text.startswith("//", i):
+            nl = text.find("\n", i)
+            i = n if nl < 0 else nl + 1
+            continue
+        if text.startswith("/*", i):
+            end = text.find("*/", i + 2)
+            i = n if end < 0 else end + 2
+            continue
+        if c == "/" and looks_regex_start(text, i):
+            i = skip_regex(text, i)
+            continue
+        yield i
+        i += 1
+
+
+def is_jsx_ident(name: str) -> bool:
+    if not name:
+        return False
+    if name[0].isupper():
+        return True
+    # intrinsic tags used as JSX after && (
+    return name in {
+        "div",
+        "span",
+        "p",
+        "a",
+        "img",
+        "ul",
+        "ol",
+        "li",
+        "button",
+        "form",
+        "input",
+        "label",
+        "table",
+        "thead",
+        "tbody",
+        "tr",
+        "td",
+        "th",
+        "section",
+        "header",
+        "footer",
+        "nav",
+        "main",
+        "aside",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "svg",
+        "path",
+        "iframe",
+        "video",
+        "audio",
+        "canvas",
+        "style",
+    }
+
+
+def jsx_start_at(text: str, i: int) -> tuple[bool, int, str]:
+    """If text[i:] (after skip) opens JSX, return (True, tag_index, tag_name)."""
+    i = skip_ws_comments(text, i)
+    n = len(text)
+    if i >= n:
+        return False, i, ""
+    if text[i] == "<":
+        nxt = text[i + 1] if i + 1 < n else ""
+        if nxt == ">":
+            return True, i, "<>"
+        if nxt == "/":
+            return False, i, ""
+        if nxt.isalpha() or nxt in "!>":
+            m = JSX_TAG_RE.match(text, i)
+            name = m.group(1) if m else "<>"
+            return True, i, name
+        return False, i, ""
+    if text[i] == "{":
+        j = skip_ws_comments(text, i + 1)
+        if j < n and text[j] == "<":
+            ok, _, name = jsx_start_at(text, j)
+            return ok, i, name
+        return False, i, ""
+    m = IDENT_RE.match(text, i)
+    if m and is_jsx_ident(m.group(0)):
+        name = m.group(0)
+        j = m.end()
+        # compound Foo.Bar (member component) — stop if next member is lowercase (property)
+        while True:
+            k = skip_ws_comments(text, j)
+            if k < n and text[k] == ".":
+                k2 = skip_ws_comments(text, k + 1)
+                m2 = IDENT_RE.match(text, k2)
+                if not m2:
+                    break
+                if not m2.group(0)[0].isupper():
+                    return False, i, ""  # Foo.permission / Notification.requestPermission
+                name = name + "." + m2.group(0)
+                j = m2.end()
+                continue
+            break
+        j = skip_ws_comments(text, j)
+        # JSX: <Foo />, Foo(), Foo, Foo}
+        if j >= n or text[j] in "({,;)}":
+            return True, i, name
+        if text[j] == "<":  # Foo<Props> or invalid
+            return True, i, name
+    return False, i, ""
+
+
+def operand_is_jsx(text: str, after_op: int) -> tuple[bool, str]:
+    """Rule A: operand after && or ? is a JSX node."""
+    i = skip_ws_comments(text, after_op)
+    n = len(text)
+    if i >= n:
+        return False, ""
+    ok, _, name = jsx_start_at(text, i)
+    if ok:
+        return True, name
+    if text[i] == "(":
+        # reject () => immediately
+        j = skip_ws_comments(text, i + 1)
+        if j < n and text[j] == ")":
+            return False, ""
+        ok, _, name = jsx_start_at(text, i + 1)
+        if ok:
+            return True, name
+        # ( <> or ( <Tag  already covered. ( { <Tag
+        return False, ""
+    return False, ""
+
+
+def extract_jsx_name_from(text: str, start: int) -> str:
+    ok, name = operand_is_jsx(text, start)
+    if ok and name:
+        if name == "<>":
+            # peek first real child tag inside fragment
+            i = skip_ws_comments(text, start)
+            if i < len(text) and text[i] == "(":
+                i = skip_ws_comments(text, i + 1)
+            if i < len(text) and text[i] == "<" and i + 1 < len(text) and text[i + 1] == ">":
+                inner = skip_ws_comments(text, i + 2)
+                ok2, _, name2 = jsx_start_at(text, inner)
+                if ok2 and name2:
+                    return name2
+        return name
+    i = skip_ws_comments(text, start)
+    if i < len(text) and text.startswith("null", i) and not (i + 4 < len(text) and (text[i + 4].isalnum() or text[i + 4] == "_")):
+        return "null"
+    return "?"
+
+
+def clean_expr(s: str, n: int = 100) -> str:
+    s = re.sub(r"//.*?$", "", s, flags=re.M)
+    s = re.sub(r"/\*.*?\*/", "", s, flags=re.S)
     s = re.sub(r"\s+", " ", s).strip()
+    s = re.sub(r"^(return|const|let|var)\s+", "", s)
+    s = s.strip(" \t{}")
     s = s.replace("|", "¦")
     if len(s) > n:
         return s[: n - 1] + "…"
     return s
 
 
-def extract_cond_before(text: str, idx: int, opener: str = "{") -> str:
-    start = text.rfind(opener, max(0, idx - 400), idx)
-    if start < 0:
-        start = max(0, idx - 120)
+def expr_before(text: str, op_idx: int) -> str:
+    """Boolean expression immediately left of && or ? (JSX operand)."""
+    i = op_idx
+    depth_paren = 0
+    depth_brack = 0
+    depth_brace = 0
+    start = 0
+    # walk back over code
+    j = op_idx - 1
+    # collect region
+    while j >= 0:
+        c = text[j]
+        # skip strings backward crudely: if quote, jump to previous matching is hard;
+        # stop at structural boundaries instead.
+        if c == ")":
+            depth_paren += 1
+        elif c == "(":
+            if depth_paren == 0:
+                start = j + 1
+                break
+            depth_paren -= 1
+        elif c == "]":
+            depth_brack += 1
+        elif c == "[":
+            if depth_brack == 0:
+                start = j + 1
+                break
+            depth_brack -= 1
+        elif c == "}":
+            depth_brace += 1
+        elif c == "{":
+            if depth_brace == 0:
+                start = j + 1
+                break
+            depth_brace -= 1
+        elif depth_paren == 0 and depth_brack == 0 and depth_brace == 0:
+            if c in ";,\n":
+                start = j + 1
+                break
+            if c == ":" and (j == 0 or text[j - 1] not in "?:="):
+                # object field `description: expr && <X/>`
+                start = j + 1
+                break
+            if c == "=" and not (j > 0 and text[j - 1] in "!<>=:") and not (j + 1 < len(text) and text[j + 1] == "="):
+                start = j + 1
+                break
+        j -= 1
     else:
-        start += 1
-    raw = text[start:idx]
-    raw = re.sub(r"[\n\t]", " ", raw)
-    return clean_ws(raw, 80)
+        start = 0
+    raw = text[start:op_idx]
+    # drop a leading `return`
+    raw = re.sub(r"^\s*return\b", "", raw)
+    return clean_expr(raw)
 
 
-def extract_render_after(text: str, idx: int) -> str:
-    tail = text[idx : idx + 160]
-    tail = re.sub(r"[\n\t]", " ", tail)
-    return clean_ws(tail, 70)
+def is_ui_return(text: str, ret_idx: int) -> tuple[bool, str]:
+    """Rule B/C: return null / return < / return ( that opens JSX. Never return () => / { / false / value."""
+    if not text.startswith("return", ret_idx):
+        return False, ""
+    if ret_idx > 0 and (text[ret_idx - 1].isalnum() or text[ret_idx - 1] in "_$"):
+        return False, ""
+    i = skip_ws_comments(text, ret_idx + 6)
+    n = len(text)
+    if i >= n:
+        return False, ""
+    if text.startswith("null", i) and (i + 4 >= n or not (text[i + 4].isalnum() or text[i + 4] == "_")):
+        return True, "null"
+    if text[i] == "<":
+        ok, _, name = jsx_start_at(text, i)
+        return (True, name or "<") if ok else (False, "")
+    if text[i] == "(":
+        j = skip_ws_comments(text, i + 1)
+        if j < n and text[j] == ")":
+            return False, ""  # () =>
+        ok, name = operand_is_jsx(text, i + 1)
+        if ok:
+            return True, name
+        # `return (` + JSX tag after comments/newlines already handled.
+        # Bare `return (` of a non-JSX value: reject (Rule B: never return value).
+        return False, ""
+    return False, ""
 
 
-def looks_comment(line: str) -> bool:
-    return bool(COMMENT_LINE_RE.match(line))
+def find_keyword(text: str, word: str):
+    i = 0
+    n = len(text)
+    code = set(iter_code_indexes(text))
+    while True:
+        i = text.find(word, i)
+        if i < 0:
+            return
+        if i in code:
+            prev = text[i - 1] if i else " "
+            nxt = text[i + len(word)] if i + len(word) < n else " "
+            if not (prev.isalnum() or prev in "_$") and not (nxt.isalnum() or nxt in "_$"):
+                yield i
+        i += 1
+
+
+def find_ops(text: str, op: str):
+    code = set(iter_code_indexes(text))
+    i = 0
+    n = len(text)
+    while True:
+        i = text.find(op, i)
+        if i < 0:
+            return
+        if i in code:
+            yield i
+        i += 1
+
+
+# ----- scan -----
+
+def scan_and_tern(text: str, is_tsx: bool) -> list[dict]:
+    if not is_tsx:
+        return []
+    states: list[dict] = []
+    code = set(iter_code_indexes(text))
+    n = len(text)
+
+    # AND
+    for i in find_ops(text, "&&"):
+        after = i + 2
+        ok, name = operand_is_jsx(text, after)
+        if not ok:
+            continue
+        cond = expr_before(text, i)
+        if not cond:
+            continue
+        # reject `if ( … && <` — JSX almost never sits in if-condition
+        # already rejected if operand isn't JSX
+        render = extract_jsx_name_from(text, after)
+        ln = line_of(text, i)
+        states.append({"kind": "and-show", "line": ln, "cond": cond, "render": render, "branch": "shown", "idx": i})
+        states.append(
+            {
+                "kind": "and-hide",
+                "line": ln,
+                "cond": f"!({cond})",
+                "render": "null",
+                "branch": "hidden",
+                "idx": i,
+            }
+        )
+
+    # TERN: `?` not `?.` / `??` / `?:` (optional prop)
+    i = 0
+    while True:
+        i = text.find("?", i)
+        if i < 0:
+            break
+        if i not in code:
+            i += 1
+            continue
+        nxt = text[i + 1] if i + 1 < n else ""
+        if nxt in "?.:" :  # ?.  ??  ?:
+            i += 1
+            continue
+        after = i + 1
+        ok, name = operand_is_jsx(text, after)
+        if not ok:
+            i += 1
+            continue
+        cond = expr_before(text, i)
+        if not cond:
+            i += 1
+            continue
+        then_name = extract_jsx_name_from(text, after)
+        # find else operand after matching colon at same nesting
+        else_name = "null"
+        else_ok = False
+        # skip the then-operand to find `:`
+        j = skip_ws_comments(text, after)
+        if j < n and text[j] == "(":
+            j = skip_balanced(text, j, "(", ")")
+        elif j < n and text[j] == "<":
+            # skip a JSX tag roughly: find matching end is hard; scan forward for `:` at depth 0
+            j += 1
+        colon = _find_tern_colon(text, after, code)
+        if colon is not None:
+            else_ok, else_name = operand_is_jsx(text, colon + 1)
+            if not else_ok:
+                e = skip_ws_comments(text, colon + 1)
+                if text.startswith("null", e):
+                    else_name = "null"
+                    else_ok = True
+                else:
+                    else_name = extract_jsx_name_from(text, colon + 1)
+                    else_ok = else_name not in {"", "?"}
+            if else_ok:
+                else_name = extract_jsx_name_from(text, colon + 1) if else_name != "null" else "null"
+        ln = line_of(text, i)
+        states.append({"kind": "tern-then", "line": ln, "cond": cond, "render": then_name, "branch": "then", "idx": i})
+        states.append(
+            {
+                "kind": "tern-else",
+                "line": ln,
+                "cond": f"!({cond})",
+                "render": else_name if else_ok or else_name != "?" else "null",
+                "branch": "else",
+                "idx": i,
+            }
+        )
+        i += 1
+    return states
+
+
+def _find_tern_colon(text: str, start: int, code: set[int]) -> int | None:
+    depth_p = depth_b = depth_c = depth_a = 0
+    i = start
+    n = len(text)
+    while i < n:
+        if i not in code:
+            i += 1
+            continue
+        c = text[i]
+        if c == "(":
+            depth_p += 1
+        elif c == ")":
+            depth_p -= 1
+            if depth_p < 0:
+                return None
+        elif c == "[":
+            depth_b += 1
+        elif c == "]":
+            depth_b -= 1
+        elif c == "{":
+            depth_c += 1
+        elif c == "}":
+            depth_c -= 1
+            if depth_c < 0:
+                return None
+        elif c == "<":
+            # treat as generic/jsx open; do not track strictly
+            pass
+        elif c == "?" and depth_p == 0 and depth_b == 0 and depth_c == 0:
+            nxt = text[i + 1] if i + 1 < n else ""
+            if nxt not in "?.:":
+                depth_a += 1
+        elif c == ":" and depth_p == 0 and depth_b == 0 and depth_c == 0:
+            if depth_a == 0:
+                return i
+            depth_a -= 1
+        i += 1
+    return None
+
+
+def scan_if_ret(text: str) -> list[dict]:
+    states: list[dict] = []
+    for i in find_keyword(text, "if"):
+        j = skip_ws_comments(text, i + 2)
+        if j >= len(text) or text[j] != "(":
+            continue
+        end_cond = skip_balanced(text, j, "(", ")")
+        cond = clean_expr(text[j + 1 : end_cond - 1])
+        body = skip_ws_comments(text, end_cond)
+        # if (...) return …
+        # if (...) { return … }
+        candidates: list[int] = []
+        if body < len(text) and text.startswith("return", body):
+            candidates.append(body)
+        elif body < len(text) and text[body] == "{":
+            inner = skip_ws_comments(text, body + 1)
+            if inner < len(text) and text.startswith("return", inner):
+                candidates.append(inner)
+        for ret in candidates:
+            ok, name = is_ui_return(text, ret)
+            if not ok:
+                continue
+            states.append(
+                {
+                    "kind": "if-ret",
+                    "line": line_of(text, i),
+                    "cond": cond,
+                    "render": name,
+                    "branch": "if",
+                    "idx": i,
+                    "ret_idx": ret,
+                }
+            )
+    return states
+
+
+def scan_default(text: str, if_rets: list[dict]) -> list[dict]:
+    if not if_rets:
+        return []
+    ui_returns: list[tuple[int, str]] = []
+    for i in find_keyword(text, "return"):
+        ok, name = is_ui_return(text, i)
+        if ok:
+            ui_returns.append((i, name))
+    if_ret_idxs = {s.get("ret_idx") for s in if_rets}
+    # last UI return that is not an if-ret
+    for idx, name in reversed(ui_returns):
+        if idx in if_ret_idxs:
+            continue
+        return [
+            {
+                "kind": "default",
+                "line": line_of(text, idx),
+                "cond": "前述 if-ret 均不成立（default return）",
+                "render": name,
+                "branch": "default",
+                "idx": idx,
+            }
+        ]
+    return []
+
+
+def scan_suspense(text: str, is_tsx: bool) -> list[dict]:
+    if not is_tsx:
+        return []
+    states = []
+    for m in re.finditer(r"<Suspense\b[^>]*\bfallback\s*=\s*\{?", text):
+        # extract fallback child
+        after = m.end()
+        name = extract_jsx_name_from(text, after)
+        if name in {"", "?"}:
+            # fallback={ <PageLoading /> } or fallback={<PageLoading />}
+            name = extract_jsx_name_from(text, after)
+        if name in {"", "?"}:
+            fb = re.search(r"fallback\s*=\s*\{?\s*<([A-Za-z][\w.]*)", text[m.start() : m.start() + 200])
+            name = fb.group(1) if fb else "fallback"
+        states.append(
+            {
+                "kind": "suspense",
+                "line": line_of(text, m.start()),
+                "cond": "Suspense fallback（子树未 ready）",
+                "render": name,
+                "branch": "fallback",
+                "idx": m.start(),
+            }
+        )
+    return states
+
+
+def scan_file(p: Path) -> list[dict]:
+    try:
+        text = p.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return []
+    rp = rel(p)
+    surface = surface_of(rp)
+    stem = kebab(p.stem)
+    is_tsx = p.suffix in {".tsx", ".jsx"}
+    states: list[dict] = []
+    states.extend(scan_and_tern(text, is_tsx))
+    if_rets = scan_if_ret(text)
+    states.extend(if_rets)
+    states.extend(scan_default(text, if_rets))
+    states.extend(scan_suspense(text, is_tsx))
+
+    out = []
+    for s in states:
+        sid = f"state.{surface}.{stem}.{s['line']}{KIND_SUFFIX[s['kind']]}"
+        out.append({**s, "id": sid, "file": rp, "surface": surface})
+    return out
+
+
+# ----- rest of pipeline (classification / md) -----
+
+IMPORT_RE = re.compile(
+    r"""(?:import\s+(?:type\s+)?(?:[^'"\n]+?\s+from\s+)?|export\s+(?:type\s+)?\*\s+from\s+|export\s+\{[^}]*\}\s+from\s+)['"]([^'"]+)['"]"""
+    r"""|(?:import|require)\(\s*['"]([^'"]+)['"]\s*\)"""
+)
+
+
+def resolve_ts(base: Path, spec: str) -> Path | None:
+    if spec.startswith("."):
+        cand = (base.parent / spec).resolve()
+        for o in (
+            cand,
+            cand.with_suffix(".ts"),
+            cand.with_suffix(".tsx"),
+            cand.with_suffix(".js"),
+            cand / "index.ts",
+            cand / "index.tsx",
+        ):
+            if o.is_file():
+                return o
+        return None
+    m = re.match(r"@rocket\.chat/(ui-[a-z0-9-]+)", spec)
+    if m:
+        pkg = WORKSPACE / "packages" / m.group(1)
+        for sub in ("src/index.ts", "src/index.tsx", "index.ts"):
+            p = pkg / sub
+            if p.is_file():
+                return p
+    return None
+
+
+def import_closure() -> set[str]:
+    entries = [WORKSPACE / "apps/meteor/client/main.ts"]
+    seen: set[str] = set()
+    stack = [e for e in entries if e.exists()]
+    while stack:
+        cur = stack.pop()
+        rp = rel(cur)
+        if rp in seen:
+            continue
+        seen.add(rp)
+        try:
+            text = cur.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for m in IMPORT_RE.finditer(text):
+            spec = next(g for g in m.groups() if g)
+            nxt = resolve_ts(cur, spec)
+            if nxt is None:
+                continue
+            nrp = rel(nxt)
+            if not (nrp.startswith("apps/meteor/client/") or "/client/" in nrp or nrp.startswith("packages/ui-")):
+                continue
+            if file_class(nxt) != "candidate":
+                continue
+            stack.append(nxt)
+    return seen
+
+
+def classify_all(files: list[Path]) -> dict[str, str]:
+    return {rel(p): file_class(p) for p in files}
 
 
 def route_hint(rp: str) -> str:
@@ -261,7 +973,7 @@ def route_hint(rp: str) -> str:
         ("packages/ui-avatar", "任意展示头像的表面"),
         ("packages/ui-contexts", "被 Provider 树挂载（无独立路由）"),
         ("app/livechat", "Visitor 小部件或 omni 坐席面"),
-        ("app/slashcommand", "登录 → composer 输入对应 slash"),
+        ("app/slashcommand", "偶然 slash 命令面"),
     ]
     for k, v in mapping:
         if k in rp:
@@ -276,7 +988,7 @@ def route_hint(rp: str) -> str:
 def cond_extra(cond: str) -> str:
     c = cond.lower()
     bits = []
-    if any(x in c for x in ("isloading", "ispending", "isFetching", "isinitial")):
+    if any(x in c for x in ("isloading", "ispending", "isfetching", "isinitial")):
         bits.append("等查询 in-flight")
     if any(x in c for x in ("iserror", "error", "iserr")):
         bits.append("让该查询/mutation 失败")
@@ -284,7 +996,7 @@ def cond_extra(cond: str) -> str:
         bits.append("空列表/无数据")
     if "permission" in c or "haspermission" in c:
         bits.append("切换对应权限")
-    if "license" in c or "module" in c:
+    if "license" in c:
         bits.append("EE license 开/关")
     if "anonymous" in c:
         bits.append("匿名读")
@@ -292,8 +1004,8 @@ def cond_extra(cond: str) -> str:
         bits.append("房间加密开")
     if "federat" in c:
         bits.append("联邦房间")
-    if any(x in c for x in ("readonly", "archived", "omnichannel", "livechat")):
-        bits.append("对应房间类型/只读/归档")
+    if any(x in c for x in ("readonly", "archived")):
+        bits.append("只读/归档房")
     if "embedded" in c:
         bits.append("embedded layout")
     return ("；" + "；".join(bits)) if bits else ""
@@ -305,265 +1017,25 @@ def infer_related(cond: str, text_around: str) -> str:
         k = m.group(1)
         if "_" in k or k.startswith(("view-", "create-", "manage-", "edit-", "delete-", "access-")):
             keys.append(k)
-        if k.startswith("Accounts_") or k.startswith("Message_") or k.startswith("Omnichannel_") or k.startswith("Livechat_"):
+        if k.startswith(("Accounts_", "Message_", "Omnichannel_", "Livechat_")):
             keys.append(k)
-    # de-dupe keep order
-    seen = []
+    seen: list[str] = []
     for k in keys:
         if k not in seen:
             seen.append(k)
     return "；".join(seen[:4]) if seen else "（无）"
 
 
-def unreachable_reason(cond: str, render: str, product_refs: int, rp: str) -> str | None:
-    # Only claim 不可达 when the branch is statically impossible.
-    # Incomplete import graphs must not mint false 不可达 (Honesty > leftover=0).
+def unreachable_reason(cond: str) -> str | None:
     cl = cond.strip().lower()
     if cl in {"false", "!true"} or re.match(r"^false\b", cl):
         return "条件字面量恒假"
     return None
 
 
-def scan_file(p: Path) -> list[dict]:
-    try:
-        text = p.read_text(encoding="utf-8", errors="replace")
-    except OSError:
-        return []
-    lines = text.splitlines()
-    rp = rel(p)
-    surface = surface_of(rp)
-    stem = kebab(p.stem)
-    states: list[dict] = []
-
-    # JSX && and ternary (line-based so file:line is exact)
-    for i, line in enumerate(lines, 1):
-        if looks_comment(line):
-            continue
-        # skip import type lines
-        if line.lstrip().startswith("import "):
-            continue
-        for m in AND_RE.finditer(line):
-            cond = extract_cond_before(line, m.start(), opener="{")
-            if not cond:
-                cond = extract_cond_before(line, m.start(), opener="(")
-            render = extract_render_after(line, m.start())
-            states.append(
-                {
-                    "kind": "and-show",
-                    "line": i,
-                    "cond": cond or "&&",
-                    "render": render,
-                    "branch": "shown",
-                }
-            )
-            states.append(
-                {
-                    "kind": "and-hide",
-                    "line": i,
-                    "cond": f"!({cond})" if cond else "&& 假",
-                    "render": "不渲染该节点",
-                    "branch": "hidden",
-                }
-            )
-        for m in TERN_RE.finditer(line):
-            # skip `? (` used as generic / type — heuristic: must look like JSX ternary
-            before = line[: m.start()]
-            if before.rstrip().endswith((":", ",", "<", "extends")):
-                continue
-            if " as " in before[-20:] and "?" not in before[-20:]:
-                continue
-            cond = extract_cond_before(line, m.start(), opener="{")
-            if not cond:
-                cond = extract_cond_before(line, m.start(), opener="=")
-            render = extract_render_after(line, m.start())
-            # then
-            states.append(
-                {
-                    "kind": "tern-then",
-                    "line": i,
-                    "cond": cond or "?: then",
-                    "render": render,
-                    "branch": "then",
-                }
-            )
-            # else — try to find ':' after
-            else_bit = "else 分支"
-            rest = line[m.end() :]
-            colon = rest.find(" : ")
-            if colon < 0:
-                colon = rest.find(":")
-            if colon >= 0:
-                else_bit = clean_ws(rest[colon + 1 :], 70)
-            states.append(
-                {
-                    "kind": "tern-else",
-                    "line": i,
-                    "cond": f"!({cond})" if cond else "?: else",
-                    "render": else_bit,
-                    "branch": "else",
-                }
-            )
-        if SUSPENSE_RE.search(line):
-            states.append(
-                {
-                    "kind": "suspense",
-                    "line": i,
-                    "cond": "Suspense fallback（子树未 ready）",
-                    "render": extract_render_after(line, line.find("fallback")),
-                    "branch": "fallback",
-                }
-            )
-
-    # if-return JSX/null (same line or look-ahead 4)
-    early = 0
-    for i, line in enumerate(lines):
-        if looks_comment(line):
-            continue
-        m = IF_LINE_RE.match(line)
-        if not m:
-            # same-line if without start-of-line already handled if indented
-            if " if (" not in line and not line.lstrip().startswith("if ("):
-                continue
-            if not IF_LINE_RE.search(line) and not re.search(r"\bif\s*\(", line):
-                continue
-        # find return in this or next 5 lines
-        window = "\n".join(lines[i : i + 6])
-        rm = RETURN_JSX_RE.search(window)
-        if not rm:
-            continue
-        cond_m = re.search(r"if\s*\((.+)\)", line)
-        cond = clean_ws(cond_m.group(1), 80) if cond_m else "if"
-        # trim dangling {
-        cond = cond.rstrip("{ ").strip()
-        render = clean_ws(rm.group(0), 70)
-        states.append(
-            {
-                "kind": "if-ret",
-                "line": i + 1,
-                "cond": cond,
-                "render": render,
-                "branch": "if",
-            }
-        )
-        early += 1
-
-    # default return after at least one early-return in a tsx component
-    if early and p.suffix == ".tsx":
-        for j in range(len(lines) - 1, -1, -1):
-            if RETURN_JSX_RE.search(lines[j]) and not re.search(r"\bif\s*\(", lines[j]):
-                # skip if this return was already captured as if-ret on same line
-                already = any(s["line"] == j + 1 and s["kind"] == "if-ret" for s in states)
-                if already:
-                    continue
-                states.append(
-                    {
-                        "kind": "default",
-                        "line": j + 1,
-                        "cond": "前述 if 均不成立（default return）",
-                        "render": clean_ws(lines[j], 70),
-                        "branch": "default",
-                    }
-                )
-                break
-
-    # decorate
-    out = []
-    for n, s in enumerate(states, 1):
-        sid = f"state.{surface}.{stem}.{s['line']}{ {'and-show':'a0','and-hide':'a1','tern-then':'t0','tern-else':'t1','if-ret':'i','default':'d','suspense':'s'}[s['kind']] }"
-        out.append({**s, "id": sid, "file": rp, "surface": surface, "n": n})
-    return out
-
-
-def resolve_ts(base: Path, spec: str) -> Path | None:
-    if spec.startswith("."):
-        cand = (base.parent / spec).resolve()
-        options = [
-            cand,
-            cand.with_suffix(".ts"),
-            cand.with_suffix(".tsx"),
-            cand.with_suffix(".js"),
-            cand / "index.ts",
-            cand / "index.tsx",
-        ]
-        for o in options:
-            if o.is_file():
-                return o
-        return None
-    # workspace ui packages
-    m = re.match(r"@rocket\.chat/(ui-[a-z0-9-]+)", spec)
-    if m:
-        pkg = WORKSPACE / "packages" / m.group(1)
-        # try package.json exports — fall back to src
-        for sub in ("src/index.ts", "src/index.tsx", "index.ts"):
-            p = pkg / sub
-            if p.is_file():
-                return p
-    return None
-
-
-def product_importers(files: list[Path]) -> dict[str, set[str]]:
-    """Map relpath -> set of candidate files that import it."""
-    importers: dict[str, set[str]] = defaultdict(set)
-    for p in files:
-        if file_class(p) != "candidate":
-            continue
-        try:
-            text = p.read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            continue
-        src = rel(p)
-        for m in IMPORT_RE.finditer(text):
-            spec = next(g for g in m.groups() if g)
-            nxt = resolve_ts(p, spec)
-            if nxt is None:
-                continue
-            importers[rel(nxt)].add(src)
-    return importers
-
-
-def import_closure() -> set[str]:
-    """Kept for --count diagnostics; not used to mark 不可达 (resolver is incomplete)."""
-    entries = [
-        WORKSPACE / "apps/meteor/client/main.ts",
-    ]
-    seen: set[str] = set()
-    stack = [e for e in entries if e.exists()]
-    while stack:
-        cur = stack.pop()
-        rp = rel(cur)
-        if rp in seen:
-            continue
-        seen.add(rp)
-        try:
-            text = cur.read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            continue
-        for m in IMPORT_RE.finditer(text):
-            spec = next(g for g in m.groups() if g)
-            nxt = resolve_ts(cur, spec)
-            if nxt is None:
-                continue
-            nrp = rel(nxt)
-            if not (
-                nrp.startswith("apps/meteor/client/")
-                or "/client/" in nrp
-                or nrp.startswith("packages/ui-")
-            ):
-                continue
-            if file_class(nxt) != "candidate":
-                continue
-            stack.append(nxt)
-    return seen
-
-
-def classify_all(files: list[Path]) -> dict[str, str]:
-    return {rel(p): file_class(p) for p in files}
-
-
 def build_rows(files: list[Path], closure: set[str]) -> tuple[list[dict], dict[str, str]]:
     classes = classify_all(files)
-    refs = product_importers(files)
-    rows = []
+    rows: list[dict] = []
     per_file_kind: dict[str, str] = {}
     for p in files:
         rp = rel(p)
@@ -573,16 +1045,11 @@ def build_rows(files: list[Path], closure: set[str]) -> tuple[list[dict], dict[s
             continue
         st = scan_file(p)
         if not st:
-            # distinguish tsx linear vs no-jsx
-            if p.suffix in {".tsx", ".jsx"}:
-                per_file_kind[rp] = "jsx-linear"
-            else:
-                per_file_kind[rp] = "no-jsx"
+            per_file_kind[rp] = "jsx-linear" if p.suffix in {".tsx", ".jsx"} else "no-jsx"
             continue
         per_file_kind[rp] = "jsx-branch"
-        product_refs = len(refs.get(rp, ()))
         for s in st:
-            reason = unreachable_reason(s["cond"], s["render"], product_refs, rp)
+            reason = unreachable_reason(s["cond"])
             if reason:
                 arrival = f"不可达：{reason}"
                 honesty = "[不可达]"
@@ -604,8 +1071,7 @@ def build_rows(files: list[Path], closure: set[str]) -> tuple[list[dict], dict[s
                     "line": s["line"],
                 }
             )
-    # unique ids: if collision, hash suffix
-    seen = {}
+    seen: dict[str, bool] = {}
     for r in rows:
         if r["id"] in seen:
             h = hashlib.sha1(f"{r['src']}:{r['kind']}:{r['cond']}".encode()).hexdigest()[:4]
@@ -639,72 +1105,72 @@ def emit_files(kinds):
         print(f"{k}\t{rp}")
 
 
+SURFACE_ORDER = [
+    "root",
+    "home",
+    "navbar",
+    "sidebar",
+    "nav",
+    "room",
+    "message",
+    "composer",
+    "account",
+    "admin",
+    "omni",
+    "marketplace",
+    "directory",
+    "teams",
+    "invite",
+    "setup",
+    "e2e",
+    "voip",
+    "videoconf",
+    "callhist",
+    "oauth",
+    "conference",
+    "search",
+    "notfound",
+    "mailer",
+    "outlook",
+    "audit",
+    "provider",
+    "hook",
+    "comp",
+    "portal",
+    "uiclient",
+    "uikit",
+    "uictx",
+    "avatar",
+    "livechat",
+    "slash",
+    "emoji",
+    "translate",
+    "app",
+    "meteor",
+    "lib",
+    "startup",
+    "store",
+    "router",
+    "ctx",
+    "appsui",
+    "authz",
+    "reaction",
+    "ui",
+    "uiutils",
+    "other",
+]
+
+
 def emit_markdown_tables(rows: list[dict]) -> str:
-    parts = []
-    by = defaultdict(list)
+    parts: list[str] = []
+    by: dict[str, list] = defaultdict(list)
     for r in rows:
         by[r["surface"]].append(r)
-    order = [
-        "root",
-        "home",
-        "navbar",
-        "sidebar",
-        "nav",
-        "room",
-        "message",
-        "composer",
-        "account",
-        "admin",
-        "omni",
-        "marketplace",
-        "directory",
-        "teams",
-        "invite",
-        "setup",
-        "e2e",
-        "voip",
-        "videoconf",
-        "callhist",
-        "oauth",
-        "conference",
-        "search",
-        "notfound",
-        "mailer",
-        "outlook",
-        "audit",
-        "provider",
-        "hook",
-        "comp",
-        "portal",
-        "uiclient",
-        "uikit",
-        "uictx",
-        "avatar",
-        "livechat",
-        "slash",
-        "emoji",
-        "translate",
-        "app",
-        "meteor",
-        "lib",
-        "startup",
-        "store",
-        "router",
-        "ctx",
-        "appsui",
-        "authz",
-        "reaction",
-        "ui",
-        "uiutils",
-        "other",
-    ]
-    seen = set()
-    surfaces = [s for s in order if s in by]
+    surfaces = [s for s in SURFACE_ORDER if s in by]
     surfaces += [s for s in sorted(by) if s not in surfaces]
     for s in surfaces:
         chunk = by[s]
-        seen.add(s)
-        parts.append(f"\n### {s}（{len(chunk)}）\n")
+        parts.append(f"\n### {s}（{len(chunk)}）\n\n")
         parts.append("| id | 表面 | 分支条件 | 渲染 | 到达配方 | 诚实 | 关联 | 出处 |\n")
         parts.append("| --- | --- | --- | --- | --- | --- | --- | --- |\n")
         for r in chunk:
@@ -724,114 +1190,162 @@ def emit_markdown_tables(rows: list[dict]) -> str:
 
 
 def render_full_md(files, rows, kinds, closure) -> str:
+    """Assemble markdown from a clean template. No f-string over prose that contains braces."""
     c = Counter(kinds.values())
     h = Counter(r["honesty"] for r in rows)
-    k = Counter(r["kind"] for r in rows)
+    knd = Counter(r["kind"] for r in rows)
     by_surf = Counter(r["surface"] for r in rows)
-    surf_eq = " + ".join(f"{n}" for _, n in sorted(by_surf.items()))
-    class_eq = (
-        f"{c.get('jsx-branch', 0)}+{c.get('jsx-linear', 0)}+{c.get('no-jsx', 0)}"
-        f"+{c.get('excluded-spec', 0)}+{c.get('excluded-stories', 0)}"
-        f"+{c.get('excluded-server', 0)}"
+    surf_bits = " + ".join(str(n) for _, n in sorted(by_surf.items()))
+    class_eq = "{jb}+{jl}+{nj}+{sp}+{st}+{sv}".format(
+        jb=c.get("jsx-branch", 0),
+        jl=c.get("jsx-linear", 0),
+        nj=c.get("no-jsx", 0),
+        sp=c.get("excluded-spec", 0),
+        st=c.get("excluded-stories", 0),
+        sv=c.get("excluded-server", 0),
     )
-    kind_eq = (
-        f"{k.get('and-show', 0)}+{k.get('and-hide', 0)}+{k.get('tern-then', 0)}"
-        f"+{k.get('tern-else', 0)}+{k.get('if-ret', 0)}+{k.get('default', 0)}"
-        f"+{k.get('suspense', 0)}"
+    kind_eq = "{a0}+{a1}+{t0}+{t1}+{i}+{d}+{s}".format(
+        a0=knd.get("and-show", 0),
+        a1=knd.get("and-hide", 0),
+        t0=knd.get("tern-then", 0),
+        t1=knd.get("tern-else", 0),
+        i=knd.get("if-ret", 0),
+        d=knd.get("default", 0),
+        s=knd.get("suspense", 0),
     )
-    header = f"""# Round 2 / Vol.8 — UI 状态闭集
+    nfiles = len(files)
+    nstates = len(rows)
+    tokens = {
+        "SHA": SHA,
+        "NFILES": str(nfiles),
+        "NSTATES": str(nstates),
+        "JB": str(c.get("jsx-branch", 0)),
+        "JL": str(c.get("jsx-linear", 0)),
+        "NJ": str(c.get("no-jsx", 0)),
+        "SP": str(c.get("excluded-spec", 0)),
+        "ST": str(c.get("excluded-stories", 0)),
+        "SV": str(c.get("excluded-server", 0)),
+        "CLASS_EQ": class_eq,
+        "A0": str(knd.get("and-show", 0)),
+        "A1": str(knd.get("and-hide", 0)),
+        "T0": str(knd.get("tern-then", 0)),
+        "T1": str(knd.get("tern-else", 0)),
+        "IR": str(knd.get("if-ret", 0)),
+        "DF": str(knd.get("default", 0)),
+        "SU": str(knd.get("suspense", 0)),
+        "KIND_EQ": kind_eq,
+        "H_PEND": str(h.get("[待渲染实测]", 0)),
+        "H_UNR": str(h.get("[不可达]", 0)),
+        "H_LIVE": str(h.get("[实测]", 0)),
+        "H_SUM": str(sum(h.values())),
+        "SURF_EQ": surf_bits,
+    }
+    header = """# Round 2 / Vol.8 — UI 状态闭集
 
-冻结树：**仅** `{SHA}`（短 SHA `e519470`）。**不是** `develop`。`file:line` 均相对此 SHA。
+冻结树：**仅** `@@SHA@@`（短 SHA `e519470`）。**不是** `develop`。`file:line` 均相对此 SHA。
+
+本卷是 **条件渲染分支** 库存，不是功能清单。不要把 kind 数加总成「功能总数」。
 
 ## 1. 方法
 
-- 规则：**每个条件渲染分支 = 一个 state**。id = `state.<surface>.<file-stem>.<line><kind>`。
-- 目标树（本卷闭集）：
-  - `apps/meteor/client/**`
-  - `apps/meteor/ee/client/**`（本冻结 **目录不存在**）
-  - `apps/meteor/app/**/client/**`
-  - `apps/meteor/ee/app/**/client/**`（本冻结 **目录不存在**）
-  - `packages/ui-*`：`ui-avatar` `ui-client` `ui-composer` `ui-contexts` `ui-kit` `ui-video-conf` `ui-voip`
-- 目标文件：以上树内 `*.{{ts,tsx,js,jsx}}`，排除 `node_modules` / `dist` / `.turbo` / `coverage`。
-- 文件分类（每个目标文件恰好一类）：
-  - `jsx-branch`：抽出 ≥1 个条件渲染分支
-  - `jsx-linear`：`.tsx`/`.jsx` 无抽出分支（直线渲染）
-  - `no-jsx`：无 JSX 条件渲染（`.ts` 模块 / 类型 / 纯逻辑）
-  - `excluded-spec`：`*.spec.*` / `*.test.*` / `tests/`
-  - `excluded-stories`：`*.stories.*` / `stories/`
-- 分支抽取（确定性，见 `export-08-states.py`）：
-  - JSX `&& (` / `&& <` → **shown + hidden** 两行
-  - JSX `? (` / `? <`（排除 `?.` / `??`）→ **then + else** 两行
-  - `if (...)` 后 6 行内 `return null` / `return (` / `return <` → **if-ret**
-  - 同一文件存在 if-ret 时，最后一个非 if 的 `return` → **default**
-  - `<Suspense fallback=` → **suspense**
-- 8 列：id / 表面 / 分支条件 / 渲染 / 到达配方或不可达 / 诚实 / 关联 / 出处。
-- 诚实：本环境 **Meteor boot 失败** → **STOP live，无假 DOM**。未点击的可达行一律 `[待渲染实测]`。仅字面量恒假才标 `[不可达]`。
-- 不扫 `develop`。不发明 DOM。
+规则：**每个条件渲染分支 = 一个 state**。id = `state.<surface>.<file-stem>.<line><kind>`。
+
+目标树（本卷闭集）：
+
+- `apps/meteor/client/**`
+- `apps/meteor/ee/client/**`（本冻结目录不存在）
+- `apps/meteor/app/**/client/**`
+- `apps/meteor/ee/app/**/client/**`（本冻结目录不存在）
+- `packages/ui-*`：`ui-avatar`、`ui-client`、`ui-composer`、`ui-contexts`、`ui-kit`、`ui-video-conf`、`ui-voip`
+
+目标文件：以上树内 `.ts` / `.tsx` / `.js` / `.jsx`，排除 `node_modules`、`dist`、`.turbo`、`coverage`。
+
+文件分类（每个目标文件恰好一类）：
+
+| 类 | 含义 |
+| --- | --- |
+| `jsx-branch` | 抽出 ≥1 个条件渲染分支 |
+| `jsx-linear` | `.tsx` / `.jsx` 无抽出分支（直线渲染） |
+| `no-jsx` | 无 JSX 条件渲染（`.ts` 模块 / 类型 / 纯逻辑） |
+| `excluded-spec` | `*.spec.*` / `*.test.*` / `tests/` |
+| `excluded-stories` | `*.stories.*` / `stories/` |
+
+分支抽取（确定性，见同目录 `export-08-states.py`）：
+
+| kind | 规则 |
+| --- | --- |
+| and-show / and-hide | **仅 JSX 操作数**。`&&` 后（跳过空白/注释）是 `<`，或 `(` 且下一非空白 token 是 `<` / `{<` / 大写 JSX 标识。拒绝 `const x = a &&`、`return a &&` 布尔、对象字段布尔、`if (a &&`、`&& (counter.x += 1)`。`.ts` 不抽 AND。配对 shown+hidden。 |
+| tern-then / tern-else | **仅 JSX 操作数**。`cond ? <` 或 `cond ? (` 打开 JSX。拒绝 `?.`、`??`、泛型、`.match(/...?/)`、两边都不是 JSX 的 `a ? b : c`。`.ts` 不抽 TERN。配对 then+else。 |
+| if-ret | `if (...)` 后紧跟或块首条 `return null` / `return <` / `return (` 且该 `(` 打开 JSX。永不收 `return () =>`、`return {`、`return false`、`return value`。 |
+| default | 仅当本文件已有 if-ret，且最后一个非 if-ret 的 UI return 是 `return null` / `return <` / `return (`（JSX）。永不收 effect cleanup `return () =>` 或裸 `return;`。 |
+| suspense | JSX `<Suspense fallback=`。 |
+
+8 列：id / 表面 / 分支条件 / 渲染 / 到达配方或不可达 / 诚实 / 关联 / 出处。
+
+渲染列写 **子节点名**（组件/标签/`null`），不写 `&&` / `return (` 操作符。条件列只写布尔表达式，不含 `return` / `const x =`。
+
+诚实：本环境 Meteor boot 失败 → **STOP live，无假 DOM**。未点击可达行一律 `[待渲染实测]`。仅字面量恒假才标 `[不可达]`。不扫 develop。不发明 DOM。
 
 ## 2. 目标树证明（本冻结）
 
+下面命令在冻结树上复跑。命令本身放在围栏里，不掺进 §1 正文。
+
 ```bash
 git rev-parse HEAD
-# expect {SHA}
+# expect @@SHA@@
 
 test ! -d apps/meteor/ee/client && echo MISSING_EE_CLIENT
 test ! -d apps/meteor/ee/app && echo MISSING_EE_APP
 # expect both MISSING_*
 
 ls -1 packages | grep '^ui-'
-# expect:
-# ui-avatar
-# ui-client
-# ui-composer
-# ui-contexts
-# ui-kit
-# ui-video-conf
-# ui-voip
+# expect: ui-avatar ui-client ui-composer ui-contexts ui-kit ui-video-conf ui-voip
 ```
 
-EE 客户端 UI 在本冻结已并入 `apps/meteor/client`（如 omnichannel / ABAC / audit），**没有**独立 `ee/client` 树。`ee/apps/*` 是无 `client/` 的微服务，不在本卷命名 sweep 内。
+EE 客户端 UI 在本冻结已并入 `apps/meteor/client`（omnichannel / ABAC / audit 等），没有独立 `ee/client` 树。`ee/apps/*` 是无 `client/` 的微服务，不在本卷命名 sweep 内。
 
 ## 3. 文件闭合
 
 | 类 | 数 |
 | --- | ---: |
-| jsx-branch | {c.get('jsx-branch', 0)} |
-| jsx-linear | {c.get('jsx-linear', 0)} |
-| no-jsx | {c.get('no-jsx', 0)} |
-| excluded-spec | {c.get('excluded-spec', 0)} |
-| excluded-stories | {c.get('excluded-stories', 0)} |
-| excluded-server | {c.get('excluded-server', 0)} |
-| **TARGET_FILES** | **{len(files)}** |
+| jsx-branch | @@JB@@ |
+| jsx-linear | @@JL@@ |
+| no-jsx | @@NJ@@ |
+| excluded-spec | @@SP@@ |
+| excluded-stories | @@ST@@ |
+| excluded-server | @@SV@@ |
+| **TARGET_FILES** | **@@NFILES@@** |
 
-等式：`{class_eq} = {len(files)}`。
+等式：`@@CLASS_EQ@@ = @@NFILES@@`。
 
 每个目标文件由 `python3 docs/qa/pm-feature-atlas/round-2/export-08-states.py --files` 打出 `class<TAB>relpath`。`CLASS_SUM` 必须等于 `TARGET_FILES`。无第三类、无漏文件。
 
-## 4. 状态闭合
+## 4. 状态闭合（不是功能总数）
+
+下表是 **分支 kind 计数**，不要加总成功能数。
 
 | 分支 kind | 数 |
 | --- | ---: |
-| and-show | {k.get('and-show', 0)} |
-| and-hide | {k.get('and-hide', 0)} |
-| tern-then | {k.get('tern-then', 0)} |
-| tern-else | {k.get('tern-else', 0)} |
-| if-ret | {k.get('if-ret', 0)} |
-| default | {k.get('default', 0)} |
-| suspense | {k.get('suspense', 0)} |
-| **STATES** | **{len(rows)}** |
+| and-show | @@A0@@ |
+| and-hide | @@A1@@ |
+| tern-then | @@T0@@ |
+| tern-else | @@T1@@ |
+| if-ret | @@IR@@ |
+| default | @@DF@@ |
+| suspense | @@SU@@ |
+| **STATES** | **@@NSTATES@@** |
 
-等式：`{kind_eq} = {len(rows)}`。
+kind 等式（只核行数）：`@@KIND_EQ@@ = @@NSTATES@@`。
 
 | 诚实 | 数 |
 | --- | ---: |
-| [待渲染实测] | {h.get('[待渲染实测]', 0)} |
-| [不可达] | {h.get('[不可达]', 0)} |
-| [实测] | {h.get('[实测]', 0)} |
+| [待渲染实测] | @@H_PEND@@ |
+| [不可达] | @@H_UNR@@ |
+| [实测] | @@H_LIVE@@ |
 
-`[待渲染实测]+[不可达]+[实测] = {sum(h.values())}`。本卷 `[实测]=0`（boot STOP）。
+`[待渲染实测]+[不可达]+[实测] = @@H_SUM@@`。本卷 `[实测]=0`（boot STOP）。
 
-表面分表行数之和必须等于 STATES：`{surf_eq} = {len(rows)}`。
+表面分表行数之和必须等于 STATES：`@@SURF_EQ@@ = @@NSTATES@@`。
 
 ## 5. Live boot（STOP）
 
@@ -839,98 +1353,129 @@ EE 客户端 UI 在本冻结已并入 `apps/meteor/client`（如 omnichannel / A
 
 | 步 | 结果 |
 | --- | --- |
-| Meteor 3.4.1 | 已安装（`~/.meteor`，与 `apps/meteor/.meteor/release` 一致） |
-| Mongo 7.0.24 单节点 `rs0` | `127.0.0.1:27017` PRIMARY（`replSetInitiate` ok） |
-| Node 22.22.3 + `yarn install` | 完成（peer 警告，非 fatal） |
-| `meteor npm run dsv` 第 1 次 | **FAIL** `ENOENT: scandir apps/meteor/packages/rocketchat-i18n/i18n`（symlink → 尚不存在的 `packages/i18n/dist/resources`） |
-| `yarn workspace @rocket.chat/tools build` 然后 `@rocket.chat/i18n build` | 成功；symlink 可 `listdir` 68 个 json |
-| `meteor npm run dsv` 第 2 次 | **FAIL** Livechat：`cp .../packages/livechat/dist/.` ENOENT；随后 `open 'index.html'` ENOENT。Meteor 解析 stack 崩溃退出 |
+| Meteor 3.4.1 | 已安装（与 `apps/meteor/.meteor/release` 一致） |
+| Mongo 7.0.24 单节点 rs0 | `127.0.0.1:27017` PRIMARY |
+| Node 22.22.3 + yarn install | 完成（peer 警告，非 fatal） |
+| meteor npm run dsv 第 1 次 | FAIL：`rocketchat-i18n/i18n` symlink 指向尚未构建的 `packages/i18n/dist/resources` |
+| yarn workspace tools + i18n build | 成功；symlink 可 listdir 68 个 json |
+| meteor npm run dsv 第 2 次 | FAIL：`packages/livechat/dist` / `index.html` ENOENT |
 | 后续 | **STOP live**。不再为假页面补 dist / 编 DOM |
 
-因此：**STOP live**。表体不写 `[实测]`，不截图，不编造 DOM。可达未点击 = `[待渲染实测]`。
+因此表体不写 `[实测]`，不截图，不编造 DOM。可达未点击 = `[待渲染实测]`。不要用 `[不可达]` 清零剩余行。
 
 ## 6. 闭集表（一行一分支）
 
-数据行 **{len(rows)}**。排序：surface / file / line / kind。
+数据行 **@@NSTATES@@**。排序：surface / file / line / kind。
 """
-    return header + emit_markdown_tables(rows) + """
+    for key, val in tokens.items():
+        header = header.replace("@@" + key + "@@", val)
 
+    footer = """
 ## 7. 闭合判据（拒收条件：数字对不上）
 
-在 **`""" + SHA + """`** 上重跑。不要用 develop。
+在冻结提交上重跑。不要用 develop。
 
 ```bash
 git rev-parse HEAD
-# expect """ + SHA + """
+# expect @@SHA@@
 
 python3 docs/qa/pm-feature-atlas/round-2/export-08-states.py --verify
-# TARGET_FILES """ + str(len(files)) + """
-# CLASS_SUM """ + str(len(files)) + """
-# STATES """ + str(len(rows)) + """
-# UNIQUE_IDS """ + str(len(rows)) + """
-# VERIFY_OK """ + str(len(files)) + " " + str(len(rows)) + """
+# TARGET_FILES @@NFILES@@
+# CLASS_SUM @@NFILES@@
+# STATES @@NSTATES@@
+# UNIQUE_IDS @@NSTATES@@
+# VERIFY_OK @@NFILES@@ @@NSTATES@@
 
 rg -c '^\\| `state\\.' docs/qa/pm-feature-atlas/round-2/08-states.md
-# expect """ + str(len(rows)) + """
+# expect @@NSTATES@@
 
 rg -o '^\\| `state\\.[^`]+' docs/qa/pm-feature-atlas/round-2/08-states.md | sort | uniq | wc -l
-# expect """ + str(len(rows)) + """
+# expect @@NSTATES@@
 ```
 
 文件闭合（无漏文件）：
 
 ```bash
 python3 docs/qa/pm-feature-atlas/round-2/export-08-states.py --files | wc -l
-# expect """ + str(len(files)) + """
+# expect @@NFILES@@
 
 python3 - <<'PY'
-from pathlib import Path
-import subprocess, sys
-sys.path.insert(0, 'docs/qa/pm-feature-atlas/round-2')
-import importlib.util
+import importlib.util, subprocess
 spec = importlib.util.spec_from_file_location('e', 'docs/qa/pm-feature-atlas/round-2/export-08-states.py')
-e = importlib.util.module_from_spec(spec); spec.loader.exec_module(e)
+e = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(e)
 files = {e.rel(p) for p in e.target_files()}
-listed = {line.split('\\t',1)[1] for line in subprocess.check_output(
-    ['python3','docs/qa/pm-feature-atlas/round-2/export-08-states.py','--files'], text=True).splitlines() if '\\t' in line}
+listed = {
+    line.split('\\t', 1)[1]
+    for line in subprocess.check_output(
+        ['python3', 'docs/qa/pm-feature-atlas/round-2/export-08-states.py', '--files'],
+        text=True,
+    ).splitlines()
+    if '\\t' in line
+}
 print('SYMDIFF', sorted(files ^ listed)[:10], 'len', len(files ^ listed))
 print('COUNT', len(files), len(listed))
 PY
-# expect SYMDIFF [] ; COUNT """ + str(len(files)) + " " + str(len(files)) + """
+# expect SYMDIFF [] ; COUNT @@NFILES@@ @@NFILES@@
 ```
 
-树级 rg（本冻结）：
+泄漏点必须缺席（旧抽取器的非 JSX 行）：
 
 ```bash
-# ee/client 不存在
+rg -n 'useSearchItems\\.ts:156|useSearchItems\\.ts:21|useAISearchRooms\\.ts:34|useFingerprintChange\\.tsx:65|useQuickActions\\.tsx:268|useQuickActions\\.tsx:279|useQuickActions\\.tsx:289|useQuickActions\\.tsx:295|useRoomList\\.ts:81|useRoomList\\.ts:167' \\
+  docs/qa/pm-feature-atlas/round-2/08-states.md
+# expect 0 matches
+```
+
+树级证明：
+
+```bash
 rg --files apps/meteor/ee/client 2>&1 | head
 # expect: No such file or directory / 0 files
 
-# 目标树源文件（与 exporter 同一排除）
-rg --files -g '*.ts' -g '*.tsx' -g '*.js' -g '*.jsx' \
-  -g '!**/node_modules/**' -g '!**/dist/**' \
-  apps/meteor/client packages/ui-avatar packages/ui-client \
-  packages/ui-composer packages/ui-contexts packages/ui-kit \
-  packages/ui-video-conf packages/ui-voip \
-  | wc -l
-# 只覆盖 packages/ui-* + meteor/client；app/**/client 另计。exporter TARGET_FILES 才是权威并集。
-```
-
-`rg` 对 `apps/meteor/app/**/client` 必须用 exporter / `find`，因为该树是多根：
-
-```bash
 find apps/meteor/app -type d -name client | wc -l
 # expect 30
 ```
 
 ## 8. 排除与非本卷
 
-- 不扫 `develop`，不做 freeze-vs-develop diff（那是 vol 14）。
+- 不扫 develop，不做 freeze-vs-develop diff（那是 vol 14）。
 - 不扫 `apps/meteor/server`、`ee/server`、`ee/apps`（无 client UI）。
 - spec/stories 已分类，不抽 state。
 - setting/permission 闭集是 vol 6/7；本卷只在「关联」列回指字面量。
 - 无 `[实测]` 行。boot 修好后只能把已点击行升级为 `[实测]`，不能把未点击行改成不可达来清零。
+- 本卷没有功能总数。
 """
+    for key, val in tokens.items():
+        footer = footer.replace("@@" + key + "@@", val)
+    return header + emit_markdown_tables(rows) + footer
+
+
+LEAK_SITES = [
+    "useSearchItems.ts:156",
+    "useSearchItems.ts:21",
+    "useAISearchRooms.ts:34",
+    "useFingerprintChange.tsx:65",
+    "useQuickActions.tsx:268",
+    "useQuickActions.tsx:279",
+    "useQuickActions.tsx:289",
+    "useQuickActions.tsx:295",
+    "useRoomList.ts:81",
+    "useRoomList.ts:167",
+]
+
+
+def assert_no_leaks(rows: list[dict]) -> None:
+    bad = [r["src"] for r in rows if any(site in r["src"] for site in LEAK_SITES)]
+    if bad:
+        raise SystemExit("LEAK_SITES_PRESENT " + " ".join(sorted(set(bad))))
+
+
+def sample_and_show(rows: list[dict], n: int = 20) -> None:
+    shows = [r for r in rows if r["kind"] == "and-show"]
+    print("AND_SHOW_SAMPLE", min(n, len(shows)), "of", len(shows))
+    for r in shows[:n]:
+        print(f"  {r['src']}  cond={r['cond'][:60]!r}  render={r['render']!r}")
 
 
 def main(argv=None):
@@ -940,16 +1485,18 @@ def main(argv=None):
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--tables", action="store_true")
     ap.add_argument("--verify", action="store_true")
+    ap.add_argument("--sample-and", action="store_true")
     ap.add_argument("--write-md", metavar="PATH")
     args = ap.parse_args(argv)
     files = target_files()
     closure = import_closure()
     rows, kinds = build_rows(files, closure)
-    if args.count or args.verify or not any([args.files, args.json, args.tables]):
+    if args.count or args.verify or args.write_md or not any([args.files, args.json, args.tables, args.sample_and]):
         emit_count(files, rows, kinds, closure)
     if args.verify:
         assert len(files) == len(kinds), (len(files), len(kinds))
         assert len(rows) == len({r["id"] for r in rows})
+        assert_no_leaks(rows)
         print("VERIFY_OK", len(files), len(rows))
     if args.files:
         emit_files(kinds)
@@ -957,6 +1504,8 @@ def main(argv=None):
         json.dump({"rows": rows, "kinds": kinds}, sys.stdout)
     if args.tables:
         sys.stdout.write(emit_markdown_tables(rows))
+    if args.sample_and:
+        sample_and_show(rows)
     if args.write_md:
         Path(args.write_md).write_text(render_full_md(files, rows, kinds, closure), encoding="utf-8")
         print("WROTE", args.write_md)
