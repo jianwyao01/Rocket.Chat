@@ -19,26 +19,34 @@
 - 扫描根：`apps/meteor/client` `apps/meteor/app` `packages/ui-client` `packages/ui-contexts` `packages/ui-voip` `packages/ui-video-conf` `packages/fuselage-ui-kit` `packages/web-ui-registration`。
   - `apps/meteor/ee/client` 在本冻结树 **不存在**。不要把它写进复跑命令。
 - 排除：`*.spec.*` `*.test.*` `*.stories.*` `tests/` `node_modules` `server/`。
-- 诚实标记：每行 `[读]`。本环境 **Meteor 未 boot**（见 §2），故无 `[实测]` / `[活]`。
+- 诚实标记：有用户可见截图才升 `[实测]`。打不开 / OS 抢走 / 预览互斥未挂 / 无联邦房 / 未诱发 REST fail = leftover，保持 `[读]`。不发明 debounce/throttle DOM。
 - 8 列：稳定语义 id / 功能一句话 / 和弦或常量 / 门控 / 触发后果 / 供给 / 关联 / 出处。
+- 截图：`docs/qa/pm-feature-atlas/round-2/shots/vol11/`。
 
 ---
 
 ## 2. Live-verify（Meteor boot）
 
-本环境探测（2026-08-22）：
+跳过 docker compose（overlayfs 失败）。按 Volume 5 路径（2026-08-22）：
 
 | 探测 | 结果 |
 | --- | --- |
-| `git rev-parse HEAD` | `e519470d35b6caf5b228d81aef41c86aab3051f4` |
-| `which meteor` | 不存在 |
-| `which mongod` | 不存在 |
-| `apps/meteor/node_modules` | 不存在 |
-| 仓库根 `node_modules` | 不存在 |
-| `pgrep meteor` | 无 |
-| 监听端口 | 无 RC Web |
+| 产品 merge-base | `e519470d35b6caf5b228d81aef41c86aab3051f4`（`git merge-base HEAD e519470`） |
+| 文档分支 HEAD | 本卷 atlas commit（Meteor 横幅 Commit Hash 会是 docs HEAD，不是冻结 SHA） |
+| Mongo | 8.0.12 tarball；`rs0` PRIMARY `127.0.0.1:27017` |
+| nvm / Meteor / deno | 22.22.3 / 3.4.1 / 2.3.1 |
+| turbo | `yarn turbo run build --filter=@rocket.chat/meteor... --filter='!@rocket.chat/meteor'`（i18n dist 已出） |
+| `MONGO_URL` | `mongodb://127.0.0.1:27017/rocketchat?replicaSet=rs0&directConnection=true&retryWrites=false` |
+| `ROOT_URL` | `http://127.0.0.1:3000` → **HTTP 200**；`TEST_MODE=true` `OVERWRITE_SETTING_Show_Setup_Wizard=completed` |
+| 登录 | `rocketchat.internal.admin.test` / 同密 |
+| 版本 | 8.8.0-develop；Community；`hasValidLicense=false` |
+| Feature preview | `/account/feature-preview` = 「No feature to preview」（`aiSearch` / `secondarySidebar` 未挂） |
+| 房间 | 仅 `#general`；无联邦房、无消息图、无 UiKit app、无 VoIP |
+| OS | Xfce：**Ctrl+Esc 打开系统应用菜单**，不是 RC leftover「未绑定」 |
 
-**未 boot。STOP。** 不发明按键实测、焦点顺序实测、乐观窗口实测。全文保持 `[读]`。
+登录页 / 进房：`01-login.webp` `02-home.webp`。preview 空页：`19-feature-preview.webp`。
+
+纸面闭合在 boot 后复跑仍对齐：tinykeys 调用 **6**、和弦 **10**、SHORTCUTS **9**、FocusScope **13**、`77+20+1+8+1=107`、`runOptimistic` **2**。
 
 ---
 
@@ -66,18 +74,18 @@
 
 | 稳定语义 id | 功能一句话 | 和弦或常量 | 门控 | 触发后果 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `kb.reg.search.mod-k.classic` | Ctrl/Cmd+K 聚焦房间搜索 | `$mod+K` | `FeaturePreviewOff` `aiSearch`；`NavBarSearch` 已挂 | `[读]` ①`setFocus('filterText')`；`aria-keyshortcuts` 含 `Control+K Meta+K`。②无 REST。③不 persist | core+preview | `kb.doc.openSearch` | `apps/meteor/client/navbar/NavBarSearch/NavBarSearch.tsx:56-59` |
-| `kb.reg.search.mod-p.classic` | Ctrl/Cmd+P 同上 | `$mod+P` | 同左 | `[读]` 同 K。占浏览器打印和弦 | core+preview | `kb.reg.search.mod-k.classic` | `NavBarSearch.tsx:61-64` |
-| `kb.reg.search.esc.classic` | Escape 清空并关搜索 overlay | `Escape` | 同左；全局 `window` | `[读]` ①`resetField('filterText')`；`state.close()`。②无 REST。③无。**无输入守卫**：任意焦点按 Esc 都会清搜索 | core+preview | `kb.reg.search.mod-k.classic` | `NavBarSearch.tsx:65-68` |
-| `kb.reg.search.mod-k.ai` | AI 搜索栏的 Ctrl/Cmd+K | `$mod+K` | `FeaturePreviewOn` `aiSearch` | `[读]` 同 classic；另清 `appliedFilters` 只在 Esc | core+preview | `kb.reg.search.mod-k.classic` | `apps/meteor/client/navbar/NavBarSearch/NavBarAISearch.tsx:61-64` |
-| `kb.reg.search.mod-p.ai` | AI 搜索栏的 Ctrl/Cmd+P | `$mod+P` | 同左 | `[读]` 同 K | core+preview | `kb.reg.search.mod-k.ai` | `NavBarAISearch.tsx:66-69` |
-| `kb.reg.search.esc.ai` | Escape 清文本+滤镜并关 overlay | `Escape` | 同左 | `[读]` ①`resetField` + `setValue('appliedFilters', empty)` + `close`。②无 REST。③无 | core+preview | `kb.reg.search.esc.classic` | `NavBarAISearch.tsx:70-73` |
-| `kb.reg.shortcuts.shift-question` | Shift+? 打开快捷键说明 | `Shift+?` | `AppLayout` 已挂；目标不是 contentEditable / INPUT / TEXTAREA / SELECT / `dialog[open]` | `[读]` ①`GenericModal` `title=Keyboard_Shortcuts_Title`。②无 REST。③关后不 persist | core | `kb.doc.openKeyboardShortcuts` | `apps/meteor/client/views/root/hooks/useKeyboardShortcutsHotkey.tsx:7-21,39-40`；`AppLayout.tsx:57` |
-| `kb.reg.sidebar.alt.legacy` | 焦点在侧栏房间项时 Alt 点开 kebab | `Alt` | `FeaturePreviewOff` `secondarySidebar`；目标 class 含 `rcx-sidebar-item` | `[读]` ①该 item 内 `button` click。②无 REST。③无 | core+preview | `kb.reg.sidebar.alt.v2` | `apps/meteor/client/sidebar/hooks/useShortcutOpenMenu.ts:8-15`；`sidebar/RoomList/RoomList.tsx:50` |
-| `kb.reg.sidebar.alt.v2` | 新侧栏房间项 Alt 开菜单 | `Alt` | `FeaturePreviewOn` `secondarySidebar`；class 含 `rcx-sidebar-v2-item` | `[读]` 同 legacy，class 不同 | core+preview | `kb.reg.sidebar.alt.legacy` | `apps/meteor/client/views/navigation/sidebar/hooks/useShortcutOpenMenu.ts:8-15`；`navigation/sidebar/RoomList/RoomList.tsx:37` |
-| `kb.reg.subscription.konami` | Admin 订阅页 Konami 切 license tab | `ArrowUp ArrowUp ArrowDown ArrowDown ArrowLeft ArrowRight ArrowLeft ArrowRight b a` | 仅 `SubscriptionPage` 挂载时；`useSessionStorage('admin:showLicenseTab')` | `[读]` ①切换 license 面板。②无 REST。③sessionStorage 刷新仍在 | core+admin | （无） | `apps/meteor/client/views/admin/subscription/SubscriptionPage.tsx:39-42` |
+| `kb.reg.search.mod-k.classic` | Ctrl/Cmd+K 聚焦房间搜索 | `$mod+K` | `FeaturePreviewOff` `aiSearch`；`NavBarSearch` 已挂 | `[实测]` ①`setFocus('filterText')`；placeholder「Search rooms (Ctrl+K)」= classic。Ctrl+K → 蓝框 + Recent（`#general` / admin / rocket.cat / 自己）。②无 REST。③不 persist。shot `03-ctrl-k-search.webp` | core+preview | `kb.doc.openSearch` | `apps/meteor/client/navbar/NavBarSearch/NavBarSearch.tsx:56-59` |
+| `kb.reg.search.mod-p.classic` | Ctrl/Cmd+P 同上 | `$mod+P` | 同左 | `[实测]` 同 K。本机未抢打印。shot `05-ctrl-p-search.webp` | core+preview | `kb.reg.search.mod-k.classic` | `NavBarSearch.tsx:61-64` |
+| `kb.reg.search.esc.classic` | Escape 清空并关搜索 overlay | `Escape` | 同左；全局 `window` | `[实测]` ①`resetField` + `close`；Esc 后 overlay 没了。②无 REST。③无。**无输入守卫**未另测。shot `04-escape-cleared.webp` | core+preview | `kb.reg.search.mod-k.classic` | `NavBarSearch.tsx:65-68` |
+| `kb.reg.search.mod-k.ai` | AI 搜索栏的 Ctrl/Cmd+K | `$mod+K` | `FeaturePreviewOn` `aiSearch` | `[读]` leftover：Community preview 页「No feature to preview」，顶栏仍是 classic placeholder。shot `19-feature-preview.webp` | core+preview | `kb.reg.search.mod-k.classic` | `apps/meteor/client/navbar/NavBarSearch/NavBarAISearch.tsx:61-64` |
+| `kb.reg.search.mod-p.ai` | AI 搜索栏的 Ctrl/Cmd+P | `$mod+P` | 同左 | `[读]` leftover 同 `mod-k.ai` | core+preview | `kb.reg.search.mod-k.ai` | `NavBarAISearch.tsx:66-69` |
+| `kb.reg.search.esc.ai` | Escape 清文本+滤镜并关 overlay | `Escape` | 同左 | `[读]` leftover 同 `mod-k.ai` | core+preview | `kb.reg.search.esc.classic` | `NavBarAISearch.tsx:70-73` |
+| `kb.reg.shortcuts.shift-question` | Shift+? 打开快捷键说明 | `Shift+?` | `AppLayout` 已挂；目标不是 contentEditable / INPUT / TEXTAREA / SELECT / `dialog[open]` | `[实测]` ①`GenericModal`「Keyboard shortcuts」。用户菜单同入口。②无 REST。③关后不 persist。shot `06-keyboard-shortcuts-modal.webp` `06b-shortcuts-all-rows.webp` `18-user-menu.webp` `18b-shortcuts-from-menu.webp` | core | `kb.doc.openKeyboardShortcuts` | `apps/meteor/client/views/root/hooks/useKeyboardShortcutsHotkey.tsx:7-21,39-40`；`AppLayout.tsx:57` |
+| `kb.reg.sidebar.alt.legacy` | 焦点在侧栏房间项时 Alt 点开 kebab | `Alt` | `FeaturePreviewOff` `secondarySidebar`；目标 class 含 `rcx-sidebar-item` | `[读]` leftover：侧栏是 legacy（Channels / `# general`）；点房间行再按 Alt，**无 kebab**。shot `07-alt-key-leftover.webp` `22-alt-sidebar-retry.webp` | core+preview | `kb.reg.sidebar.alt.v2` | `apps/meteor/client/sidebar/hooks/useShortcutOpenMenu.ts:8-15`；`sidebar/RoomList/RoomList.tsx:50` |
+| `kb.reg.sidebar.alt.v2` | 新侧栏房间项 Alt 开菜单 | `Alt` | `FeaturePreviewOn` `secondarySidebar`；class 含 `rcx-sidebar-v2-item` | `[读]` leftover：`secondarySidebar` 未挂；preview 页无开关。shot `19-feature-preview.webp` | core+preview | `kb.reg.sidebar.alt.legacy` | `apps/meteor/client/views/navigation/sidebar/hooks/useShortcutOpenMenu.ts:8-15`；`navigation/sidebar/RoomList/RoomList.tsx:37` |
+| `kb.reg.subscription.konami` | Admin 订阅页 Konami 切 license tab | `ArrowUp ArrowUp ArrowDown ArrowDown ArrowLeft ArrowRight ArrowLeft ArrowRight b a` | 仅 `SubscriptionPage` 挂载时；`useSessionStorage('admin:showLicenseTab')` | `[读]` leftover：`/admin/subscription` 打 Konami 后仍是 Community 卡，**无 license tab**。不发明第二次成功。shot `08-subscription-page.webp` `09-konami-leftover.webp` | core+admin | （无） | `apps/meteor/client/views/admin/subscription/SubscriptionPage.tsx:39-42` |
 
-**A 计数**：10。调用点 6。
+**A 计数**：10。调用点 6。实机：`[实测]` 4（classic K/P/Esc + Shift+?）+ leftover 6（AI×3 + Alt legacy/v2 + Konami）= 10。
 
 互斥挂载（不是排除，只是运行时二选一）：
 
@@ -92,17 +100,17 @@
 
 | 稳定语义 id | 功能一句话 | 和弦或常量 | 门控 | 触发后果 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `kb.doc.openKeyboardShortcuts` | 打开快捷键说明 | Mac/其他：`Shift+?` | 同 `kb.reg.shortcuts.shift-question` | `[读]` 已绑定 tinykeys。①modal。②无。③无 | core | `kb.reg.shortcuts.shift-question` | `KeyboardShortcutsModal.tsx:18-21` |
-| `kb.doc.openSearch` | 打开频道/用户搜索 | Mac：`Command+P`/`Command+K`；其他：`Control+P`/`Control+K` | 搜索组件已挂 | `[读]` 已绑定 `$mod+K`/`$mod+P`（classic 或 AI 一份）。placeholder 另写 `⌘+K`/`Ctrl+K`（`getShortcutLabel.ts:17-24`） | core | `kb.reg.search.mod-k.*` | `KeyboardShortcutsModal.tsx:23-29` |
-| `kb.doc.markAllAsRead` | 标全部未读为已读 | Mac 文案：`Shift+Escape`；其他：`Control+Escape` | `AppLayout` 调 `useEscapeKeyStroke` | `[读]` **已绑定**，但走 `document.body` `keydown` 而非 tinykeys。`event.code==='Escape'` 且 `shiftKey \|\| ctrlKey` → 确认 modal → `clearUnreadAllMessagesMutation`。①`GenericModal` `Clear_all_unreads_question`。②mutation 清未读。③刷新后未读应消失。Round-1 03 的 `documented-unbound` **在本冻结不成立** | core | `kb.adj.escape.mark-all` | `KeyboardShortcutsModal.tsx:32-34`；`useEscapeKeyStroke.ts:22-44` |
-| `kb.doc.editPreviousMessage` | 编辑上一条自己的消息 | `ArrowUp` | 焦点 textarea 且 `selectionEnd===0` | `[读]` 非 tinykeys。`MessageBox` `keydown` → `onNavigateToPreviousMessage`。①进入 editing。②无 REST。③刷新不保持编辑 | core | `kb.adj.composer.arrow-up` | `KeyboardShortcutsModal.tsx:37-39`；`MessageBox.tsx:253-263` |
-| `kb.doc.moveToBeginningHorizontal` | 移到消息开头（水平） | Mac：`Command+ArrowLeft`；其他：`Alt+ArrowLeft` | 浏览器 textarea 原生 | `[读]` **无 RC handler**。`handleFormattingShortcut` / `keyboardEventHandler` 不认该和弦。按键走 UA | core（文档） | `kb.doc.moveToEndHorizontal` | `KeyboardShortcutsModal.tsx:42-44` |
-| `kb.doc.moveToBeginningVertical` | 移到消息开头（垂直） | Mac：`Command+ArrowUp`；其他：`Alt+ArrowUp` | 同左 | `[读]` 无 RC handler。`MessageBox` 在 `selectionEnd===0` 时 ArrowUp 会进编辑，**可能抢走**「到文首」 | core（文档） | `kb.doc.editPreviousMessage` | `KeyboardShortcutsModal.tsx:47-49` |
-| `kb.doc.moveToEndHorizontal` | 移到消息末尾（水平） | Mac：`Command+ArrowRight`；其他：`Alt+ArrowRight` | 浏览器原生 | `[读]` 无 RC handler | core（文档） | `kb.doc.moveToBeginningHorizontal` | `KeyboardShortcutsModal.tsx:52-54` |
-| `kb.doc.moveToEndVertical` | 移到消息末尾（垂直） | Mac：`Command+ArrowDown`；其他：`Alt+ArrowDown` | 浏览器原生 | `[读]` 无 RC handler。文末 ArrowDown 会走下一条可编辑 | core（文档） | `kb.adj.composer.arrow-down` | `KeyboardShortcutsModal.tsx:57-59` |
-| `kb.doc.newLine` | 插入换行不发送 | `Shift+Enter`（文案两侧相同） | `sendOnEnter` 偏好 | `[读]` 非 tinykeys。`normal`：修饰键+Enter 换行；`alternative`：裸 Enter 换行。①`insertNewLine()`。②无 REST。③随草稿 | core+preference | `kb.adj.composer.enter` | `KeyboardShortcutsModal.tsx:62-64`；`MessageBox.tsx:223-232` |
+| `kb.doc.openKeyboardShortcuts` | 打开快捷键说明 | Mac/其他：`Shift+?` | 同 `kb.reg.shortcuts.shift-question` | `[实测]` modal 第 1 行：Show keyboard shortcuts = `Shift + ?`。已绑定。shot `06b-shortcuts-all-rows.webp` `18b-shortcuts-from-menu.webp` | core | `kb.reg.shortcuts.shift-question` | `KeyboardShortcutsModal.tsx:18-21` |
+| `kb.doc.openSearch` | 打开频道/用户搜索 | Mac：`Command+P`/`Command+K`；其他：`Control+P`/`Control+K` | 搜索组件已挂 | `[实测]` modal 第 2 行 Linux：`Ctrl + P` or `Ctrl + K`。和弦已走。shot `06b` + `03`/`05` | core | `kb.reg.search.mod-k.*` | `KeyboardShortcutsModal.tsx:23-29` |
+| `kb.doc.markAllAsRead` | 标全部未读为已读 | Mac 文案：`Shift+Escape`；其他：`Control+Escape` | `AppLayout` 调 `useEscapeKeyStroke` | `[实测]` modal 第 3 行 Linux 文案 **Ctrl + Esc**。绑定是 `shiftKey \|\| ctrlKey` + `Escape`，**不是** tinykeys。**Shift+Esc**（先点开输入区）→「Clear all unreads?」`13-shift-esc.webp`；Tab 仍在 modal `14-markall-modal-tab.webp`；Esc 关后房间还在、焦点回 listitem `15-markall-modal-esc-restore.webp`。**Ctrl+Esc** 被 Xfce 系统菜单抢走 `10-ctrl-escape-system-menu.webp`（OS steal，不是 unbound）。未点「Yes, clear all!」。Round-1 `documented-unbound` **在本冻结不成立** | core | `kb.adj.escape.mark-all` | `KeyboardShortcutsModal.tsx:32-34`；`useEscapeKeyStroke.ts:22-44` |
+| `kb.doc.editPreviousMessage` | 编辑上一条自己的消息 | `ArrowUp` | 焦点 textarea 且 `selectionEnd===0` | `[实测]` modal 第 4 行：`Up arrow`。**未按** composer ↑（只对文案）。shot `06b` | core | `kb.adj.composer.arrow-up` | `KeyboardShortcutsModal.tsx:37-39`；`MessageBox.tsx:253-263` |
+| `kb.doc.moveToBeginningHorizontal` | 移到消息开头（水平） | Mac：`Command+ArrowLeft`；其他：`Alt+ArrowLeft` | 浏览器 textarea 原生 | `[实测]` modal 第 5 行 Linux：`Alt + Left arrow`。**无 RC handler**（只对文案）。shot `06b` | core（文档） | `kb.doc.moveToEndHorizontal` | `KeyboardShortcutsModal.tsx:42-44` |
+| `kb.doc.moveToBeginningVertical` | 移到消息开头（垂直） | Mac：`Command+ArrowUp`；其他：`Alt+ArrowUp` | 同左 | `[实测]` modal 第 6 行：`Alt + Up arrow`。无 RC handler。shot `06b` | core（文档） | `kb.doc.editPreviousMessage` | `KeyboardShortcutsModal.tsx:47-49` |
+| `kb.doc.moveToEndHorizontal` | 移到消息末尾（水平） | Mac：`Command+ArrowRight`；其他：`Alt+ArrowRight` | 浏览器原生 | `[实测]` modal 第 7 行：`Alt + Right arrow`。无 RC handler。shot `06b` | core（文档） | `kb.doc.moveToBeginningHorizontal` | `KeyboardShortcutsModal.tsx:52-54` |
+| `kb.doc.moveToEndVertical` | 移到消息末尾（垂直） | Mac：`Command+ArrowDown`；其他：`Alt+ArrowDown` | 浏览器原生 | `[实测]` modal 第 8 行：`Alt + Down arrow`。无 RC handler。shot `06b` | core（文档） | `kb.adj.composer.arrow-down` | `KeyboardShortcutsModal.tsx:57-59` |
+| `kb.doc.newLine` | 插入换行不发送 | `Shift+Enter`（文案两侧相同） | `sendOnEnter` 偏好 | `[实测]` modal 第 9 行：`Shift + Enter`。**未在 composer 按**（只对文案）。shot `06b` | core+preference | `kb.adj.composer.enter` | `KeyboardShortcutsModal.tsx:62-64`；`MessageBox.tsx:223-232` |
 
-**文档集计数**：9。其中绑定 5（含 mark-all 的非 tinykeys 绑定）、纯文档/UA 原生 4。
+**文档集计数**：9。modal 实机 9 行与纸面 `id:` 对齐（Linux 标签）。其中绑定 5（含 mark-all 的非 tinykeys 绑定）、纯文档/UA 原生 4。
 
 ---
 
@@ -112,7 +120,7 @@
 
 | 稳定语义 id | 功能一句话 | 和弦或常量 | 门控 | 触发后果 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `kb.adj.escape.mark-all` | Shift/Ctrl+Escape 清全部未读 | `Escape` + `shiftKey \|\| ctrlKey` | `AppLayout.tsx:56` | `[读]` ①确认 modal。②`useClearUnreadAllMessagesMutation`。③刷新后未读应空 | core | `kb.doc.markAllAsRead` | `useEscapeKeyStroke.ts:22-44` |
+| `kb.adj.escape.mark-all` | Shift/Ctrl+Escape 清全部未读 | `Escape` + `shiftKey \|\| ctrlKey` | `AppLayout.tsx:56` | `[实测]` ①Shift+Esc →「Clear all unreads?」。②未确认 mutation。③Ctrl+Esc = OS 菜单。shot `13-shift-esc.webp` `10-ctrl-escape-system-menu.webp` | core | `kb.doc.markAllAsRead` | `useEscapeKeyStroke.ts:22-44` |
 | `kb.adj.escape.room-read` | 房间内裸 Escape 标当前房已读 | `keyup` `Escape` | `ReadStateManager.handleWindowEvents` | `[读]` ①未读条可消。②`POST /v1/subscriptions.read`。③persist。与 mark-all 和弦不同（无 Shift/Ctrl） | core | `time.hof.mark-as-read` | `readStateManager.ts:97-105` |
 | `kb.adj.composer.enter` | Enter 发送或换行 | Enter / 修饰+Enter | `sendOnEnter`；`keyCodes.CARRIAGE_RETURN \|\| NEW_LINE` | `[读]` ①发送或 `insertNewLine`。②`POST /v1/chat.sendMessage` 或无。③同 send | core+preference | `kb.doc.newLine` | `MessageBox.tsx:218-235` |
 | `kb.adj.composer.escape` | Escape 退出编辑或空内容回调 | `Escape` | textarea 焦点 | `[读]` ①`closeEditing`；空则 `onEscape`（线程可关面板）。②无 REST。③不持久 | core | `kb.doc.editPreviousMessage` | `MessageBox.tsx:247-250` |
@@ -142,26 +150,28 @@
 
 | 稳定语义 id | 功能一句话 | 和弦或常量 | 门控 | 触发后果 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `focus.skip.main` | 第一个 Tab 露出「跳到主内容」 | 链到 `#main-content` | 未 `:focus` 时 clip 成 1×1 | `[读]` ①`a` `Skip_to_main_content`；href=`{path}#main-content`。②无。③无 | core | `focus.main-content` | `AccessibilityShortcut.tsx:11-29`；`LayoutWithSidebar.tsx:58` |
-| `focus.main-content` | 主列 `main#main-content` | hash `#main-content` | 已登录主壳 | `[读]` ①skip-link 着陆点。②无。③无 | core | `focus.skip.main` | `MainContent.tsx:23-26` |
-| `focus.scope.navbar-search` | 顶栏搜索包一层 FocusScope | （无 trap） | 非 embed | `[读]` ①内部 `useFocusManager` 给搜索 listbox。②无。③无 | core | `kb.reg.search.mod-k.*` | `NavBarNavigation.tsx:17` |
-| `focus.scope.sidebar.legacy` | 旧侧栏 FocusScope | （无 trap） | `secondarySidebar` Off | `[读]` ①侧栏箭头导航的 focus manager 根。②无。③无 | core+preview | `kb.adj.sidebar.arrows` | `sidebar/SidebarRegion.tsx:93` |
-| `focus.scope.nav.primary` | 新导航第一块 FocusScope | （无 trap） | `secondarySidebar` On | `[读]` ①导航区焦点根。②无。③无 | core+preview | `focus.scope.nav.secondary` | `NavigationRegion.tsx:95` |
-| `focus.scope.nav.secondary` | 新导航第二块 FocusScope | （无 trap） | 同左 | `[读]` ①侧板/次栏焦点根。②无。③无 | core+preview | `focus.scope.nav.primary` | `NavigationRegion.tsx:102` |
-| `focus.scope.room.invite` | 邀请订阅房间整页 FocusScope | （无 trap） | `isInviteSubscription` | `[读]` ①邀请 UI 获焦。②无。③无 | core | `focus.scope.room` | `Room.tsx:44` |
-| `focus.scope.room` | 普通房间壳 FocusScope | （无 trap） | 非 invite | `[读]` ①header / 时间线 / composer / aside 共用一个 scope。②无。③无 | core | `kb.adj.msglist.tab` | `Room.tsx:53` |
-| `focus.scope.contextualbar` | 上下文栏 autoFocus + restoreFocus | Esc 关栏 | toolbox tab 打开 | `[读]` ①打开时进栏，关后还焦点。②无。③无 | core | `kb.adj.contextualbar.esc` | `ContextualbarDialog.tsx:40` |
-| `focus.scope.modal` | 通用模态 contain + restore + autoFocus | Esc 关 | `ModalRegion` 有 modal | `[读]` ①焦点锁在模态。②无。③无 | core | `kb.adj.modal.esc` | `packages/ui-client/src/components/Modal/ModalRegion.tsx:25` |
-| `focus.scope.uikit-modal` | UiKit 模态同样 trap | Esc / 忽略栏外键 | UiKit modal | `[读]` ①contain restore autoFocus。②interaction endpoint。③无 | core+apps | `focus.scope.modal` | `views/modal/uikit/ModalBlock.tsx:177` |
-| `focus.scope.image-gallery` | 图片画廊 contain + autoFocus | 画廊打开 | 点消息图 | `[读]` ①焦点进画廊。②无。③无 | core | `focus.scope.modal` | `ImageGallery.tsx:133` |
-| `focus.scope.videoconf-popup` | 视频会议弹层 restoreFocus | 弹层开 | videoconf popup | `[读]` ①关后还焦点。②无。③无 | core | `focus.scope.modal` | `VideoConfPopups.tsx:55` |
-| `focus.scope.voip-widget` | 语音 widget 可选 autoFocus | 呼叫 UI | voip 开 | `[读]` ①`autoFocus={autoFocus}`。②无。③无 | core+voip | `focus.scope.voip-keypad` | `packages/ui-voip/src/components/Widget/Widget.tsx:16` |
-| `focus.scope.voip-keypad` | 拨号盘 autoFocus | 拨号盘开 | keypad 挂载 | `[读]` ①焦点进拨号。②无。③无 | core+voip | `focus.scope.voip-widget` | `packages/ui-voip/src/components/Keypad/Keypad.tsx:26` |
-| `focus.list.message` | 时间线 listitem 键盘顺序 | ↑↓ Tab Shift+Tab | 房间/线程消息列表 | `[读]` ①见 `kb.adj.msglist.tab`。首次键盘进入 `focusLast` listitem | core | `kb.adj.msglist.tab` | `useMessageListNavigation.ts:15-109`；`RoomBody.tsx:102`；`ThreadMessageList.tsx:121` |
+| `focus.skip.main` | 第一个 Tab 露出「跳到主内容」 | 链到 `#main-content` | 未 `:focus` 时 clip 成 1×1 | `[读]` leftover：未专门 Tab 出 skip-link。①`a` `Skip_to_main_content` | core | `focus.main-content` | `AccessibilityShortcut.tsx:11-29`；`LayoutWithSidebar.tsx:58` |
+| `focus.main-content` | 主列 `main#main-content` | hash `#main-content` | 已登录主壳 | `[读]` leftover：未走 `#main-content` hash | core | `focus.skip.main` | `MainContent.tsx:23-26` |
+| `focus.scope.navbar-search` | 顶栏搜索包一层 FocusScope | （无 trap） | 非 embed | `[实测]` ①Ctrl+K 后搜索获焦 + Recent listbox。②无。③无。shot `03-ctrl-k-search.webp` | core | `kb.reg.search.mod-k.*` | `NavBarNavigation.tsx:17` |
+| `focus.scope.sidebar.legacy` | 旧侧栏 FocusScope | （无 trap） | `secondarySidebar` Off | `[实测]` ①legacy 侧栏已挂（Channels / `# general`）。无 contain trap。②无。③无。shot `02-home.webp` `22-alt-sidebar-retry.webp` | core+preview | `kb.adj.sidebar.arrows` | `sidebar/SidebarRegion.tsx:93` |
+| `focus.scope.nav.primary` | 新导航第一块 FocusScope | （无 trap） | `secondarySidebar` On | `[读]` leftover：v2 导航未挂。shot `19-feature-preview.webp` | core+preview | `focus.scope.nav.secondary` | `NavigationRegion.tsx:95` |
+| `focus.scope.nav.secondary` | 新导航第二块 FocusScope | （无 trap） | 同左 | `[读]` leftover 同左 | core+preview | `focus.scope.nav.primary` | `NavigationRegion.tsx:102` |
+| `focus.scope.room.invite` | 邀请订阅房间整页 FocusScope | （无 trap） | `isInviteSubscription` | `[读]` leftover：无 invite 订阅房间 | core | `focus.scope.room` | `Room.tsx:44` |
+| `focus.scope.room` | 普通房间壳 FocusScope | （无 trap） | 非 invite | `[实测]` ①`#general` 房间壳。关 mark-all 后焦点回到消息 listitem 蓝框。②无。③无。shot `15-markall-modal-esc-restore.webp` | core | `kb.adj.msglist.tab` | `Room.tsx:53` |
+| `focus.scope.contextualbar` | 上下文栏 autoFocus + restoreFocus | Esc 关栏 | toolbox tab 打开 | `[实测]` ①Channel info `/channel-settings`。Tab 仍在栏内。未截关栏还焦。②无。③无。shot `12-room-contextual-bar.webp` `12b-contextual-bar-tab-focus.webp` | core | `kb.adj.contextualbar.esc` | `ContextualbarDialog.tsx:40` |
+| `focus.scope.modal` | 通用模态 contain + restore + autoFocus | Esc 关 | `ModalRegion` 有 modal | `[实测]` ①Keyboard shortcuts / Clear all unreads / Create channel。打开 Name 获焦；Tab → Topic 蓝框；Esc 后 Home 卡片回来。②无。③无。shot `06` `13` `14` `16-create-channel-modal.webp` `16b-create-channel-tab.webp` `17-create-channel-closed.webp` | core | `kb.adj.modal.esc` | `packages/ui-client/src/components/Modal/ModalRegion.tsx:25` |
+| `focus.scope.uikit-modal` | UiKit 模态同样 trap | Esc / 忽略栏外键 | UiKit modal | `[读]` leftover：Community 无挂载的 UiKit modal | core+apps | `focus.scope.modal` | `views/modal/uikit/ModalBlock.tsx:177` |
+| `focus.scope.image-gallery` | 图片画廊 contain + autoFocus | 画廊打开 | 点消息图 | `[读]` leftover：`#general` 无图片消息 | core | `focus.scope.modal` | `ImageGallery.tsx:133` |
+| `focus.scope.videoconf-popup` | 视频会议弹层 restoreFocus | 弹层开 | videoconf popup | `[读]` leftover：未开 videoconf | core | `focus.scope.modal` | `VideoConfPopups.tsx:55` |
+| `focus.scope.voip-widget` | 语音 widget 可选 autoFocus | 呼叫 UI | voip 开 | `[读]` leftover：Community 无 voip | core+voip | `focus.scope.voip-keypad` | `packages/ui-voip/src/components/Widget/Widget.tsx:16` |
+| `focus.scope.voip-keypad` | 拨号盘 autoFocus | 拨号盘开 | keypad 挂载 | `[读]` leftover 同左 | core+voip | `focus.scope.voip-widget` | `packages/ui-voip/src/components/Keypad/Keypad.tsx:26` |
+| `focus.list.message` | 时间线 listitem 键盘顺序 | ↑↓ Tab Shift+Tab | 房间/线程消息列表 | `[实测]` 关 mark-all 后焦点在最后一条 listitem（蓝框）。↑↓ 邻条未另走。shot `15-markall-modal-esc-restore.webp` | core | `kb.adj.msglist.tab` | `useMessageListNavigation.ts:15-109`；`RoomBody.tsx:102`；`ThreadMessageList.tsx:121` |
 | `focus.list.sidebar` | 侧栏房间键盘顺序 | ↑↓ Tab | 旧或新 RoomList | `[读]` 见 `kb.adj.sidebar.arrows` | core | `kb.adj.sidebar.arrows` | `sidebar/RoomList/useSidebarListNavigation.ts`；`navigation/sidebar/RoomList/useSidebarListNavigation.ts` |
 | `focus.list.members` | 成员列表键盘顺序 | keydown | 成员栏 | `[读]` 见 `kb.adj.members.arrows` | core | `kb.adj.members.arrows` | `useMembersListNavigation.ts:7` |
 
 **B 计数**：FocusScope JSX 13 + skip + main + 3 list hooks = **18** 行。`13` 必须能被下面的 `rg '<FocusScope'` 复跑对上。
+
+实机能开：navbar-search / sidebar.legacy / room / contextualbar / modal（+ Create channel）。打不开 leftover：invite / NavigationRegion×2 / ImageGallery / VideoConf / VoIP×2 / UiKit。skip-link 未 Tab 出。
 
 ---
 
@@ -185,7 +195,7 @@ API 闭集 **107** = `77+20+1+8+1`。
 | `time.hof.thread-invalidate` | 线程主消息 query 失效 | `wait: 10000` | 线程栏打开 | `[读]` ①10s 后 invalidate。②query。③无 | core | `opt.send` | `useThreadMainMessageQuery.ts:98` |
 | `time.hof.get-more` | 历史加载节流（唯一 `withThrottling`） | `wait: 100` | 用户已滚/按 PageUp 等 | `[读]` ①`getMore` / `getMoreNext`。②历史订阅。③刷新重拉 | core | `kb.adj.history.keys` | `useGetMore.ts:24` |
 
-**HOF 计数**：`8+1 = 9`。
+**HOF 计数**：`8+1 = 9`。107 不发明 debounce/throttle DOM；本节保持 `[读]`。
 
 ### 8.2 邻接：`UserAction` 打字窗口（不在 107）
 
@@ -226,8 +236,8 @@ API 闭集 **107** = `77+20+1+8+1`。
 
 | 稳定语义 id | 功能一句话 | 和弦或常量 | 门控 | 触发后果 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `opt.send` | 发送先本地插入 `temp:true` | **无 ms 窗口** | 非联邦房；有 uid/username；`trim(msg)!==''`；`_id` 尚未在 store | `[读]` ①`role=listitem` 立即出现，`temp`；联邦房 **跳过**（`:30-32`）。②紧接着 `POST /v1/chat.sendMessage`。③仅当记录仍 `temp===true` 时清 flag（`:57-60`），避免盖掉先到的 stream。REST 失败：toast，**未见**回滚删 temp。刷新后只剩 server 真相 | core | `kb.adj.composer.enter` | `app/lib/client/methods/sendMessage.ts:12-51`；`lib/chats/flows/sendMessage.ts:48-60` |
-| `opt.reaction` | `+:emoji:` 先改最后一条反应 | **无 ms 窗口** | 消息存在、非 private、emoji 已注册、非只读、已订阅 | `[读]` ①最后一条反应条立刻变。②`POST /v1/chat.react`。③失败 toast 并 rethrow，**未见**把 usernames 数组扳回去。刷新后以 server 为准 | core | `kb.adj.composer.enter` | `app/reactions/client/methods/setReaction.ts:8-81`；`processSetReaction.ts:27-32` |
+| `opt.send` | 发送先本地插入 `temp:true` | **无 ms 窗口** | 非联邦房；有 uid/username；`trim(msg)!==''`；`_id` 尚未在 store | `[实测]` ①`#general` 发出 `vol11-opt-send-20260822`，listitem 立即出现（未见 pending spinner）。②REST 随后成功。③联邦跳过 leftover（无 federated room，不发明 Matrix）。REST fail leftover（未诱发；不伪造 rollback）。shot `11-optimistic-send.webp` | core | `kb.adj.composer.enter` | `app/lib/client/methods/sendMessage.ts:12-51`；`lib/chats/flows/sendMessage.ts:48-60` |
+| `opt.reaction` | `+:emoji:` 先改最后一条反应 | **无 ms 窗口** | 消息存在、非 private、emoji 已注册、非只读、已订阅 | `[实测]` ①composer 发送 `+:smile:` 后最后一条出现第二枚 smile，composer 清空，**没有**字面 `+:smile:` 消息。②`POST /v1/chat.react`。③失败 toast leftover（未诱发）。工具栏点 reaction 走 `ReactionMessageAction` REST，**不是** `runOptimisticSetReaction`（对照 `21-reaction-optimistic.webp`）。shot `23-plus-smile-runOptimistic.webp` | core | `kb.adj.composer.enter` | `app/reactions/client/methods/setReaction.ts:8-81`；`processSetReaction.ts:27-32` |
 
 **D 计数**：2。`rg 'export const runOptimistic'` = 2。调用点另 2（`sendMessage.ts:49`、`processSetReaction.ts:27`）。`6` 是「定义+import+调用」命中，不是窗口数。
 
@@ -246,8 +256,10 @@ focus 表行              18 = 13 + skip + main + 3 list
 debounce/throttle API  107 = 77+20+1+8+1
 HOF wait 行             9 = 8+1
 runOptimistic 定义      2
-Meteor boot             0（未 boot）
+Meteor boot             1（200；产品 merge-base e519470）
 ```
+
+`[实测]` 只给有截图的行；其余 leftover 仍 `[读]`。不要把上面的数加成功能总数。
 
 邻接（不进对应闭集）：keyboard 17；`UserAction` 3；lodash `debounce` 1。
 
@@ -340,6 +352,8 @@ PY
 - **`lodash.debounce` / `setTimeout` / CSS transition**：除 `UserAction` 与日期泡外不进 107。
 - **`apps/meteor/ee/client`**：本冻结路径不存在。
 - **livechat visitor widget**（`packages/livechat`）：另一客户端，不进本闭集。
-- **Meteor 未 boot**：无 `[实测]`。
+- **debounce/throttle 107**：纸面计数。不发明 DOM 时序实测。
+- **打不开的 FocusScope**：invite / v2 NavigationRegion×2 / ImageGallery / VideoConf / VoIP×2 / UiKit。Community + 本库只有 `#general`。
+- **Ctrl+Esc**：Xfce 系统菜单，不是 RC unbound。
 
 `file:line` 只保证在 `e519470` 上存在。
