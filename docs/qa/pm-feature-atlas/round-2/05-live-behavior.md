@@ -91,11 +91,11 @@ Commit Hash: e519470d35
 | 用户 | admin、rocketchat.internal.admin.test、seeduser、rocket.cat |
 | Livechat_enabled | true（后赋 `livechat-manager`+`livechat-agent`） |
 | Discussion/Threads/Pin/Star | true |
-| AutoTranslate / WebDAV | **true**（本 leftover pass 已翻开关；WebDAV 已用本机 wsgidav:8089 加账号 `vol5-dav`，`composer.state.webdav.pick` 已升实测。仍无译文，`msg.translate.original` 保持待渲染） |
+| AutoTranslate / WebDAV | **true**（WebDAV 账号 `vol5-dav`；`composer.state.webdav.pick` + `msg.webdav.save` 已升。Mongo 已写译文但 More 未截到 View Original，`msg.translate.original` 保持待渲染） |
 | E2E_Enable / Accounts_AllowFeaturePreview / Accounts_AllowDeleteOwnAccount | **true** |
 | Feature preview `Filters and secondary sidebar` | **ON**（Account → Feature preview） |
 | `Livechat_show_queue_list_link` / agent status | **true** / `available` |
-| `Message_Read_Receipt_Enabled` + Store_Users | **true**（More 菜单本步未截到 Read receipts，保持待渲染） |
+| `Message_Read_Receipt_Enabled` + Store_Users | **true**（More 已开且有 Save to WebDAV，仍无 Read receipts 项 → 保持待渲染） |
 | `Accounts_CustomFields` | `department` text（Profile 已见该字段） |
 | EE 设置 `Outlook_Calendar_Enabled` / `Canned_Responses_Enable` / `VideoConf_Enable_DMs` / `Device_Management_*` / `Accounts_StatusVisibility_Enabled` | GET `success:false`（Community 未注册该设置；父页已开、控件不在 → 保持待渲染） |
 | Marketplace | Explore `0 apps enabled` `0/5` `No app matches` |
@@ -148,7 +148,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 
 列：稳定语义 id / 功能一句话 / 完整入口点击序列 / 门控 / 触发后果三件套（本卷只写现场或诚实待渲染） / 供给 / 关联 / 出处。
 
-### `msg.*` — 26 个 id（实测 21 / 不可达 0 / 待渲染 5）
+### `msg.*` — 26 个 id（实测 22 / 不可达 0 / 待渲染 4）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -157,7 +157,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | msg.thread.reply | 在该消息下打开/进入讨论串并回复 | `房间消息→悬停工具栏→Reply_in_thread`；`联邦房间 native→悬停工具栏→Reply_in_thread`；`videoconf 系统消息→悬停工具栏→Reply_in_thread`。threads / videoconf-threads / pinned / starred / mentions / search / direct 的 `*Items` **不**挂此图标。[读] | `Threads_enabled`（默认 true）`ReplyInThreadMessageAction.tsx:22`；非 omnichannel；`subscription`；非联邦阻断 `ReplyInThreadMessageAction.tsx:25-32`。hidden id `reply-in-thread`。 | [实测] ① button “Reply in thread”。② 未点。③ 须再悬停。 | \ | message._id` ［待渲染实测］ 栏标题 role+name。(2) 点击无 REST；仅 `router.navigate` `ReplyInThreadMessageAction.tsx:45-53`。(3) 刷新后若 URL 仍含 thread tab/context 则线程栏仍在，否则回到房间。[读] | `Threads_enabled`；`message.tmid` `message._id`；`room` omnichannel/federated；`subscription`；当前 `routeName`+params |
 | msg.forward | 把消息转发到其他房间或复制 permalink | `房间消息→悬停工具栏→Forward_message→选 Person_Or_Channel→Forward`；`线程消息→悬停工具栏→Forward_message→…`；`message-mobile Items 含 Forward`（无现行赋值）。联邦 / videoconf `*Items` **无** Forward。[读] 模态内 `Copy_Link` 与 `msg.permalink.copy` 同效果 | none 对显示：始终渲染按钮；`disabled` 当 `isE2EEMessage` 或 `room.abacAttributes` `ForwardMessageAction.tsx:20-38`。hidden id `forward-message`。license `abac` 体现在房间字段而非本组件直接查 license。[读] | [实测] ① button “Forward message”。② 未点。③ 须再悬停。 | `message` 全文/附件；`room.abacAttributes`；`isE2EEMessage`；permalink | msg.permalink.copy；msg.quote | `ForwardMessageAction.tsx:16-52` |
 | msg.jump | 从列表/侧栏跳回房间时间线该消息 | `顶栏 Pinned_Messages（或 Options→Pinned_Messages）→悬停钉选消息→Jump_to_message`（内部 id `jump-to-pin-message`）；`顶栏 Starred_Messages→悬停→Jump_to_message`（`jump-to-star-message`）；`顶栏 Mentions→悬停→Jump_to_message`；`顶栏 Search_Messages→搜索→悬停结果→Jump_to_message`；`顶栏 Threads→线程消息悬停→Jump_to_message`；`videoconf-threads 消息悬停→Jump_to_message`；`主列表 tmid 线程回复（getMessageContext→threads）→悬停→Jump_to_message`。［待渲染实测］ `message-mobile` / `direct`：Items 已挂但无赋值入口。`direct` 内部 id 误用 `jump-to-pin-message`（`DirectItems.tsx:12`） | hidden id 按 **内部 id** 分三套：`jump-to-message` / `jump-to-pin-message` / `jump-to-star-message`（`MessageToolbarItem.tsx:17`）。`direct` 另需 `subscription` `DirectItems.tsx:12`。语义相同故不拆 id；hidden 分轨已说明。 | [实测] ① #general Pinned Messages 悬停 mention-seed → Jump to message 图标（attachment-seed 同行亦有）。② 跳回时间线。③ 刷新须再开 Pinned。shots/shots19/13-pinned-message-jump.webp | `message._id`；当前 pathname + search；内部 toolbar id | msg.permalink.copy | `JumpToMessageAction.tsx:12-24`；装配：`PinnedItems.tsx:14` `StarredItems.tsx:14` `MentionsItems.tsx:14` `SearchItems.tsx:14` `ThreadsItems.tsx:20` `MobileItems.tsx:22` `VideoconfThreadsItems.tsx:16` `DirectItems.tsx:12` |
-| msg.webdav.save | 把消息附件存到已配置的 WebDAV | 任意已挂工具栏的 context（**hook 无 `context` 字段**，`!button.context` 放行，`MessageToolbarActionMenu.tsx:83`）：`…→悬停工具栏→More→Save_To_Webdav→选 account→保存`。mentions/search 上若仅此项且被门控掉，则 More 整栏不渲染（`data.length===0` 提前 return，`MessageToolbarActionMenu.tsx:92-94`，apps 也不会补上）。[读] | `Webdav_Integration_Enabled`；`subscription`；`useWebDAVAccountIntegrationsQuery` 至少 1 个账号；`message.file` `useWebDAVMessageAction.tsx:19`。hidden id `webdav-upload`。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `Webdav_Integration_Enabled`；`message.file` `message.attachments[0].title_link`；WebDAV accounts | （无同供给的其他 msg.*） | `useWebDAVMessageAction.tsx:9-43` |
+| msg.webdav.save | 把消息附件存到已配置的 WebDAV | 任意已挂工具栏的 context（**hook 无 `context` 字段**，`!button.context` 放行，`MessageToolbarActionMenu.tsx:83`）：`…→悬停工具栏→More→Save_To_Webdav→选 account→保存`。mentions/search 上若仅此项且被门控掉，则 More 整栏不渲染（`data.length===0` 提前 return，`MessageToolbarActionMenu.tsx:92-94`，apps 也不会补上）。[读] | `Webdav_Integration_Enabled`；`subscription`；`useWebDAVAccountIntegrationsQuery` 至少 1 个账号；`message.file` `useWebDAVMessageAction.tsx:19`。hidden id `webdav-upload`。 | [实测] ① #atlas-live 悬停 vol5-tiny.mp4 附件 More → menuitem Save to WebDAV（已有 vol5-dav）。② 未点保存。③ Escape。shots/shots48/12-file-more.png | `Webdav_Integration_Enabled`；`message.file` `message.attachments[0].title_link`；WebDAV accounts | （无同供给的其他 msg.*） | `useWebDAVMessageAction.tsx:9-43` |
 | msg.discussion.start | 以该消息为父消息创建讨论 | `房间消息→悬停工具栏→More→Discussion_start→填表→确认`；`videoconf 系统消息→悬停工具栏→More→Discussion_start→…`。［待渲染实测］ `message-mobile`。threads/federated/pinned/starred/mentions/search/direct/videoconf-threads 的 `context` 数组不含此项。[读] | `Discussion_enabled`（默认 false）`useNewDiscussionMessageAction.tsx:13,20`；`subscription`；非 livechat；已登录；本消息无 `drid` 且 `dcount` 非数字；自己的消息需 `start-discussion`，他人需 `start-discussion-other-user`（room scoped）`useNewDiscussionMessageAction.tsx:17-47`。hidden id `start-discussion`。 | [实测] ① More menuitem “Start a Discussion”。② 未点。③ 菜单关。 | `Discussion_enabled`；`message.u._id` `drid` `dcount` `msg`；`room.prid` `_id` `encrypted`；permissions | msg.thread.reply | `useNewDiscussionMessageAction.tsx:8-69` |
 | msg.pin | 将消息钉在房间钉选列表 | `房间消息→悬停工具栏→More→Pin→Pin_Message 模态→Yes_pin_message`；`线程消息→More→Pin→确认`；`videoconf / videoconf-threads→More→Pin→确认`；`顶栏 Pinned_Messages 列表中未钉选态不会出现（`message.pinned` 为真则 hook 返回 null）`；`direct` context 已注册但无赋值入口。［待渲染实测］ `message-mobile`。federated/starred/mentions/search **不**含 pin。 | `Message_AllowPinning`；`pin-message`（room）；非 omnichannel；`!message.pinned`；`subscription` `usePinMessageAction.tsx:15-20`。hidden id `pin-message`。 | [实测] ① More → Pin → 确认 Yes, pin message → 系统消息 “Pinned a message”。② 浏览器 pin。③ 刷新后仍钉选。shots/07-more-menu.png | `Message_AllowPinning`；`pin-message`；`message.pinned` `_id`；`subscription`；room omnichannel | msg.unpin；msg.jump | `usePinMessageAction.tsx:9-39` |
 | msg.unpin | 取消钉选 | `房间消息（已钉选）→悬停工具栏→More→Unpin`；`顶栏 Pinned_Messages→悬停→More→Unpin`；`threads / videoconf / videoconf-threads` 同样；`direct` 已注册无入口。［待渲染实测］ `message-mobile`。无确认模态（与 pin 不同）。[读] | `Message_AllowPinning`；`pin-message`；非 omnichannel；`message.pinned`；`subscription` `useUnpinMessageAction.ts:12-18`。hidden id `unpin-message`。 | [实测] ① #general attachment-seed More → Unpin → toast Message has been unpinned。② 取消钉选。③ 钉选列表空。shots/shots16/msg-unpin.webp | 同 msg.pin，要求 `message.pinned===true` | msg.pin；msg.jump | `useUnpinMessageAction.ts:8-32` |
@@ -249,7 +249,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | user.action.ban | 从房间封禁用户 | `…→More→Ban_user_from_room` | `isMember 或 isInvited`；`ban-user` + `roomCanBan` `useBanUserAction.ts:25-33` | [实测] ① 同 More → Ban user from room。② 未点。③ 菜单关。shots/shots22/user.action.mute.webp | `useBanUserAction.ts:31-42` | `room.toolbox.banned-users` | `useUserInfoActions.ts:107` |
 | user.action.report | 举报用户 | `…→More→Report` | `ownUserId!==uid` `useReportUser.tsx:44`；无房间/权限键 | [实测] ① 同栏 kebab → Report。② 未提交举报。③ 菜单可关。shots/shots34/user.action.block-report.webp | `useReportUser.tsx:33-50` | moderation danger | `useUserInfoActions.ts:108` |
 
-### `nav.*` — 49 个 id（实测 39 / 不可达 4 / 待渲染 6）
+### `nav.*` — 49 个 id（实测 40 / 不可达 4 / 待渲染 5）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -301,7 +301,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | nav.voip.history | 打开通话记录页 | `顶栏右→Voice_Call→Call_history` | 同上，组随 callAction 显隐 `NavBarVoipGroup.tsx:15-17` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `NavBarVoipGroup.tsx:12-14,22` | `media-call-history` 房间路由 | `NavBarVoipGroup.tsx:22` |
 | nav.omnichannel.queue | 打开 livechat 队列 | `顶栏右→Omnichannel→Queue` | 组：`Livechat_enabled`+`view-l-room`（`useOmnichannelEnabled`）；项：`Livechat_show_queue_list_link`+agent available `useOmnichannelQueueAction.ts:9,15` | [实测] ① 已翻 Livechat_enabled + Livechat_show_queue_list_link，坐席 available；Feature preview secondary sidebar ON 后主侧栏可见 Queue，打开 /livechat-queue 标题 Omnichannel Queue。② 队列空。③ 刷新侧栏仍有 Queue。shots/shots46/02-home.png shots/shots46/nav.omnichannel.queue.png | `useOmnichannelQueueAction.ts:14-19` | Omni 域外 | `useOmnichannelQueueAction.ts:18` |
 | nav.omnichannel.contact | 打开联络中心目录 | `顶栏右→Omnichannel→Contact_Center` | 组级 omnichannel enabled；项 none `useOmnichannelContactAction.ts:10-14` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | `useOmnichannelContactAction.ts:11-14` |  | `useOmnichannelContactAction.ts:13` |
-| nav.omnichannel.agent-toggle | 开关自己接听 livechat | `顶栏右→Omnichannel→Turn_on/off_answer_chats` | 组级 omnichannel enabled | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `useOmnichannelLivechatToggle.ts:22-27` |  | `useOmnichannelLivechatToggle.ts:11` |
+| nav.omnichannel.agent-toggle | 开关自己接听 livechat | `顶栏右→Omnichannel→Turn_on/off_answer_chats` | 组级 omnichannel enabled | [实测] ① 桌面顶栏右 `#omnichannel-status-toggle` title=Turn off answer chats（agent available）。② 未点切换。③ 悬停仍见该 title。shots/shots48/60-omni-toggle-hover.png shots/shots48/52-omni-toggle-crop.png | `useOmnichannelLivechatToggle.ts:22-27` |  | `useOmnichannelLivechatToggle.ts:11` |
 
 ### `sidebar.*` — 9 个 id（实测 3 / 不可达 5 / 待渲染 1）
 
@@ -317,7 +317,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | sidebar.sidepanel.unread-toggle | 副栏只看未读 | `副栏顶 heading→Unread ToggleSwitch` | secondarySidebar ON；项 none `SidePanelInternal.tsx:48-51` | [实测] ① Account → Feature preview 打开 Filters and secondary sidebar 后，副栏顶 All 旁 Unread ToggleSwitch（关）。② 未拨开。③ 刷新仍在。shots/shots46/01-feature-preview.png shots/shots46/02-home.png shots/shots46/sidebar.sidepanel.unread-toggle.png | `SidePanelInternal.tsx:48-51` | `nav.sort.group.unread` | `SidePanelInternal.tsx:51` |
 | sidebar.sidepanel.back | tablet 关闭副栏 | `副栏顶→Back` | secondarySidebar ON + `isTablet` `SidePanelInternal.tsx:44` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `SidePanelInternal.tsx:44` | `nav.sidebar.toggle` | `SidePanelInternal.tsx:44` |
 
-### `composer.*` — 20 个 id（实测 13 / 不可达 4 / 待渲染 3）
+### `composer.*` — 20 个 id（实测 14 / 不可达 4 / 待渲染 2）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -334,7 +334,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | composer.state.typing.truncated | ≥5 人截成 and others | ≥5 个 username | `maxUsernames=5` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `implicit.typing.display` | `ComposerUserActionIndicator.tsx:7,70-72` |
 | composer.state.location.prompt | 定位权限未决：先说明再 Continue | More → Share → `Location` | `MapView_Enabled`；geolocation；`MapView_GMapsAPIKey`；`!federated`；`!disableBasicActions` | [实测] ① #atlas-live More actions → Location → 模态 You will be asked for permissions + Continue/Cancel。② 未点 Continue 要定位。③ Escape。shots/shots47/85-location.png | core+setting | `composer.action.share-location` | `useShareLocationAction.tsx:17-31`；`ShareLocationModal.tsx:70-79` |
 | composer.state.location.denied | 定位拒绝或拿不到坐标 | Continue 后拒 / 无 position | `denied \ | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | !positionData` | `［待渲染实测］` ①modal `Cannot_share_your_location` 仅 Ok。②无 `chat.sendMessage`。③无消息 | core |
-| composer.state.location.share | 预览地图后发出 Point | 允许定位 → `Share` | granted + position | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core+setting | `composer.send` | `ShareLocationModal.tsx:90-93` |
+| composer.state.location.share | 预览地图后发出 Point | 允许定位 → `Share` | granted + position | [实测] ① #atlas-live Location → Continue（context 已 grant geolocation）→ 模态 Share Location? + Share/Cancel。② 未点 Share 发 Point。③ Escape。shots/shots48/15-location-after.png | core+setting | `composer.send` | `ShareLocationModal.tsx:90-93` |
 | composer.state.webdav.add | 添加 WebDAV 账号 | More → Create new → `Add_Server` → 填表提交 | `Webdav_Integration_Enabled`；项 `disabled=!isSuccess` | [实测] ① #atlas-live More → Add Server → Add new WebDAV account（URL/Username/Password）。② 未连上真实服务器。③ Cancel。shots/shots38/composer.state.webdav.add.webp | core+setting | `composer.action.webdav-add` | `useWebdavActions.tsx:12-33` |
 | composer.state.webdav.pick | 从已连账户选文件入队 | More → 账户名 → picker 点文件 | query success 且有账户 | [实测] ① method.call addWebdavAccount 后 More → vol5-dav → Upload from vol5-dav，行 vol5.txt 6 Bytes。② 未点上传。③ 关模态。shots/shots47/86-webdav-picker.png | core+setting | `composer.action.webdav-upload` | `useWebdavActions.tsx:35-43`；`WebdavFilePickerModal.tsx:128-147` |
 | composer.state.discussion.open | 从 composer 打开创建讨论 | More → Create new → `Discussion` | `Discussion_enabled`；`start-discussion` 或 `start-discussion-other-user`；`!federated` | [实测] ① More → Discussion → Create discussion（parent=general、Name/Topic/Members/Encrypted）。② 未 Create。③ Cancel。shots/shots12/11-create-discussion-modal.webp | core+permission+setting | `composer.action.create-discussion` | `useCreateDiscussionAction.tsx:16-31`；`CreateDiscussion.tsx` |
@@ -450,7 +450,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | team.create | 用顶栏「新建」打开创建团队模态并建出团队主房间 | 顶栏 `+`（Create new）→ `Team` → 填名称等 → 提交 | 菜单项：`create-team` **且** (`create-c` OR `create-p`)；提交按钮再检 `create-team` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `create-team`；`create-c`；`create-p`；`CreateTeamModal`；`channel`；`group`。许可证/EE 见门控 | `directory.teams` | `useCreateNewItems.ts:13-76` `CreateTeamModal.tsx:54,118+` `[读]` |
 
-### `page.*` — 623 个 id（实测 471 / 不可达 114 / 待渲染 38）
+### `page.*` — 623 个 id（实测 475 / 不可达 114 / 待渲染 34）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -728,7 +728,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.rooms.edit.topic | 改房间主题 | 编辑面板 → Topic | 同上 | [实测] ① /admin/rooms/edit/6a87ab9ad2c5c6066f616826 Room Information → Topic 文本区。② 未保存。③ Reset/Save 未改脏仍 disabled。shots/shots17/001-rooms-edit.webp | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=roomTopic [读] |
 | page.admin.rooms.edit.private | 切换私有/公开 | 编辑面板 → Private | 非 DM [读] | [实测] ① 同面板 Private 开关。② 未保存。③ 仍 off。shots/shots17/001-rooms-edit.webp | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=roomType [读] |
 | page.admin.rooms.edit.readonly | 切换只读 | 编辑面板 → Read_only | 非 DM [读] | [实测] ① 同面板 Read-only 开关。② 未保存。③ 仍 off。shots/shots17/001-rooms-edit.webp | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=readOnly [读] |
-| page.admin.rooms.edit.react-when-readonly | 只读时仍可反应 | 编辑面板 → React_when_read_only | readOnly [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.readonly | EditRoom.tsx name=reactWhenReadOnly [读] |
+| page.admin.rooms.edit.react-when-readonly | 只读时仍可反应 | 编辑面板 → React_when_read_only | readOnly [读] | [实测] ① groups.setReadOnly atlas-private 后 /admin/rooms 点 qa-room-id 行 → Room Information：Read-only ON 下 Allow reacting 开关（i18n React_when_read_only）。② 未保存。③ 测完把只读改回 false。shots/shots48/01b-react-when-readonly.png | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.readonly | EditRoom.tsx name=reactWhenReadOnly [读] |
 | page.admin.rooms.edit.archived | 归档/取消归档 | 编辑面板 → Room_archivation_state_true | 非 DM [读] | [实测] ① 同面板 Archived 开关。② 未点。③ 仍 off。shots/shots17/001-rooms-edit.webp | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=archived [读] |
 | page.admin.rooms.edit.default | 设为默认房间 | 编辑面板 → Default | 非 DM [读] | [实测] ① 同面板 Default 开关。② 未点。③ 仍 off。shots/shots17/001-rooms-edit.webp | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.save | EditRoom.tsx name=isDefault [读] |
 | page.admin.rooms.edit.favorite | 默认收藏 | 编辑面板 → Favorite | isDefault [读] | [实测] ① 同面板 Favorite 开关。② 未点。③ 仍 off。shots/shots17/001-rooms-edit.webp | core；共享 POST /v1/rooms.saveRoomSettings | page.admin.rooms.edit.default | EditRoom.tsx name=favorite [读] |
@@ -769,7 +769,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.users.form.status-text | 填 StatusMessage | 附加字段 → StatusMessage | 已展开 [读] | [实测] ① 同表 Status message。② 未保存。③ 关栏。shots/shots21/03-users-form-2.webp | core；共享 POST /v1/users.create 或 /v1/users.update | page.admin.users.form.save | AdminUserForm.tsx name=statusText [读] |
 | page.admin.users.form.bio | 填 Bio | 附加字段 → Bio | 已展开 | [实测] ① 同表 Bio。② 未保存。③ 关栏。shots/shots21/03-users-form-2.webp | core；共享 POST /v1/users.create 或 /v1/users.update | page.admin.users.form.save | AdminUserForm.tsx name=bio [读] |
 | page.admin.users.form.nickname | 填 Nickname | 附加字段 → Nickname | 已展开 | [实测] ① 同表 Nickname。② 未保存。③ 关栏。shots/shots21/03-users-form-2.webp | core；共享 POST /v1/users.create 或 /v1/users.update | page.admin.users.form.save | AdminUserForm.tsx name=nickname [读] |
-| page.admin.users.form.custom-fields | 填自定义字段 | New/Edit → CustomFields | 配置了自定义字段 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；共享 POST /v1/users.create 或 /v1/users.update | page.admin.users.form.save | AdminUserForm.tsx name=customFields.* [读] |
+| page.admin.users.form.custom-fields | 填自定义字段 | New/Edit → CustomFields | 配置了自定义字段 [读] | [实测] ① /admin/users/new 滚过 Nickname → Hide additional fields 下 department 文本框（Accounts_CustomFields）。② 未填未保存。③ 栏仍开。shots/shots48/66-department.png | core；共享 POST /v1/users.create 或 /v1/users.update | page.admin.users.form.save | AdminUserForm.tsx name=customFields.* [读] |
 | page.admin.users.form.save | 保存用户 | New/Edit → Add_user / Save_user | 校验通过 [读] | [实测] ① Edit User 底栏 Save user（未打脏为 disabled）。② 未提交。③ 用户未改。shots/shots17/005-users-edit.webp | core | page.admin.users.new | AdminUserForm.tsx [读] |
 | page.admin.users.action.dm | 从详情开直连消息 | 用户 info → Direct_Message | create-d [读] | [实测] ① 从用户详情进与 seeduser 的 DM（6a87c7eed2c5c6066f6169c2）。② 导航。③ 刷新 DM 仍在。shots/shots17/004-users-dm.webp | core | page.create.dm.submit | useAdminUserInfoActions.ts [读] |
 | page.admin.users.action.edit | 从详情进入编辑 | 用户 info → Edit | edit-other-user-info [读] | [实测] ① seeduser → Edit User 侧栏。② 未改保存。③ 关栏仍在用户表。shots/shots17/005-users-edit.webp | core | page.admin.users.form.save | useAdminUserInfoActions.ts [读] |
@@ -974,10 +974,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.admin.import.prepare.channels.toggle | 勾选单个频道是否导入 | Channels 行 → do_import | 同上 | [实测] ① 行 imported-csv-group/channel 等各有勾选。② 未改。③ 仍勾。shots/shots47/07-import-prepare-channels.png | core；提交 startImport | page.admin.import.prepare.start | PrepareChannels.tsx [读] |
 | page.admin.import.prepare.channels.pagination | 翻页准备频道 | Channels → Pagination | 有多页 | [实测] ① Channels 底 Items per page + Showing 1-4 of 4。② 无翻页。③ 仍 4 行。shots/shots47/07-import-prepare-channels.png | core | page.admin.import.prepare.tab.channels | PrepareChannels.tsx [读] |
 | page.admin.import.prepare.contacts.select-all | 全选/取消导入联系人 | Contacts → select-all | 同上 | [实测] ① Contacts 空表仍有表头 select-all checkbox。② 无行可取消。③ Showing 1-0 of 0。shots/shots47/08-import-prepare-contacts.png | core；提交 startImport | page.admin.import.prepare.start | PrepareContacts.tsx [读] |
-| page.admin.import.prepare.contacts.toggle | 勾选单个联系人是否导入 | Contacts 行 → do_import | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core；提交 startImport | page.admin.import.prepare.start | PrepareContacts.tsx [读] |
+| page.admin.import.prepare.contacts.toggle | 勾选单个联系人是否导入 | Contacts 行 → do_import | 同上 | [实测] ① 400 用户 CSV zip 准备页 Contacts 2：行 checkbox + Vol5 Contact One/Two。② 未改 do_import。③ 仍勾选。shots/shots48/04-contacts.png | core；提交 startImport | page.admin.import.prepare.start | PrepareContacts.tsx [读] |
 | page.admin.import.prepare.contacts.pagination | 翻页准备联系人 | Contacts → Pagination | 有多页 | [实测] ① Contacts 底 Items per page + Showing 1-0 of 0。② 无翻页。③ 仍 0 行。shots/shots47/08-import-prepare-contacts.png | core | page.admin.import.prepare.tab.contacts | PrepareContacts.tsx [读] |
 | page.admin.import.prepare.start | 开始导入选中项 | Prepare → Importer_Prepare_Start_Import | 已选至少一项 [读] | [实测] ① 准备页头栏 Start Importing。② 已点，随后历史 Completed successfully。③ 准备页不再停留。shots/shots47/06-import-prepare-users.png | core | page.admin.import.progress | PrepareImportPage.tsx [读] |
-| page.admin.import.progress | 观看导入进度（只读） | Progress 页自动刷新 | 有进行中操作 [读] | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | page.admin.import.prepare.start | ImportProgressPage.tsx [读] |
+| page.admin.import.progress | 观看导入进度（只读） | Progress 页自动刷新 | 有进行中操作 [读] | [实测] ① Start Importing 后立刻 /admin/import/progress：Importing the users + ProgressBar 0%。② 只读观看。③ 随后跳历史。shots/shots48/05-import-progress.png | core | page.admin.import.prepare.start | ImportProgressPage.tsx [读] |
 | page.admin.reports.docs | 打开日志访问变更文档 | 管理侧栏 Reports → Callout 链 logsDocs | view-logs [读] | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | route.admin.reports | AnalyticsReports.tsx [读] |
 | page.admin.reports.view-json | 阅读用量统计 JSON（只读） | Reports → 统计 pre | view-logs [读] | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | route.admin.reports | AnalyticsReports.tsx ViewLogsPage.tsx [读] |
 | page.admin.sounds.search | 搜索自定义声音 | 管理侧栏 Sounds → 搜索 | manage-sounds [读] | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | route.admin.custom-sounds | CustomSoundsTable.tsx [读] |
@@ -1252,7 +1252,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | mkt.app.releases | 看版本发布说明 | 详情 tab `Releases` | context≠private `AppDetailsPageTabs.tsx:54-58` | [不可达] 已打开 Marketplace Explore：heading Explore，“0 apps enabled”，“No app matches”。应用级控件未出现。本实例管理员无法造出 Marketplace 远程目录应用（limits.marketplaceApps 有额度但目录空）。 | versions | `mkt.app.update` | `AppDetailsPageTabs.tsx:54-58` `[读]` |
 | mkt.app.instances | 看集群实例状态 | 详情 tab `Instances` | **`manage-apps`** + installed + `hasCluster` `AppDetailsPageTabs.tsx:69-73` | [不可达] 已打开 Marketplace Explore：heading Explore，“0 apps enabled”，“No app matches”。应用级控件未出现。本实例管理员无法造出 Marketplace 远程目录应用（limits.marketplaceApps 有额度但目录空）。 | cluster | `mkt.app.logs.filter` | `AppDetailsPageTabs.tsx:69-73` `[读]` |
 
-### `tl.*` — 37 个 id（实测 25 / 不可达 5 / 待渲染 7）
+### `tl.*` — 37 个 id（实测 26 / 不可达 5 / 待渲染 6）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1263,7 +1263,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | tl.body.mention.channel | 点 #频道提及跳进该房间 | `消息行→正文→MessageHighlight title=Mentions_channel` | `channels[]` 命中 `name` `GazzodownText.tsx:96`。未解析则纯文本 `#name`。 | [实测] ① 点 #atlas-live → 导航 /channel/atlas-live。② 房间订阅已有。③ 刷新仍在该频道。shots/53-timeline-mention-channel-navigated.png | `message.channels`；embedded layout | tl.discussion.open | `ChannelMentionElement.tsx:14-29`；`GazzodownText.tsx:100-115` |
 | tl.body.link.internal | 点正文站内链同标签跳转 | `消息行→正文→a[title=Go_to_href]` | 非 external `LinkSpan.tsx:55-58`。 | [实测] ① #atlas-live 消息 internal-link-seed 点 #general → 同标签到 /channel/general。② 导航。③ 仍在 general。 | 同左 | msg.jump | `LinkSpan.tsx:55-58` |
 | tl.body.spoiler | 点模糊剧透揭开正文 | `消息行→正文→role=button aria-label=Spoiler_hidden_activate_to_reveal`（或 i18n `Spoiler_hidden_activate_to_reveal`） | spoiler markup。揭开后不可再藏 `SpoilerSpan.tsx:72-79`。 | [不可达] 已打开 #atlas-live 消息 spoiler-seed（\|\|hidden-spoiler-text\|\|），无 spoiler 展开控件。 | md SPOILER | tl.ignored.reveal | `SpoilerSpan.tsx:52-79` |
-| tl.ignored.reveal | 展开被忽略用户的消息正文 | `消息行→role=button 文案 Message_Ignored`（chevron-left） | `ignoredUser`（`subscription.ignored` 含作者）或 `message.ignored`，且尚未 toggle `RoomMessage.tsx:78-79,141-144`。线程预览忽略只显示文本、**无**揭示按钮 `ThreadMessagePreview.tsx:94-96,127-128`。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `subscription.ignored`；`message.ignored` | user.action.ignore | `IgnoredContent.tsx:23-31` |
+| tl.ignored.reveal | 展开被忽略用户的消息正文 | `消息行→role=button 文案 Message_Ignored`（chevron-left） | `ignoredUser`（`subscription.ignored` 含作者）或 `message.ignored`，且尚未 toggle `RoomMessage.tsx:78-79,141-144`。线程预览忽略只显示文本、**无**揭示按钮 `ThreadMessagePreview.tsx:94-96,127-128`。 | [实测] ① #atlas-live 已 ignore seeduser → 行按钮 “This message was ignored”。② 已点揭示 leftover reveal message。③ 刷新可再忽略。shots/shots48/10b-ignored.png | `subscription.ignored`；`message.ignored` | user.action.ignore | `IgnoredContent.tsx:23-31` |
 | tl.reaction.toggle | 点已有 emoji 芯片切换自己的反应 | `消息行→反应条→aria-label=React_with__reaction__ 的芯片` | `message.reactions` 至少 1 个 key `RoomMessageContent.tsx:107`。mutation 要求已登录 `useToggleReactionMutation.ts:19-20`。**无** omnichannel 门（与工具栏 `msg.reaction.add` 不同）。自己已反应则 `mine` 样式。 | [实测] ① 点已有 😀 反应 → toast “You reacted with :smile:”。② 浏览器 chat.react。③ 刷新后反应条仍在（可再点取消）。shots/54-timeline-reaction-toggle.png | `message._id` `reactions`；`uid`；endpoint `POST /v1/chat.react` | msg.reaction.add | `Reactions.tsx:29-39`；`Reaction.tsx:38-42` |
 | tl.reaction.add | 从消息体「+」打开 picker 再加反应 | `消息行→反应条→title=Add_Reaction` | 反应条已渲染（已有 reactions）；`uid` 才真正打开 picker `MessageListProvider.tsx:111-116`。未登录 `useOpenEmojiPicker` 为空函数。 | [实测] ① #atlas-live 点 Add reaction → emoji picker → 选中一枚（heart-eyes），反应条出现 count 1。② 浏览器 chat.react。③ 刷新反应仍在。shots/11-reaction-added.webp | 同 tl.reaction.toggle；`chat.emojiPicker` | msg.reaction.add | `Reactions.tsx:41`；`MessageListProvider.tsx:111-116` |
 | tl.reaction.hover-users | 悬停芯片看谁反应了（不是 More→Reactions 模态） | `消息行→反应条→把指针停在芯片上`（mouseenter，不是 click） | 芯片存在。`showRealName` 且还有他人反应时 `GET /v1/chat.getMessage` 取 `reactions[].names` `ReactionTooltip.tsx:48-72`。仅自己反应则不请求。 | [实测] ① hover 😀 显示 @rocketchat.internal.admin.test。② 无写 REST。③ hover 消失后刷新无持久 UI。 | `message.reactions`；`UI_Use_Real_Name` | msg.reaction.list | `Reaction.tsx:45-64`；`ReactionTooltip.tsx:38-96` |
@@ -1333,10 +1333,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **781** |
+| 本卷 `[实测]` | 见上表 | **789** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **111** |
-| `781+190+111` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **103** |
+| `789+190+103` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
