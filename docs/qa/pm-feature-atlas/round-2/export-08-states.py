@@ -1720,9 +1720,9 @@ kind 等式（只核行数）：`@@KIND_EQ@@ = @@NSTATES@@`。
 | 登录 | `rocketchat.internal.admin.test` 成功 |
 | 产品 merge-base | `e519470` |
 
-Walk 并截图：login、account security / profile / preferences、home、`#general`（header / composer / message）、channel info、members、directory channels / users / teams。
+Walk 并截图：login、account security / profile / preferences、home、`#general`（header / composer / message / toolbox）、channel info、members、directory channels / users / teams、Create channel / team / DM / discussion 弹层、account security 2FA（TOTP / Email）展开。
 
-未打开因而不晋级：message toolbox 内层按钮、Create channel/team/dm/discussion 弹层、E2EE accordion、Video/Voice call chrome、Game Center、Outlook、VoIP 组、Apps inject、federation External、SAML。
+未打开因而不晋级：toolbox More 菜单内层项、Create 弹层内 FieldError / broadcast hint、DM 弹层无 errors.users（0 行）、TOTP QR / backup codes（未开启）、E2EE accordion、Video/Voice call chrome、Game Center、Outlook、VoIP 组、Apps inject、federation External、SAML。
 
 截图目录：`docs/qa/pm-feature-atlas/round-2/shots/`。标签回写：同目录 `live-08-states.json` 只改诚实列，不改抽取器、不改 4221 行集。未点击可达行仍 `[待渲染实测]`。不要用 `[不可达]` 清零。本卷 **不是** live-closed。
 

@@ -97,9 +97,9 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 
 | 诚实 | 数 |
 | --- | ---: |
-| [待渲染实测] | 4114 |
+| [待渲染实测] | 4102 |
 | [不可达] | 0 |
-| [实测] | 107 |
+| [实测] | 119 |
 
 `[待渲染实测]+[不可达]+[实测] = 4221`。本卷只晋级已截图分支，**不是** live-closed。
 
@@ -119,9 +119,9 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | 登录 | `rocketchat.internal.admin.test` 成功 |
 | 产品 merge-base | `e519470` |
 
-Walk 并截图：login、account security / profile / preferences、home、`#general`（header / composer / message）、channel info、members、directory channels / users / teams。
+Walk 并截图：login、account security / profile / preferences、home、`#general`（header / composer / message / toolbox）、channel info、members、directory channels / users / teams、Create channel / team / DM / discussion 弹层、account security 2FA（TOTP / Email）展开。
 
-未打开因而不晋级：message toolbox 内层按钮、Create channel/team/dm/discussion 弹层、E2EE accordion、Video/Voice call chrome、Game Center、Outlook、VoIP 组、Apps inject、federation External、SAML。
+未打开因而不晋级：toolbox More 菜单内层项、Create 弹层内 FieldError / broadcast hint、DM 弹层无 errors.users（0 行）、TOTP QR / backup codes（未开启）、E2EE accordion、Video/Voice call chrome、Game Center、Outlook、VoIP 组、Apps inject、federation External、SAML。
 
 截图目录：`docs/qa/pm-feature-atlas/round-2/shots/`。标签回写：同目录 `live-08-states.json` 只改诚实列，不改抽取器、不改 4221 行集。未点击可达行仍 `[待渲染实测]`。不要用 `[不可达]` 清零。本卷 **不是** live-closed。
 
@@ -230,7 +230,7 @@ Walk 并截图：login、account security / profile / preferences、home、`#gen
 | `state.navbar.create-channel-modal.225a1` | navbar | !(errors.name) | null | 登录后顶栏；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateChannelModal.tsx:225` |
 | `state.navbar.create-channel-modal.225a0` | navbar | errors.name | FieldError | 登录后顶栏；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateChannelModal.tsx:225` |
 | `state.navbar.create-channel-modal.226a1` | navbar | !(!allowSpecialNames) | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateChannelModal.tsx:226` |
-| `state.navbar.create-channel-modal.226a0` | navbar | !allowSpecialNames | FieldHint | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateChannelModal.tsx:226` |
+| `state.navbar.create-channel-modal.226a0` | navbar | !allowSpecialNames | FieldHint | 登录后顶栏 Create new → Channel；shot:create-channel.png；!allowSpecialNames FieldHint | [实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateChannelModal.tsx:226` |
 | `state.navbar.create-channel-modal.246a1` | navbar | !(errors.members) | null | 登录后顶栏；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateChannelModal.tsx:246` |
 | `state.navbar.create-channel-modal.246a0` | navbar | errors.members | FieldError | 登录后顶栏；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateChannelModal.tsx:246` |
 | `state.navbar.create-channel-modal.318a1` | navbar | !(broadcast) | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateChannelModal.tsx:318` |
@@ -240,7 +240,7 @@ Walk 并截图：login、account security / profile / preferences、home、`#gen
 | `state.navbar.create-team-modal.189a1` | navbar | !(errors?.name) | null | 登录后顶栏；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateTeamModal.tsx:189` |
 | `state.navbar.create-team-modal.189a0` | navbar | errors?.name | FieldError | 登录后顶栏；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateTeamModal.tsx:189` |
 | `state.navbar.create-team-modal.190a1` | navbar | !(!allowSpecialNames) | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateTeamModal.tsx:190` |
-| `state.navbar.create-team-modal.190a0` | navbar | !allowSpecialNames | FieldHint | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateTeamModal.tsx:190` |
+| `state.navbar.create-team-modal.190a0` | navbar | !allowSpecialNames | FieldHint | 登录后顶栏 Create new → Team；shot:create-team.png；!allowSpecialNames FieldHint | [实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateTeamModal.tsx:190` |
 | `state.navbar.create-team-modal.273a1` | navbar | !(broadcast) | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateTeamModal.tsx:273` |
 | `state.navbar.create-team-modal.273a0` | navbar | broadcast | FieldHint | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateTeamModal.tsx:273` |
 | `state.navbar.use-market-place-menu.43a1` | navbar | !(appRequestStats.isLoading) | null | 登录后顶栏；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/hooks/useMarketPlaceMenu.tsx:43` |
@@ -1156,7 +1156,7 @@ Walk 并截图：login、account security / profile / preferences、home、`#gen
 | `state.message.message-header.77a1` | message | !(message.private) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/MessageHeader.tsx:77` |
 | `state.message.message-header.77a0` | message | message.private | MessageStatusPrivateIndicator | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/MessageHeader.tsx:77` |
 | `state.message.message-toolbar-holder.41a1` | message | !(showToolbar && depsQueryResult.isSuccess && depsQueryResult.data.room) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/MessageToolbarHolder.tsx:41` |
-| `state.message.message-toolbar-holder.41a0` | message | showToolbar && depsQueryResult.isSuccess && depsQueryResult.data.room | Suspense | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/MessageToolbarHolder.tsx:41` |
+| `state.message.message-toolbar-holder.41a0` | message | showToolbar && depsQueryResult.isSuccess && depsQueryResult.data.room | Suspense | 登录 → `#general`；focus 消息后工具条挂上；shot:message-toolbox.png；showToolbar Suspense | [实测] | （无） | `apps/meteor/client/components/message/MessageToolbarHolder.tsx:41` |
 | `state.message.message-toolbar-holder.42s` | message | Suspense fallback（子树未 ready） | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/MessageToolbarHolder.tsx:42` |
 | `state.message.status-indicators.27a1` | message | !(translated) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/StatusIndicators.tsx:27` |
 | `state.message.status-indicators.27a0` | message | translated | MessageStatusIndicatorItem | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/StatusIndicators.tsx:27` |
@@ -1279,21 +1279,21 @@ Walk 并截图：login、account security / profile / preferences、home、`#gen
 | `state.message.message-roles.17a1` | message | !(isBot) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/header/MessageRoles.tsx:17` |
 | `state.message.message-roles.17a0` | message | isBot | MessageRole | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/header/MessageRoles.tsx:17` |
 | `state.message.message-toolbar-action-menu.92i` | message | data.length === 0 | null | 登录 → 打开有消息的房间；空列表/无数据 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/MessageToolbarActionMenu.tsx:92` |
-| `state.message.message-toolbar-action-menu.146d` | message | 前述 if-ret 均不成立（default return） | GenericMenu | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/MessageToolbarActionMenu.tsx:146` |
+| `state.message.message-toolbar-action-menu.146d` | message | 前述 if-ret 均不成立（default return） | GenericMenu | 登录 → `#general`；focus 消息工具条；shot:message-toolbox.png；More kebab GenericMenu（内层菜单未展开） | [实测] | （无） | `apps/meteor/client/components/message/toolbar/MessageToolbarActionMenu.tsx:146` |
 | `state.message.message-toolbar-item.17i` | message | hiddenActions.includes(id) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/MessageToolbarItem.tsx:17` |
-| `state.message.message-toolbar-item.21d` | message | 前述 if-ret 均不成立（default return） | FuselageMessageToolbarItem | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/MessageToolbarItem.tsx:21` |
+| `state.message.message-toolbar-item.21d` | message | 前述 if-ret 均不成立（default return） | FuselageMessageToolbarItem | 登录 → `#general`；focus 消息工具条；shot:message-toolbox.png；可见 MessageToolbarItem（含 Forward） | [实测] | （无） | `apps/meteor/client/components/message/toolbar/MessageToolbarItem.tsx:21` |
 | `state.message.message-toolbar-stars-action-menu.26i` | message | !starsAction.data?.length | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/MessageToolbarStarsActionMenu.tsx:26` |
 | `state.message.message-toolbar-stars-action-menu.71d` | message | 前述 if-ret 均不成立（default return） | GenericMenu | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/MessageToolbarStarsActionMenu.tsx:71` |
 | `state.message.direct-items.12a1` | message | !(!!subscription) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/items/DirectItems.tsx:12` |
 | `state.message.direct-items.12a0` | message | !!subscription | JumpToMessageAction | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/items/DirectItems.tsx:12` |
 | `state.message.quote-message-action.30i` | message | isFederationBlocked | null | 登录 → 打开有消息的房间；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/items/actions/QuoteMessageAction.tsx:30` |
 | `state.message.quote-message-action.34i` | message | !chat ¦¦ !subscription | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/items/actions/QuoteMessageAction.tsx:34` |
-| `state.message.quote-message-action.38d` | message | 前述 if-ret 均不成立（default return） | MessageToolbarItem | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/items/actions/QuoteMessageAction.tsx:38` |
+| `state.message.quote-message-action.38d` | message | 前述 if-ret 均不成立（default return） | MessageToolbarItem | 登录 → `#general`；focus 消息工具条；shot:message-toolbox.png；Quote | [实测] | （无） | `apps/meteor/client/components/message/toolbar/items/actions/QuoteMessageAction.tsx:38` |
 | `state.message.reaction-message-action.57i` | message | !enabled | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/items/actions/ReactionMessageAction.tsx:57` |
-| `state.message.reaction-message-action.69d` | message | 前述 if-ret 均不成立（default return） | <> | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/items/actions/ReactionMessageAction.tsx:69` |
+| `state.message.reaction-message-action.69d` | message | 前述 if-ret 均不成立（default return） | <> | 登录 → `#general`；focus 消息工具条；shot:message-toolbox.png；Add reaction | [实测] | （无） | `apps/meteor/client/components/message/toolbar/items/actions/ReactionMessageAction.tsx:69` |
 | `state.message.reply-in-thread-message-action.25i` | message | !threadsEnabled ¦¦ isOmnichannelRoom(room) ¦¦ !subscription | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/items/actions/ReplyInThreadMessageAction.tsx:25` |
 | `state.message.reply-in-thread-message-action.31i` | message | isFederationBlocked | null | 登录 → 打开有消息的房间；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/items/actions/ReplyInThreadMessageAction.tsx:31` |
-| `state.message.reply-in-thread-message-action.35d` | message | 前述 if-ret 均不成立（default return） | MessageToolbarItem | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/items/actions/ReplyInThreadMessageAction.tsx:35` |
+| `state.message.reply-in-thread-message-action.35d` | message | 前述 if-ret 均不成立（default return） | MessageToolbarItem | 登录 → `#general`；focus 消息工具条；shot:message-toolbox.png；Reply in thread | [实测] | （无） | `apps/meteor/client/components/message/toolbar/items/actions/ReplyInThreadMessageAction.tsx:35` |
 | `state.message.room-message.124a1` | message | !(!sequential && message.u.username && !selecting && showUserAvatar) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:124` |
 | `state.message.room-message.124a0` | message | !sequential && message.u.username && !selecting && showUserAvatar | MessageAvatar | 登录 → 打开有消息的房间；shot:room-general.png；消息头像 | [实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:124` |
 | `state.message.room-message.136a1` | message | !(selecting) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:136` |
@@ -1527,9 +1527,9 @@ Walk 并截图：login、account security / profile / preferences、home、`#gen
 | `state.account.account-security-page.60a1` | account | !(require2faSetup) | null | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:60` |
 | `state.account.account-security-page.60a0` | account | require2faSetup | Callout | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:60` |
 | `state.account.account-security-page.65a1` | account | !(twoFactorTOTP) | null | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:65` |
-| `state.account.account-security-page.65a0` | account | twoFactorTOTP | TwoFactorTOTP | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:65` |
+| `state.account.account-security-page.65a0` | account | twoFactorTOTP | TwoFactorTOTP | 登录 → `/account/security`；展开 Two Factor Authentication；shot:account-security-2fa.png；TwoFactorTOTP 开关 | [实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:65` |
 | `state.account.account-security-page.66a1` | account | !(showEmailTwoFactor) | null | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:66` |
-| `state.account.account-security-page.66a0` | account | showEmailTwoFactor | TwoFactorEmail | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:66` |
+| `state.account.account-security-page.66a0` | account | showEmailTwoFactor | TwoFactorEmail | 登录 → `/account/security`；展开 Two Factor Authentication；shot:account-security-2fa.png；TwoFactorEmail 开关 | [实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:66` |
 | `state.account.account-security-page.69a1` | account | !(e2eEnabled) | null | 登录 → `/account/security`；房间加密开 | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:69` |
 | `state.account.account-security-page.69a0` | account | e2eEnabled | AccordionItem | 登录 → `/account/security`；房间加密开 | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:69` |
 | `state.account.account-security-route.13i` | account | !canViewSecurity | NotAuthorizedPage | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityRoute.tsx:13` |
@@ -4210,14 +4210,14 @@ Walk 并截图：login、account security / profile / preferences、home、`#gen
 | `state.comp.create-discussion.123a1` | comp | !(defaultParentRoom) | null | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/CreateDiscussion/CreateDiscussion.tsx:123` |
 | `state.comp.create-discussion.123a0` | comp | defaultParentRoom | Controller | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/CreateDiscussion/CreateDiscussion.tsx:123` |
 | `state.comp.create-discussion.130a1` | comp | !(!defaultParentRoom) | null | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/CreateDiscussion/CreateDiscussion.tsx:130` |
-| `state.comp.create-discussion.130a0` | comp | !defaultParentRoom | Controller | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/CreateDiscussion/CreateDiscussion.tsx:130` |
+| `state.comp.create-discussion.130a0` | comp | !defaultParentRoom | Controller | 登录后顶栏 Create new → Discussion；shot:create-discussion.png；无 defaultParentRoom → RoomAutoComplete | [实测] | （无） | `apps/meteor/client/components/CreateDiscussion/CreateDiscussion.tsx:130` |
 | `state.comp.create-discussion.143t1` | comp | !(encrypted) | null | 登录后主壳（由 client/main.ts 闭包挂载）；房间加密开 | [待渲染实测] | （无） | `apps/meteor/client/components/CreateDiscussion/CreateDiscussion.tsx:143` |
 | `state.comp.create-discussion.143t0` | comp | encrypted | Icon | 登录后主壳（由 client/main.ts 闭包挂载）；房间加密开 | [待渲染实测] | （无） | `apps/meteor/client/components/CreateDiscussion/CreateDiscussion.tsx:143` |
 | `state.comp.create-discussion.149a1` | comp | !(errors.parentRoom) | null | 登录后主壳（由 client/main.ts 闭包挂载）；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/components/CreateDiscussion/CreateDiscussion.tsx:149` |
 | `state.comp.create-discussion.149a0` | comp | errors.parentRoom | FieldError | 登录后主壳（由 client/main.ts 闭包挂载）；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/components/CreateDiscussion/CreateDiscussion.tsx:149` |
 | `state.comp.create-discussion.163a1` | comp | !(errors.name) | null | 登录后主壳（由 client/main.ts 闭包挂载）；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/components/CreateDiscussion/CreateDiscussion.tsx:163` |
 | `state.comp.create-discussion.163a0` | comp | errors.name | FieldError | 登录后主壳（由 client/main.ts 闭包挂载）；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/components/CreateDiscussion/CreateDiscussion.tsx:163` |
-| `state.comp.create-discussion.193t1` | comp | !(encrypted) | FieldHint | 登录后主壳（由 client/main.ts 闭包挂载）；房间加密开 | [待渲染实测] | （无） | `apps/meteor/client/components/CreateDiscussion/CreateDiscussion.tsx:193` |
+| `state.comp.create-discussion.193t1` | comp | !(encrypted) | FieldHint | 登录后顶栏 Create new → Discussion；shot:create-discussion.png；未加密 → First_message_hint | [实测] | （无） | `apps/meteor/client/components/CreateDiscussion/CreateDiscussion.tsx:193` |
 | `state.comp.create-discussion.193t0` | comp | encrypted | FieldHint | 登录后主壳（由 client/main.ts 闭包挂载）；房间加密开 | [待渲染实测] | （无） | `apps/meteor/client/components/CreateDiscussion/CreateDiscussion.tsx:193` |
 | `state.comp.default-parent-room-field.32i` | comp | isPending | Skeleton | 登录后主壳（由 client/main.ts 闭包挂载）；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/components/CreateDiscussion/DefaultParentRoomField.tsx:32` |
 | `state.comp.default-parent-room-field.36i` | comp | !data?.room ¦¦ isError | Callout | 登录后主壳（由 client/main.ts 闭包挂载）；让该查询/mutation 失败；空列表/无数据 | [待渲染实测] | （无） | `apps/meteor/client/components/CreateDiscussion/DefaultParentRoomField.tsx:36` |

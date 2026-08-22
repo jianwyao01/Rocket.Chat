@@ -643,6 +643,78 @@
       "honesty": "[实测]",
       "arrival": "登录 → `/directory`；空列表/无数据；shot:directory-teams.png；No results found",
       "shot": "directory-teams.png"
+    },
+    {
+      "id": "state.message.message-toolbar-holder.41a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `#general`；focus 消息后工具条挂上；shot:message-toolbox.png；showToolbar Suspense",
+      "shot": "message-toolbox.png"
+    },
+    {
+      "id": "state.message.reaction-message-action.69d",
+      "honesty": "[实测]",
+      "arrival": "登录 → `#general`；focus 消息工具条；shot:message-toolbox.png；Add reaction",
+      "shot": "message-toolbox.png"
+    },
+    {
+      "id": "state.message.quote-message-action.38d",
+      "honesty": "[实测]",
+      "arrival": "登录 → `#general`；focus 消息工具条；shot:message-toolbox.png；Quote",
+      "shot": "message-toolbox.png"
+    },
+    {
+      "id": "state.message.reply-in-thread-message-action.35d",
+      "honesty": "[实测]",
+      "arrival": "登录 → `#general`；focus 消息工具条；shot:message-toolbox.png；Reply in thread",
+      "shot": "message-toolbox.png"
+    },
+    {
+      "id": "state.message.message-toolbar-action-menu.146d",
+      "honesty": "[实测]",
+      "arrival": "登录 → `#general`；focus 消息工具条；shot:message-toolbox.png；More kebab GenericMenu（内层菜单未展开）",
+      "shot": "message-toolbox.png"
+    },
+    {
+      "id": "state.message.message-toolbar-item.21d",
+      "honesty": "[实测]",
+      "arrival": "登录 → `#general`；focus 消息工具条；shot:message-toolbox.png；可见 MessageToolbarItem（含 Forward）",
+      "shot": "message-toolbox.png"
+    },
+    {
+      "id": "state.navbar.create-channel-modal.226a0",
+      "honesty": "[实测]",
+      "arrival": "登录后顶栏 Create new → Channel；shot:create-channel.png；!allowSpecialNames FieldHint",
+      "shot": "create-channel.png"
+    },
+    {
+      "id": "state.navbar.create-team-modal.190a0",
+      "honesty": "[实测]",
+      "arrival": "登录后顶栏 Create new → Team；shot:create-team.png；!allowSpecialNames FieldHint",
+      "shot": "create-team.png"
+    },
+    {
+      "id": "state.comp.create-discussion.130a0",
+      "honesty": "[实测]",
+      "arrival": "登录后顶栏 Create new → Discussion；shot:create-discussion.png；无 defaultParentRoom → RoomAutoComplete",
+      "shot": "create-discussion.png"
+    },
+    {
+      "id": "state.comp.create-discussion.193t1",
+      "honesty": "[实测]",
+      "arrival": "登录后顶栏 Create new → Discussion；shot:create-discussion.png；未加密 → First_message_hint",
+      "shot": "create-discussion.png"
+    },
+    {
+      "id": "state.account.account-security-page.65a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/account/security`；展开 Two Factor Authentication；shot:account-security-2fa.png；TwoFactorTOTP 开关",
+      "shot": "account-security-2fa.png"
+    },
+    {
+      "id": "state.account.account-security-page.66a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/account/security`；展开 Two Factor Authentication；shot:account-security-2fa.png；TwoFactorEmail 开关",
+      "shot": "account-security-2fa.png"
     }
   ]
 }
