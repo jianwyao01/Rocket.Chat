@@ -433,26 +433,110 @@ def jsx_start_at(text: str, i: int) -> tuple[bool, int, str]:
     return False, i, ""
 
 
+JS_CALLS = frozenset(
+    {
+        "Boolean",
+        "Array",
+        "String",
+        "Number",
+        "Object",
+        "Map",
+        "Set",
+        "Date",
+        "JSON",
+        "Promise",
+        "Math",
+        "Symbol",
+        "BigInt",
+        "Function",
+        "RegExp",
+        "Error",
+        "Reflect",
+        "Proxy",
+        "Intl",
+    }
+)
+FORBIDDEN_RENDER = frozenset({"Boolean", "Array", "String", "Number", "Object", "ROOM_INTIAL_VALUE"})
+
+
 def operand_is_jsx(text: str, after_op: int) -> tuple[bool, str]:
-    """Rule A: operand after && or ? is a JSX node."""
+    """A': after && / ? must be `<` or `(` whose next non-ws token is `<` / `{<`. No bare uppercase ident."""
     i = skip_ws_comments(text, after_op)
     n = len(text)
     if i >= n:
         return False, ""
-    ok, _, name = jsx_start_at(text, i)
-    if ok:
-        return True, name
+    if text[i] == "<":
+        ok, _, name = jsx_start_at(text, i)
+        if ok and name.split(".")[0] not in JS_CALLS:
+            return True, name
+        return False, ""
     if text[i] == "(":
-        # reject () => immediately
         j = skip_ws_comments(text, i + 1)
         if j < n and text[j] == ")":
             return False, ""
-        ok, _, name = jsx_start_at(text, i + 1)
-        if ok:
-            return True, name
-        # ( <> or ( <Tag  already covered. ( { <Tag
+        if j < n and text[j] == "<":
+            ok, _, name = jsx_start_at(text, j)
+            return (True, name) if ok and name.split(".")[0] not in JS_CALLS else (False, "")
+        if j < n and text[j] == "{":
+            k = skip_ws_comments(text, j + 1)
+            if k < n and text[k] == "<":
+                ok, _, name = jsx_start_at(text, k)
+                return (True, name) if ok and name.split(".")[0] not in JS_CALLS else (False, "")
         return False, ""
     return False, ""
+
+
+def jsx_name_from_array_map(text: str, start: int) -> str:
+    """`Array(n).fill(...).map(() => <Tag/>)` → Tag. Never render=`Array`."""
+    i = skip_ws_comments(text, start)
+    if not text.startswith("Array", i):
+        return ""
+    nxt = i + 5
+    if nxt < len(text) and (text[nxt].isalnum() or text[nxt] == "_"):
+        return ""
+    j = skip_ws_comments(text, nxt)
+    if j >= len(text) or text[j] != "(":
+        return ""
+    j = skip_balanced(text, j, "(", ")")
+    map_open: int | None = None
+    while True:
+        k = skip_ws_comments(text, j)
+        if k >= len(text) or text[k] != ".":
+            break
+        k2 = skip_ws_comments(text, k + 1)
+        m = IDENT_RE.match(text, k2)
+        if not m:
+            break
+        p = skip_ws_comments(text, m.end())
+        if p >= len(text) or text[p] != "(":
+            break
+        if m.group(0) == "map":
+            map_open = p
+            break
+        j = skip_balanced(text, p, "(", ")")
+    if map_open is None:
+        return ""
+    inner_end = skip_balanced(text, map_open, "(", ")") - 1
+    idx = map_open + 1
+    while idx < inner_end:
+        idx = skip_ws_comments(text, idx)
+        if idx >= inner_end:
+            break
+        if text[idx] == "<":
+            ok, _, name = jsx_start_at(text, idx)
+            if ok and name and name.split(".")[0] not in JS_CALLS:
+                return name
+        idx += 1
+    return ""
+
+
+def inside_mutation_fn(text: str, idx: int, bodies: list[tuple[int, int]]) -> bool:
+    """C'' nested: JSX inside mutationFn / useMutation is not a product UI branch."""
+    for s, _e in _containing_bodies(bodies, idx):
+        prefix = text[max(0, s - 160) : s]
+        if re.search(r"\bmutationFn\s*:", prefix) or re.search(r"\buseMutation\s*\(", prefix):
+            return True
+    return False
 
 
 def extract_jsx_name_from(text: str, start: int) -> str:
@@ -808,19 +892,26 @@ def scan_and_tern(text: str, is_tsx: bool) -> list[dict]:
     states: list[dict] = []
     code = set(iter_code_indexes(text))
     n = len(text)
+    bodies = find_function_bodies(text)
 
     # AND
     for i in find_ops(text, "&&"):
+        if inside_mutation_fn(text, i, bodies):
+            continue
         after = i + 2
         ok, name = operand_is_jsx(text, after)
         if not ok:
+            name = jsx_name_from_array_map(text, after)
+            if not name:
+                continue
+        if name in FORBIDDEN_RENDER:
             continue
         cond = expr_before(text, i)
         if not cond:
             continue
-        # reject `if ( … && <` — JSX almost never sits in if-condition
-        # already rejected if operand isn't JSX
-        render = extract_jsx_name_from(text, after)
+        render = name if name else extract_jsx_name_from(text, after)
+        if render in FORBIDDEN_RENDER:
+            continue
         ln = line_of(text, i)
         states.append({"kind": "and-show", "line": ln, "cond": cond, "render": render, "branch": "shown", "idx": i})
         states.append(
@@ -843,8 +934,15 @@ def scan_and_tern(text: str, is_tsx: bool) -> list[dict]:
         if i not in code:
             i += 1
             continue
+        prev = text[i - 1] if i else ""
+        if prev == "?":  # second char of `??`
+            i += 1
+            continue
         nxt = text[i + 1] if i + 1 < n else ""
         if nxt in "?.:" :  # ?.  ??  ?:
+            i += 1
+            continue
+        if inside_mutation_fn(text, i, bodies):
             i += 1
             continue
         after = i + 1
@@ -857,29 +955,28 @@ def scan_and_tern(text: str, is_tsx: bool) -> list[dict]:
             i += 1
             continue
         then_name = extract_jsx_name_from(text, after)
-        # find else operand after matching colon at same nesting
-        else_name = "null"
-        else_ok = False
-        # skip the then-operand to find `:`
-        j = skip_ws_comments(text, after)
-        if j < n and text[j] == "(":
-            j = skip_balanced(text, j, "(", ")")
-        elif j < n and text[j] == "<":
-            # skip a JSX tag roughly: find matching end is hard; scan forward for `:` at depth 0
-            j += 1
+        if then_name in FORBIDDEN_RENDER:
+            i += 1
+            continue
         colon = _find_tern_colon(text, after, code)
-        if colon is not None:
-            else_ok, else_name = operand_is_jsx(text, colon + 1)
-            if not else_ok:
-                e = skip_ws_comments(text, colon + 1)
-                if text.startswith("null", e):
-                    else_name = "null"
-                    else_ok = True
-                else:
-                    else_name = extract_jsx_name_from(text, colon + 1)
-                    else_ok = else_name not in {"", "?"}
-            if else_ok:
-                else_name = extract_jsx_name_from(text, colon + 1) if else_name != "null" else "null"
+        if colon is None:
+            i += 1
+            continue
+        else_ok, else_name = operand_is_jsx(text, colon + 1)
+        e = skip_ws_comments(text, colon + 1)
+        is_null = text.startswith("null", e) and (e + 4 >= n or not (text[e + 4].isalnum() or text[e + 4] == "_"))
+        if is_null:
+            else_ok = True
+            else_name = "null"
+        elif else_ok:
+            else_name = extract_jsx_name_from(text, colon + 1)
+        else:
+            # A': both branches must be JSX or null. Data constants are not terns.
+            i += 1
+            continue
+        if else_name in FORBIDDEN_RENDER:
+            i += 1
+            continue
         ln = line_of(text, i)
         states.append({"kind": "tern-then", "line": ln, "cond": cond, "render": then_name, "branch": "then", "idx": i})
         states.append(
@@ -887,7 +984,7 @@ def scan_and_tern(text: str, is_tsx: bool) -> list[dict]:
                 "kind": "tern-else",
                 "line": ln,
                 "cond": f"!({cond})",
-                "render": else_name if else_ok or else_name != "?" else "null",
+                "render": else_name,
                 "branch": "else",
                 "idx": i,
             }
@@ -1506,8 +1603,8 @@ def render_full_md(files, rows, kinds, closure) -> str:
 
 | kind | 规则 |
 | --- | --- |
-| and-show / and-hide | **仅 JSX 操作数**，且仅 `.tsx` / `.jsx`。`&&` 后（跳过空白/注释）是 `<`，或 `(` 且下一非空白 token 是 `<` / `{<` / 大写 JSX 标识。拒绝布尔 `const x = a &&`、`return a &&`、对象字段布尔、`if (a &&`、`&& (counter.x += 1)`。配对 shown+hidden。 |
-| tern-then / tern-else | **仅 JSX 操作数**，且仅 `.tsx` / `.jsx`。`cond ? <` 或 `cond ? (` 打开 JSX。拒绝 `?.`、`??`、泛型、`.match(/...?/)`、两边都不是 JSX 的 `a ? b : c`。配对 then+else。 |
+| and-show / and-hide | **A'**：仅 `.tsx` / `.jsx`。`&&` 后（跳过空白/注释）必须是 `<`，或 `(` 且下一非空白是 `<` / `{<`。**不把裸大写 ident 当 JSX**。`Boolean(` / `Array(` / `String(` / `Number(` / `Object(` 永不作 and-show。`cond && Array(n).map(() => <Tag/>)` 的 render 写 map 内 JSX 子节点（如 `Skeleton`），cond 仍是 `&&` 左侧。`mutationFn` / `useMutation` 内 0 行。配对 shown+hidden。 |
+| tern-then / tern-else | **A'**：两边都必须是 JSX 或 `null`。`cond ? <` 或 `cond ? (` 打开 JSX。数据常量（如 `ROOM_INTIAL_VALUE`）不是分支。跳过 `?.` / `??`。配对 then+else。 |
 | if-ret | **仅 `.tsx` / `.jsx`（C''）**。`if (...)` 后紧跟或块首条 `return null` / `return <` / `return (` 且该 `(` 打开 JSX。**同一函数**还必须另有至少一处打开 JSX 的 return；若该函数所有非 null return 都是对象 / config / callback / 原始值（含 `return {` 图标或菜单配置），抽 0 行。嵌套函数还要求最外层函数也是 JSX-render（hook 里的 template / `.map` 不算）。永不收 `return () =>`、`return {`、`return false`、`return value` 作为 if-ret 本身。`.ts` 抽 0 行。 |
 | default | **仅 `.tsx` / `.jsx`（C''）**，且**同一函数**已有 if-ret。该函数最后一个非 if-ret 的 UI return 是 `return null` / `return <` / `return (`（JSX）。永不收 `return () =>` 或裸 `return;`。 |
 | suspense | JSX `<Suspense fallback=`。 |
@@ -1667,7 +1764,11 @@ rg '^\\| `state\\.' docs/qa/pm-feature-atlas/round-2/08-states.md | rg '\\| > ' 
 # expect 0 matches
 
 # C''：toolbar/config hook 不得进表
-rg '^\\| `state\\.' docs/qa/pm-feature-atlas/round-2/08-states.md | rg 'useNewDiscussionMessageAction|usePinMessageAction|useReadReceiptsDetailsAction|useReportMessageAction|useShowMessageReactionsAction|useWebDAVMessageAction|useAvatarTemplate|useRoomIcon|useShowSettingAlerts' || true
+rg '^\\| `state\\.' docs/qa/pm-feature-atlas/round-2/08-states.md | rg 'useNewDiscussionMessageAction|usePinMessageAction|useReadReceiptsDetailsAction|useReportMessageAction|useShowMessageReactionsAction|useWebDAVMessageAction|useAvatarTemplate|useRoomIcon|useShowSettingAlerts|useRoomLeave|useExportMessagesAsPDFMutation' || true
+# expect 0 matches
+
+# A'：render 不得是 JS 内置 / 数据常量
+rg '^\\| `state\\.' docs/qa/pm-feature-atlas/round-2/08-states.md | rg '\\| (Boolean\\|Array\\|String\\|Number\\|Object\\|ROOM_INTIAL_VALUE) \\|' || true
 # expect 0 matches
 ```
 
@@ -1753,6 +1854,8 @@ TSX_JUNK = (
     "useAvatarTemplate.tsx",
     "useRoomIcon.tsx",
     "useShowSettingAlerts.tsx",
+    "useRoomLeave.tsx",
+    "useExportMessagesAsPDFMutation.tsx",
 )
 
 KEEP_JSX = (
@@ -1769,6 +1872,16 @@ KEEP_SITES = (
     "AdminUserForm.tsx:199",
     "AdminUserInfoActions.tsx:33",
     "normalizeThreadMessage.tsx",
+    "ContentForDays.tsx:60",
+    "useMarketPlaceMenu.tsx:43",
+    "useMarketPlaceMenu.tsx:44",
+    "useStatusItems.tsx:110",
+    "useStatusItems.tsx:111",
+    "useThreadRoomAction.tsx:60",
+    "useAppMenu.tsx:361",
+    "useUserStatusTooltip.tsx:13",
+    "AppDetailsPageHeader.tsx:48",
+    "AppDetailsPageTabs.tsx:59",
 )
 
 
@@ -1794,6 +1907,13 @@ def assert_no_leaks(rows: list[dict]) -> None:
     missing_sites = [site for site in KEEP_SITES if not any(site in r["src"] or site in r["file"] for r in rows)]
     if missing_sites:
         raise SystemExit("KEEP_SITES_MISSING " + " ".join(missing_sites))
+    forbidden = [f"{r['src']} render={r['render']}" for r in rows if r["render"] in FORBIDDEN_RENDER]
+    if forbidden:
+        raise SystemExit("FORBIDDEN_RENDER " + " ; ".join(forbidden[:12]))
+    if not any(r["render"] == "BundleChips" and "AppDetailsPageHeader.tsx" in r["file"] for r in rows):
+        raise SystemExit("KEEP_JSX_MISSING BundleChips@AppDetailsPageHeader")
+    if not any(r["render"] == "TabsItem" and "AppDetailsPageTabs.tsx" in r["file"] for r in rows):
+        raise SystemExit("KEEP_JSX_MISSING TabsItem@AppDetailsPageTabs")
 
 
 def sample_and_show(rows: list[dict], n: int = 20) -> None:
