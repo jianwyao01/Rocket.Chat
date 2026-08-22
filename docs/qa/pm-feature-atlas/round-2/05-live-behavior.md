@@ -80,6 +80,8 @@ Commit Hash: e519470d35
 `POST /api/v1/login` `rocketchat.internal.admin.test` / `rocketchat.internal.admin.test` → **success**  
 `POST /api/v1/login` `admin` / `admin123` → **success**
 
+本 leftover pass（SANDBOX_DEAD 后新机）再走同一路径：docker overlayfs `run alpine` exit 125；Mongo 8.0.12 + Meteor 3.4.1 + `meteor npm run dsv` 成功，`http://127.0.0.1:3000` 200。产品 merge-base 仍是冻结 `e519470d35`；横幅 Commit Hash 为文档分支 HEAD `d710b9ee5e`（只含 docs 提交）。#atlas-live 未改只读。
+
 ### 1.4 本实例供给（实测，不是读码）
 
 | 项 | 值 |
@@ -89,8 +91,13 @@ Commit Hash: e519470d35
 | 用户 | admin、rocketchat.internal.admin.test、seeduser、rocket.cat |
 | Livechat_enabled | true（后赋 `livechat-manager`+`livechat-agent`） |
 | Discussion/Threads/Pin/Star | true |
-| AutoTranslate / WebDAV | false（本轮未翻；对应行保持待渲染，不标不可达） |
-| E2E_Enable / Accounts_AllowFeaturePreview / Accounts_AllowDeleteOwnAccount | **true**（管理员已翻后再走 Security / Feature preview / Delete account） |
+| AutoTranslate / WebDAV | **true**（本 leftover pass 已翻 `AutoTranslate_Enabled` / `Webdav_Integration_Enabled`；仍无译文/无 WebDAV 账号，对应行保持待渲染） |
+| E2E_Enable / Accounts_AllowFeaturePreview / Accounts_AllowDeleteOwnAccount | **true** |
+| Feature preview `Filters and secondary sidebar` | **ON**（Account → Feature preview） |
+| `Livechat_show_queue_list_link` / agent status | **true** / `available` |
+| `Message_Read_Receipt_Enabled` + Store_Users | **true**（More 菜单本步未截到 Read receipts，保持待渲染） |
+| `Accounts_CustomFields` | `department` text（Profile 已见该字段） |
+| EE 设置 `Outlook_Calendar_Enabled` / `Canned_Responses_Enable` / `VideoConf_Enable_DMs` / `Device_Management_*` / `Accounts_StatusVisibility_Enabled` | GET `success:false`（Community 未注册该设置；父页已开、控件不在 → 保持待渲染） |
 | Marketplace | Explore `0 apps enabled` `0/5` `No app matches` |
 
 ---
@@ -127,7 +134,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 
 - 浏览器实走入口（computerUse）+ `curl` REST 登录/种子。登录：`rocketchat.internal.admin.test`（角色 admin + livechat-manager + livechat-agent）。
 - 种子：`#general` / `#atlas-live` / 私有 `atlas-private` / 讨论 `atlas-discussion` / 团队 `atlas-team` / 已离开的公开频道 `atlas-join-seed`；用户 seeduser；DM seeduser；消息含 link/spoiler/thread+reply/两张 PNG/`🤣 vol5-composer-send`；Pin / Star。
-- **已翻高影响设置再走：** `E2E_Enable=true`、`Accounts_AllowFeaturePreview=true`、`Accounts_AllowDeleteOwnAccount=true`。`FileUpload_Enabled` 默认 true。AutoTranslate / WebDAV **未翻** → 相关行保持待渲染，禁止写成不可达。
+- **已翻高影响设置再走：** `E2E_Enable=true`、`Accounts_AllowFeaturePreview=true`、`Accounts_AllowDeleteOwnAccount=true`、`AutoTranslate_Enabled=true`、`Webdav_Integration_Enabled=true`、`Message_Read_Receipt_Enabled=true`、`Livechat_show_queue_list_link=true`、Feature preview secondary sidebar ON。无译文/无 WebDAV 账号/More 未截到的行仍待渲染，禁止写成不可达。
 - **禁止**用源码编造三件套。禁止把「本轮未点到」写成不可达。禁止用「no seed」当管理员能自己造种子（开 Profile、Create Channel、发附件、点头像等）。禁止整命名空间盖章。
 - **不可达仅当：** 已按入口走，页/控件出不来（Premium 模态 / unauthorized / 404 Page not found / 打开后该控件确定不在）。
 - **可达但没点到 → 半角标签只写在该行三件套列。Honesty > leftover=0。**
@@ -242,7 +249,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | user.action.ban | 从房间封禁用户 | `…→More→Ban_user_from_room` | `isMember 或 isInvited`；`ban-user` + `roomCanBan` `useBanUserAction.ts:25-33` | [实测] ① 同 More → Ban user from room。② 未点。③ 菜单关。shots/shots22/user.action.mute.webp | `useBanUserAction.ts:31-42` | `room.toolbox.banned-users` | `useUserInfoActions.ts:107` |
 | user.action.report | 举报用户 | `…→More→Report` | `ownUserId!==uid` `useReportUser.tsx:44`；无房间/权限键 | [实测] ① 同栏 kebab → Report。② 未提交举报。③ 菜单可关。shots/shots34/user.action.block-report.webp | `useReportUser.tsx:33-50` | moderation danger | `useUserInfoActions.ts:108` |
 
-### `nav.*` — 49 个 id（实测 37 / 不可达 4 / 待渲染 8）
+### `nav.*` — 49 个 id（实测 38 / 不可达 4 / 待渲染 7）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -292,11 +299,11 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | nav.user.login | 未登录时强制登录 | `顶栏右→Login` | `!user` `NavBarControlsSection.tsx:26,38` | [不可达] 已登录后打开右上角用户菜单，菜单项为 Profile / Preferences / Accessibility / Feature preview / Keyboard shortcuts / Logout，无 Login。 | `NavBarItemLoginPage.tsx:12-15` |  | `NavBarItemLoginPage.tsx:13` |
 | nav.voip.call | 顶栏发起语音通话 | desktop `顶栏右→Voice_Call→(动态 title)`；mobile `顶栏右→kebab→同项` | `useMediaCallAction()` 有值 `NavBarControlsSection.tsx:18,34` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `NavBarVoipGroup.tsx:10-21` | `room.toolbox.start-voice-call` | `NavBarVoipGroup.tsx:21` |
 | nav.voip.history | 打开通话记录页 | `顶栏右→Voice_Call→Call_history` | 同上，组随 callAction 显隐 `NavBarVoipGroup.tsx:15-17` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `NavBarVoipGroup.tsx:12-14,22` | `media-call-history` 房间路由 | `NavBarVoipGroup.tsx:22` |
-| nav.omnichannel.queue | 打开 livechat 队列 | `顶栏右→Omnichannel→Queue` | 组：`Livechat_enabled`+`view-l-room`（`useOmnichannelEnabled`）；项：`Livechat_show_queue_list_link`+agent available `useOmnichannelQueueAction.ts:9,15` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `useOmnichannelQueueAction.ts:14-19` | Omni 域外 | `useOmnichannelQueueAction.ts:18` |
+| nav.omnichannel.queue | 打开 livechat 队列 | `顶栏右→Omnichannel→Queue` | 组：`Livechat_enabled`+`view-l-room`（`useOmnichannelEnabled`）；项：`Livechat_show_queue_list_link`+agent available `useOmnichannelQueueAction.ts:9,15` | [实测] ① 已翻 Livechat_enabled + Livechat_show_queue_list_link，坐席 available；Feature preview secondary sidebar ON 后主侧栏可见 Queue，打开 /livechat-queue 标题 Omnichannel Queue。② 队列空。③ 刷新侧栏仍有 Queue。shots/shots46/02-home.png shots/shots46/nav.omnichannel.queue.png | `useOmnichannelQueueAction.ts:14-19` | Omni 域外 | `useOmnichannelQueueAction.ts:18` |
 | nav.omnichannel.contact | 打开联络中心目录 | `顶栏右→Omnichannel→Contact_Center` | 组级 omnichannel enabled；项 none `useOmnichannelContactAction.ts:10-14` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | `useOmnichannelContactAction.ts:11-14` |  | `useOmnichannelContactAction.ts:13` |
 | nav.omnichannel.agent-toggle | 开关自己接听 livechat | `顶栏右→Omnichannel→Turn_on/off_answer_chats` | 组级 omnichannel enabled | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `useOmnichannelLivechatToggle.ts:22-27` |  | `useOmnichannelLivechatToggle.ts:11` |
 
-### `sidebar.*` — 9 个 id（实测 2 / 不可达 5 / 待渲染 2）
+### `sidebar.*` — 9 个 id（实测 3 / 不可达 5 / 待渲染 1）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -307,7 +314,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | sidebar.filter.queue | V2 主栏切到排队 | `主侧栏顶→Queue` | 上一项 + `view-livechat-queue` `OmnichannelFilters.tsx:11,21` | [不可达] 已打开 livechat 会话与主侧栏，有 Chats in progress，无 Queue 顶栏 tab。 | `OmnichannelFilters.tsx:21` | `nav.omnichannel.queue` | `OmnichannelFilters.tsx:21` |
 | sidebar.filter.on-hold | V2 主栏切到挂起 | `主侧栏顶→On_Hold` | `view-l-room` + omnichannel `OmnichannelFilters.tsx:22` | [不可达] 已打开 livechat 会话与主侧栏，无 On Hold 顶栏 tab。 | `OmnichannelFilters.tsx:22` |  | `OmnichannelFilters.tsx:22` |
 | sidebar.group.collapse | 折叠/展开侧栏分组头 | `主侧栏→(Unread/Teams/Channels/DMs 等组头)` | 分组本身由 Sort Group_by 偏好驱动；折叠控件 none `useCollapsedGroups.ts:6` | [实测] ① 主侧栏点 Teams 组头折叠。② 无写。③ 再点可展开。shots/shots7/03-sidebar-teams-collapsed.webp | `useCollapsedGroups.ts:8-16` | V1 `RoomListCollapser` 同 hook | `useCollapsedGroups.ts:6` |
-| sidebar.sidepanel.unread-toggle | 副栏只看未读 | `副栏顶 heading→Unread ToggleSwitch` | secondarySidebar ON；项 none `SidePanelInternal.tsx:48-51` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `SidePanelInternal.tsx:48-51` | `nav.sort.group.unread` | `SidePanelInternal.tsx:51` |
+| sidebar.sidepanel.unread-toggle | 副栏只看未读 | `副栏顶 heading→Unread ToggleSwitch` | secondarySidebar ON；项 none `SidePanelInternal.tsx:48-51` | [实测] ① Account → Feature preview 打开 Filters and secondary sidebar 后，副栏顶 All 旁 Unread ToggleSwitch（关）。② 未拨开。③ 刷新仍在。shots/shots46/01-feature-preview.png shots/shots46/02-home.png shots/shots46/sidebar.sidepanel.unread-toggle.png | `SidePanelInternal.tsx:48-51` | `nav.sort.group.unread` | `SidePanelInternal.tsx:51` |
 | sidebar.sidepanel.back | tablet 关闭副栏 | `副栏顶→Back` | secondarySidebar ON + `isTablet` `SidePanelInternal.tsx:44` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `SidePanelInternal.tsx:44` | `nav.sidebar.toggle` | `SidePanelInternal.tsx:44` |
 
 ### `composer.*` — 20 个 id（实测 11 / 不可达 4 / 待渲染 5）
@@ -347,14 +354,14 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | shortcut.global.markAllAsRead.documented-unbound | 帮助里写了标全已读，client 无绑定 | 打开快捷键 modal 看到 Mark_all_as_read → 关掉 → 在房间按 Shift+Esc（Mac）或 Ctrl+Esc（其他） | **无** `tinykeys`/keydown 绑定（全 `client` 仅 modal 文案）。`KeyboardShortcutsModal.tsx:32-34` | [实测] ① 快捷键说明可见 Mark all as read；房间内 Shift+Escape 弹出确认（本轮 Cancel）。② 未执行清空。③ 确认关。shots/shots7/12-keyboard-shortcuts.webp shots/shots7/22-clear-unreads-confirm.webp | core（文档） | `implicit.unread.markAllRead` | `KeyboardShortcutsModal.tsx:32-34` |
 
-### `route.*` — 50 个 id（实测 36 / 不可达 6 / 待渲染 8）
+### `route.*` — 50 个 id（实测 40 / 不可达 6 / 待渲染 4）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | route.login | 未登录用户打开登录表单并用账号密码（或登录服务）进入工作区 | ① 未登录访问需认证页（默认落到 `LoginPage`）② 或匿名可读时点顶栏 `Login`（`setForceLogin(true)`）③ 表单填用户名/邮箱+密码 → 提交 | 无用户；`Accounts_ShowFormLogin` 控制表单区；`Accounts_AllowAnonymousRead` 为真且未 `forceLogin` 时先不挡内容 `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `Accounts_ShowFormLogin`；`Accounts_AllowAnonymousRead`；`forceLogin`；`/home`；`/login`。许可证/EE 见门控 | `route.register` `route.forgot-password` | `AuthenticationCheck.tsx:20-41` `LoginPage.tsx` `LoginForm.tsx:59-251` `NavBarItemLoginPage.tsx:8-16` `[读]` |
 | route.register | 在登录壳内切到「创建账号」并提交注册 | 登录页页脚 `New here?` → `Create an account`（`setLoginRoute('register')`） | `Accounts_RegistrationForm`：`Public` 才走公开注册；`Secret URL` 时公开入口显示禁用页；`Disabled` 禁用 `[读]` | [实测] ① Guest /home 登录壳 → Create an account：Name/Email/Username/Password/Confirm。② 未提交注册。③ Back to Login。shots/shots26/register-form.webp | READ `Accounts_RegistrationForm`。许可证/EE 见门控 | `route.login` `route.register-secret-url` | `LoginForm.tsx:242-246` `RegisterSecretPageRouter.tsx:21-50` `[读]` |
 | route.forgot-password | 在登录壳内申请密码重置邮件 | 登录页密码字段下 `Forgot your password?` | `Accounts_PasswordReset`（默认 true）为假则链不渲染 `[读]` | [实测] ① 登录壳 Forgot your password? → Reset password + Email + Send instructions。② 未发信。③ Back to Login。shots/shots26/forgot-password.webp | READ `Accounts_PasswordReset`；`reset-password`。许可证/EE 见门控 | `route.reset-password` `route.login` | `LoginForm.tsx:88,219-229` `RegistrationPageRouter.tsx:36-41` `[读]` |
-| route.reset-password | 用邮件里的 token 打开重置页并设置新密码 | 打开邮件链接 `/reset-password/:token` → 提交新密码 | 公开路由；token 无效时的 UI `［待渲染实测］` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `/reset-password/:token`。许可证/EE 见门控 | `route.forgot-password` | `startup/routes.tsx:230-233` `@rocket.chat/web-ui-registration` `[读]` |
+| route.reset-password | 用邮件里的 token 打开重置页并设置新密码 | 打开邮件链接 `/reset-password/:token` → 提交新密码 | 公开路由；token 无效时的 UI `［待渲染实测］` | [实测] ① 未登录打开 /reset-password/invalid-token → Reset password / Password / Confirm / Reset。② 未提交。③ 刷新同 URL 仍重置表单。shots/shots46/40-reset-password.png shots/shots46/route.reset-password.png | READ `/reset-password/:token`。许可证/EE 见门控 | `route.forgot-password` | `startup/routes.tsx:230-233` `@rocket.chat/web-ui-registration` `[读]` |
 | route.setup-wizard | 首次部署向导（组织/管理员） | 无用户且 `Show_Setup_Wizard==='pending'`，或 admin 且 `==='in_progress'` 时自动跳 `/setup-wizard`；完成后不可再进 | `Show_Setup_Wizard` ∈ {pending,in_progress,completed}；完成后/非 admin 被锁回 `/home` `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `Show_Setup_Wizard`；`/home`；`/setup-wizard/:step?`。许可证/EE 见门控 | `route.login` `route.home` | `startup/routes.tsx:215-218` `useRedirectToSetupWizard.ts:4-16` `packages/ui-client/.../useRouteLock.ts` `[读]` |
 | route.token-login | 用一次性 login token 静默登录 | 打开 `/login-token/:token`（邮件/外链） | 公开；token 失败则 `navigate('/')` `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `navigate('/')`；`/`。许可证/EE 见门控 | `route.login` | `startup/routes.tsx:225-228` `LoginTokenRoute.tsx:4-15` `[读]` |
 | route.home | 打开工作区 Home（欢迎卡或自定义首页） | 桌面顶栏 Home 图标；或平板 `Pages` 堆叠菜单 → Home；登录后无 `defaultRoom` 时 `/` 也会落到 `/home` | 顶栏按钮：`Layout_Show_Home_Button`；页体：`Layout_Custom_Body_Only` 为真则只渲染自定义 Home `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `Layout_Show_Home_Button`；`Layout_Custom_Body_Only`；`/home`。许可证/EE 见门控 | `route.directory` `directory.channels` | `startup/routes.tsx:149-156` `NavBarItemHomePage.tsx:8-22` `HomePage.tsx:6-13` `DefaultHomePage.tsx:16-48` `IndexRoute.tsx:12-28` `[读]` |
@@ -391,13 +398,13 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | route.audit-log | 打开审计操作日志 | 顶栏 `Manage` → Audit → `Logs` | EE `auditing` + `can-audit-log` `[读]` | [不可达] 已打开 /audit、/admin/audit、/audit-home、/security-logs，均为 heading “Page not found” / “The page does not exist or you may not have access permission”；Administration 侧栏无 Audit 项。hasValidLicense=false 且入口走后控件/页不在。 | READ `auditing`；`can-audit-log`；`/audit-log`。许可证/EE 见门控 | `route.audit` | `startup/audit.tsx:57-66` `useAuditMenu.ts:22-26` `[读]` |
 | route.security-logs | 打开安全日志 | 顶栏 `Manage` → Audit → `Security_logs` | EE `auditing` + `can-audit` `[读]` | [不可达] 已打开 /audit、/admin/audit、/audit-home、/security-logs，均为 heading “Page not found” / “The page does not exist or you may not have access permission”；Administration 侧栏无 Audit 项。hasValidLicense=false 且入口走后控件/页不在。 | READ `auditing`；`can-audit`；`/security-logs`。许可证/EE 见门控 | `route.audit` | `startup/audit.tsx:68-80` `useAuditMenu.ts:28-32` `[读]` |
 | route.invite | 用邀请 hash 校验并登录/入房 | 打开 `/invite/:hash` | 公开；校验失败显示过期文案；已登录则 `useInviteTokenMutation` 入房 `[读]` | [实测] ① Guest 打开 /invite/R7LtrP → Create an account / Join your team / Back to Login。② 未注册。③ 邀请仍有效。shots/shots35/route-invite.webp | READ `useInviteTokenMutation`；`/invite/:hash`。许可证/EE 见门控 | `route.login` `route.admin.invites` | `startup/routes.tsx:205-208` `InvitePage.tsx:12-47` `[读]` |
-| route.register-secret-url | 用秘密注册 URL 打开注册 | 打开 `/register/:hash` | 已登录立刻去 `/home`；注册模式须为 Secret URL `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `/home`；`RegistrationPageRouter`；`secret-register`；`/register/:hash`。许可证/EE 见门控 | `route.register` | `startup/routes.tsx:200-203` `SecretURLPage.tsx:5-19` `[读]` |
-| route.conference | 打开会议落地页（允许访客） | 打开 `/conference/:id?callUrl=…` | `AuthenticationCheck guest`；缺 `callUrl` 的失败 UI `［待渲染实测］` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `AuthenticationCheck guest`；`callUrl`；`ConferencePage`；`/conference/:id`。许可证/EE 见门控 | — | `startup/routes.tsx:210-213` `ConferenceRoute.tsx:4-8` `[读]` |
+| route.register-secret-url | 用秘密注册 URL 打开注册 | 打开 `/register/:hash` | 已登录立刻去 `/home`；注册模式须为 Secret URL `[读]` | [实测] ① 未登录打开 /register/secret-invalid → 标题 Create an account，警告 “The URL provided is invalid.”。② 无注册表。③ 刷新同文案。shots/shots46/43-register-secret.png shots/shots46/route.register-secret-url.png | READ `/home`；`RegistrationPageRouter`；`secret-register`；`/register/:hash`。许可证/EE 见门控 | `route.register` | `startup/routes.tsx:200-203` `SecretURLPage.tsx:5-19` `[读]` |
+| route.conference | 打开会议落地页（允许访客） | 打开 `/conference/:id?callUrl=…` | `AuthenticationCheck guest`；缺 `callUrl` 的失败 UI `［待渲染实测］` | [实测] ① 未登录打开 /conference/invalid → Choose how you want to join / Login with Rocket.Chat / Continue as guest。② 未进会。③ 刷新同落地页。shots/shots46/44-conference.png shots/shots46/route.conference.png | READ `AuthenticationCheck guest`；`callUrl`；`ConferencePage`；`/conference/:id`。许可证/EE 见门控 | — | `startup/routes.tsx:210-213` `ConferenceRoute.tsx:4-8` `[读]` |
 | route.mailer-unsubscribe | 邮件一键退订工作区群发 | 打开 `/mailer/unsubscribe/:_id/:createdAt` | 公开；参数齐全即 POST `[读]` | [实测] ① 地址栏打开 /mailer/unsubscribe/vol5id/123 → 绿勾 “You have successfully unsubscribed from our Mailing List.”。② 无写 REST。③ 刷新同 URL 仍成功退订页。shots/shots42/route.mailer-unsubscribe.webp | READ `POST /v1/mailer.unsubscribe`。接口 POST /v1/mailer.unsubscribe。许可证/EE 见门控 | `route.admin.mailer` | `startup/routes.tsx:220-223` `MailerUnsubscriptionPage.tsx:8-46` `[读]` |
 | route.terms-of-service | 打开服务条款 CMS 页 | 直达 `/terms-of-service`（注册/页脚链 `［待渲染实测］`） | 公开 | [实测] ① 未登录 /terms-of-service 默认 CMS。② 无。③ 刷新仍在。shots/shots26/terms-of-service.webp | READ `CMSPage`；`Layout_Terms_of_Service`；`/terms-of-service`。许可证/EE 见门控 | `route.privacy-policy` `route.legal-notice` | `startup/routes.tsx:186-188` `[读]` |
 | route.privacy-policy | 打开隐私政策 CMS 页 | 直达 `/privacy-policy` | 公开 | [实测] ① 未登录 /privacy-policy 默认 CMS。② 无。③ 刷新仍在。shots/shots26/privacy-policy.webp | READ `CMSPage`；`Layout_Privacy_Policy`；`/privacy-policy`。许可证/EE 见门控 | `route.terms-of-service` | `startup/routes.tsx:191-193` `[读]` |
 | route.legal-notice | 打开法律声明 CMS 页 | 直达 `/legal-notice` | 公开 | [实测] ① 未登录 /legal-notice 默认 CMS。② 无。③ 刷新仍在。shots/shots26/legal-notice.webp | READ `CMSPage`；`Layout_Legal_Notice`；`/legal-notice`。许可证/EE 见门控 | `route.terms-of-service` | `startup/routes.tsx:196-198` `[读]` |
-| route.oauth-authorize | 第三方应用 OAuth 授权同意 | 外站重定向 `/oauth/authorize?client_id=&redirect_uri=` | 未登录先登录壳；已登录拉 OAuth app 后同意/拒绝 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `/oauth/authorize`。许可证/EE 见门控 | `route.admin.third-party-login` | `startup/routes.tsx:235-238` `OAuthAuthorizationPage.tsx:10-31` `[读]` |
+| route.oauth-authorize | 第三方应用 OAuth 授权同意 | 外站重定向 `/oauth/authorize?client_id=&redirect_uri=` | 未登录先登录壳；已登录拉 OAuth app 后同意/拒绝 `[读]` | [实测] ① 未登录打开 /oauth/authorize → 落到 /oauth/error/404，Error / Invalid OAuth client。② 无同意/拒绝钮。③ 刷新同错误页。shots/shots46/45-oauth-authorize.png shots/shots46/route.oauth-authorize.png | READ `/oauth/authorize`。许可证/EE 见门控 | `route.admin.third-party-login` | `startup/routes.tsx:235-238` `OAuthAuthorizationPage.tsx:10-31` `[读]` |
 | route.oauth-error | 显示 OAuth 错误页 | 失败回跳 `/oauth/error/:error` | 公开 | [实测] ① 地址栏打开 /oauth/error/invalid_request → Error + “Oops! Something went wrong. Please reload the page or contact an administrator.”。② 无。③ 刷新同 URL 仍 Error 页。shots/shots42/route.oauth-error.webp | READ `/oauth/error/:error`。许可证/EE 见门控 | `route.oauth-authorize` | `startup/routes.tsx:240-243` `[读]` |
 | route.saml | SAML IdP 回调后登录 | IdP 重定向 `/saml/:token` | 公开；`Meteor.loginWithSamlToken`；可能再跟邀请 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `Meteor.loginWithSamlToken`；`/saml/:token`。许可证/EE 见门控 | `route.login` `route.invite` | `startup/routes.tsx:245-248` `SAMLLoginRoute.tsx` `[读]` |
 | route.2fa | OAuth/现代登录流的 2FA 挑战 | 登录流送到 `/2fa/:method/:challengeId` | 公开挑战页 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `/2fa/:method/:challengeId`。许可证/EE 见门控 | `route.login` `account.security` | `startup/routes.tsx:144-147` `OAuthTwoFactorAuthenticationRouter.tsx` `[读]` |
@@ -443,7 +450,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | team.create | 用顶栏「新建」打开创建团队模态并建出团队主房间 | 顶栏 `+`（Create new）→ `Team` → 填名称等 → 提交 | 菜单项：`create-team` **且** (`create-c` OR `create-p`)；提交按钮再检 `create-team` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `create-team`；`create-c`；`create-p`；`CreateTeamModal`；`channel`；`group`。许可证/EE 见门控 | `directory.teams` | `useCreateNewItems.ts:13-76` `CreateTeamModal.tsx:54,118+` `[读]` |
 
-### `page.*` — 623 个 id（实测 446 / 不可达 114 / 待渲染 63）
+### `page.*` — 623 个 id（实测 447 / 不可达 114 / 待渲染 62）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -515,7 +522,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.account.profile.email | 改自己的邮箱 | Profile → textbox `Email` | `Accounts_AllowEmailChange`；required + `validateEmail` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `account.profile` | `AccountProfileForm.tsx:403-440` `[读]` |
 | page.account.profile.email.invalid | 非法邮箱被拦 | 输入非邮箱 → Save | 同 email | [实测] ① Email=not-an-email → Invalid email address。② 未保存。③ 刷新仍原邮箱。shots/shots32/page.account.profile.email.invalid.webp | core | `page.account.profile.email` | `AccountProfileForm.tsx:417-419` `[读]` |
 | page.account.profile.resend-verification | 重发验证邮件 | 未验证 → 按钮 `Resend_verification_email` | 邮箱未改（`email===previousEmail`）否则 disabled `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.profile.email` | `AccountProfileForm.tsx:432-436,52,100-106` `[读]` |
-| page.account.profile.custom-fields | 填写工作区自定义资料字段 | Profile → `CustomFieldsForm` 各运行时字段 | `useAccountsCustomFields()` 有 metadata 才渲染；字段集运行时 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.account.profile.save` | `AccountProfileForm.tsx:441` `[读]` |
+| page.account.profile.custom-fields | 填写工作区自定义资料字段 | Profile → `CustomFieldsForm` 各运行时字段 | `useAccountsCustomFields()` 有 metadata 才渲染；字段集运行时 `[读]` | [实测] ① 已写 Accounts_CustomFields=`department` text；Account → Profile 滚动到底见 department 文本框。② 未填未保存。③ 刷新字段仍在。shots/shots46/73-profile-bottom.png shots/shots46/page.account.profile.custom-fields.png | core | `page.account.profile.save` | `AccountProfileForm.tsx:441` `[读]` |
 | page.account.profile.cancel | 放弃未保存资料 | 页脚 `Cancel`（dirty 才可点） | `isDirty` `[读]` | [实测] ① 脏表单点 Cancel，Bio 回退。② 未保存。③ 刷新无 x。 | core | `page.account.profile.save` | `AccountProfilePage.tsx:141-144` `[读]` |
 | page.account.profile.save | 保存资料/状态/头像 | 页脚 `Save_changes` | dirty 且非 loggingOut `[读]` | [实测] ① Profile 改 Bio 为 x，页脚 Save changes 启用。② 未点 Save。③ Cancel。shots/shots12/07-profile-save-cancel.webp | core | `account.profile` | `AccountProfileForm.tsx:132-191` `AccountProfilePage.tsx:145-147` `[读]` |
 | page.account.profile.logout-others | 登出其他客户端 | Profile → `Logout_Others` | 无额外权 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.account.sessions.logout` `nav.user.logout` | `AccountProfilePage.tsx:49-64,128-130` `[读]` |
@@ -1071,7 +1078,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.audit.security.row | 打开一条设置变更详情 | Security Logs → 行单击 | 同上 | [不可达] 已打开 /audit、/admin/audit、/audit-home、/security-logs，均为 heading “Page not found” / “The page does not exist or you may not have access permission”；Administration 侧栏无 Audit 项。hasValidLicense=false 且入口走后控件/页不在。 | EE:auditing | page.audit.security.apply | SecurityLogsTable.tsx [读] |
 | page.audit.security.pagination | 翻页设置日志 | Security Logs → Pagination | 有多页 | [不可达] 已打开 /audit、/admin/audit、/audit-home、/security-logs，均为 heading “Page not found” / “The page does not exist or you may not have access permission”；Administration 侧栏无 Audit 项。hasValidLicense=false 且入口走后控件/页不在。 | EE:auditing | page.audit.security.apply | SecurityLogsTable.tsx [读] |
 
-### `omni.*` — 136 个 id（实测 85 / 不可达 29 / 待渲染 22）
+### `omni.*` — 136 个 id（实测 86 / 不可达 29 / 待渲染 21）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1092,7 +1099,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | omni.agent.directory.contact.history | 按来源筛并钻取历史会话 | 联系人 → `History` → `Filter` → 点条目 → `Search` / `Open_chat` | 非 `All` 筛无 `contact-id-verification` → `AdvancedContactModal` `ContactInfoHistory.tsx:30-43` | [实测] ① /live/.../contact-profile/history 页签 History + Filter All，空态 No history yet。② 无写。③ 刷新仍 History。shots/shots31/contact-history-tab.webp | `source` | `omni.agent.directory.chats.open` | `ContactInfoHistory.tsx:28-88` `ContactInfoHistoryMessages.tsx:73-126` `[读]` |
 | omni.agent.directory.contact.block | 拉黑/解除联系人频道 | `Channels` 行 ⋮ → `Block`/`Unblock`；或未知联系人 callout `Block` | 确认要 `contact-id-verification` 否则 upsell `useBlockChannel.tsx:32-34` | [实测] ① 同房 Unknown contact callout 的 Block（另有 Add contact）。② 未点拉黑。③ 横幅仍在。shots/shots30/03-contact-profile-panel.webp | channel id | `omni.agent.unknown-contact` | `useBlockChannel.tsx:18-38` `[读]` |
 | omni.agent.sidepanel.in-progress | 副栏列出进行中 live 房并点进 | `主侧栏 Omnichannel_filters→In_progress` → 行 | V2 `secondarySidebar` + `view-l-room` + omnichannel enabled `OmnichannelFilters.tsx:10-20` | [实测] ① 同上 Chats in progress 分组下列出进行中会话。② 无。③ 仍在。 | rooms `onHold` | `sidebar.filter.in-progress`（只写 tab） | `SidePanelInProgress.tsx:13` `[读]` |
-| omni.agent.sidepanel.on-hold | 副栏列出挂起会话 | `主侧栏→On_Hold` | 许可证 **`livechat-enterprise`**，否则 tab 隐并回 `all` `SidepanelOnHold.tsx:17-21` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `room.onHold` | `sidebar.filter.on-hold` `omni.agent.hold` | `SidepanelOnHold.tsx:17-31` `[读]` |
+| omni.agent.sidepanel.on-hold | 副栏列出挂起会话 | `主侧栏→On_Hold` | 许可证 **`livechat-enterprise`**，否则 tab 隐并回 `all` `SidepanelOnHold.tsx:17-21` | [实测] ① Feature preview secondary sidebar ON 后主侧栏可见 On hold（Community、hasValidLicense=false 仍渲染该项）。② 未点进挂起列表。③ 刷新仍在。shots/shots46/02-home.png shots/shots46/omni.agent.sidepanel.on-hold.png | `room.onHold` | `sidebar.filter.on-hold` `omni.agent.hold` | `SidepanelOnHold.tsx:17-31` `[读]` |
 | omni.agent.sidepanel.priority | 从副栏行菜单改优先级 | 进行中/挂起 行 ⋮ → `Priorities` / `Unprioritized` | 优先级启用 = omnichannel + enterprise 配置 `OmnichannelProvider.tsx:73-86` `useRoomMenuActions.ts:137` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `rid`；优先级目录 | `omni.manager.priorities.edit` | `useOmnichannelPrioritiesMenu.ts:15-52` `[读]` |
 | omni.agent.room.info | 打开会话 Room_Info（含访客 UA） | live `房间头→工具栏→info-circled` / `Room_Info` | hook 对 `live` 组始终注册 `useRoomInfoRoomAction.ts:9-14`；UA 段仅 visitor 有 `userAgent` `VisitorClientInfo.tsx:35-36` | [实测] ① Room info → Room Information 侧栏。② 无写。③ 关栏。shots/shots11/16-livechat-room-info.webp | room / visitor | `room.toolbox` 房间信息 | `ChatInfo.tsx:93-179` `[读]` |
 | omni.agent.room.edit | 保存会话 Topic/Tags/自定义字段/SLA/Priority | Room_Info → `Edit` → `Save` | 须订阅或接待人或 `save-others-livechat-room-info` `ChatInfo.tsx:61-73`；自定义字段 `view/edit-livechat-room-customfields` `RoomEdit.tsx:57`；SLA/Priority 控件要 **`livechat-enterprise`** `SlaPoliciesSelect.tsx:16-21` `PrioritiesSelect.tsx:22-51` | [实测] ① Atlas Visitor Room info → Edit → Topic/Tags，Cancel。② 未保存。③ 会话仍开。shots/shots13/05-livechat-room-edit.webp | department tags `useLivechatTags` | `omni.agent.sidepanel.priority` `omni.agent.close` | `RoomEdit.tsx:137-170` `[读]` |
@@ -1326,10 +1333,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **741** |
+| 本卷 `[实测]` | 见上表 | **749** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **190** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **151** |
-| `741+190+151` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **143** |
+| `749+190+143` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
