@@ -548,6 +548,35 @@ def expr_before(text: str, op_idx: int) -> str:
     return clean_expr(raw)
 
 
+def classify_return(text: str, ret_idx: int) -> str:
+    """Classify a `return` at ret_idx: null | jsx | object | other."""
+    if not text.startswith("return", ret_idx):
+        return "other"
+    if ret_idx > 0 and (text[ret_idx - 1].isalnum() or text[ret_idx - 1] in "_$"):
+        return "other"
+    i = skip_ws_comments(text, ret_idx + 6)
+    n = len(text)
+    if i >= n:
+        return "other"
+    if text.startswith("null", i) and (i + 4 >= n or not (text[i + 4].isalnum() or text[i + 4] == "_")):
+        return "null"
+    if text[i] == "<":
+        ok, _, _ = jsx_start_at(text, i)
+        return "jsx" if ok else "other"
+    if text[i] == "(":
+        j = skip_ws_comments(text, i + 1)
+        if j < n and text[j] == ")":
+            return "other"  # () =>
+        ok, _ = operand_is_jsx(text, i + 1)
+        return "jsx" if ok else "other"
+    if text[i] == "{":
+        j = skip_ws_comments(text, i + 1)
+        if j < n and text[j] == "<":
+            return "jsx"
+        return "object"
+    return "other"
+
+
 def is_ui_return(text: str, ret_idx: int) -> tuple[bool, str]:
     """Rule B/C: return null / return < / return ( that opens JSX. Never return () => / { / false / value."""
     if not text.startswith("return", ret_idx):
@@ -574,6 +603,172 @@ def is_ui_return(text: str, ret_idx: int) -> tuple[bool, str]:
         # Bare `return (` of a non-JSX value: reject (Rule B: never return value).
         return False, ""
     return False, ""
+
+
+CONTROL_BEFORE_PAREN = frozenset({"if", "for", "while", "switch", "catch", "with"})
+
+
+def _match_open_paren(text: str, close_idx: int, code: set[int]) -> int | None:
+    depth = 0
+    i = close_idx
+    while i >= 0:
+        if i in code:
+            c = text[i]
+            if c == ")":
+                depth += 1
+            elif c == "(":
+                depth -= 1
+                if depth == 0:
+                    return i
+        i -= 1
+    return None
+
+
+def _ident_before(text: str, idx: int) -> str:
+    """Identifier immediately left of idx (skipping ws/comments backward)."""
+    j = idx - 1
+    while j >= 0 and text[j] in " \t\r\n":
+        j -= 1
+    if j >= 1 and text[j] == "/" and text[j - 1] == "*":
+        k = text.rfind("/*", 0, j - 1)
+        j = k - 1 if k >= 0 else -1
+        while j >= 0 and text[j] in " \t\r\n":
+            j -= 1
+    end = j + 1
+    while j >= 0 and (text[j].isalnum() or text[j] in "_$"):
+        j -= 1
+    return text[j + 1 : end]
+
+
+def find_function_bodies(text: str) -> list[tuple[int, int]]:
+    """`{` … `}` spans that are function/arrow/method bodies (not if/for/class)."""
+    n = len(text)
+    code = set(iter_code_indexes(text))
+    starts: set[int] = set()
+
+    def add_body(brace: int) -> None:
+        if brace < n and text[brace] == "{":
+            starts.add(brace)
+
+    for i in find_ops(text, "=>"):
+        j = skip_ws_comments(text, i + 2)
+        if j < n and text[j] == "{":
+            add_body(j)
+
+    for i in find_keyword(text, "function"):
+        j = skip_ws_comments(text, i + 8)
+        if j < n and text[j] == "*":
+            j = skip_ws_comments(text, j + 1)
+        if j < n and (text[j].isalpha() or text[j] in "_$"):
+            m = IDENT_RE.match(text, j)
+            if m:
+                j = skip_ws_comments(text, m.end())
+        if j < n and text[j] == "<":
+            j = skip_ws_comments(text, skip_balanced(text, j, "<", ">"))
+        if j >= n or text[j] != "(":
+            continue
+        after = skip_balanced(text, j, "(", ")")
+        k = skip_ws_comments(text, after)
+        if k < n and text[k] == "{":
+            add_body(k)
+            continue
+        if k < n and text[k] == ":":
+            body = _body_after_return_type(text, k + 1, code)
+            if body is not None:
+                add_body(body)
+
+    # method / shorthand: `name(...) {` but not if/for/while/switch/catch
+    i = 0
+    while True:
+        i = text.find(")", i)
+        if i < 0:
+            break
+        if i in code:
+            j = skip_ws_comments(text, i + 1)
+            if j < n and text[j] == "{" and j not in starts:
+                open_p = _match_open_paren(text, i, code)
+                if open_p is not None:
+                    kw = _ident_before(text, open_p)
+                    if kw not in CONTROL_BEFORE_PAREN:
+                        add_body(j)
+        i += 1
+
+    bodies: list[tuple[int, int]] = []
+    for b in sorted(starts):
+        bodies.append((b, skip_balanced(text, b, "{", "}")))
+    return bodies
+
+
+def _body_after_return_type(text: str, start: int, code: set[int]) -> int | None:
+    """After `function f():`, find the `{` that opens the body (not a type literal)."""
+    n = len(text)
+    depth_p = depth_b = depth_a = depth_c = 0
+    i = start
+    while i < n:
+        if i not in code:
+            i += 1
+            continue
+        c = text[i]
+        if c == "(":
+            depth_p += 1
+        elif c == ")":
+            depth_p -= 1
+        elif c == "[":
+            depth_b += 1
+        elif c == "]":
+            depth_b -= 1
+        elif c == "<":
+            depth_a += 1
+        elif c == ">":
+            depth_a -= 1
+        elif c == "{" and depth_p == 0 and depth_b == 0 and depth_a <= 0 and depth_c == 0:
+            end = skip_balanced(text, i, "{", "}")
+            j = skip_ws_comments(text, end)
+            if j < n and text[j] in "|&[":
+                i = j
+                continue
+            if j < n and text[j] == "{":
+                return j
+            return i
+        elif c == "{":
+            depth_c += 1
+        elif c == "}":
+            depth_c -= 1
+        i += 1
+    return None
+
+
+def _containing_bodies(bodies: list[tuple[int, int]], idx: int) -> list[tuple[int, int]]:
+    return [se for se in bodies if se[0] <= idx < se[1]]
+
+
+def innermost_body(bodies: list[tuple[int, int]], idx: int) -> tuple[int, int] | None:
+    c = _containing_bodies(bodies, idx)
+    if not c:
+        return None
+    return min(c, key=lambda se: se[1] - se[0])
+
+
+def outermost_body(bodies: list[tuple[int, int]], idx: int) -> tuple[int, int] | None:
+    c = _containing_bodies(bodies, idx)
+    if not c:
+        return None
+    return max(c, key=lambda se: se[1] - se[0])
+
+
+def own_returns(text: str, body: tuple[int, int], bodies: list[tuple[int, int]]) -> list[int]:
+    s, e = body
+    out = []
+    for i in find_keyword(text, "return"):
+        if s < i < e and innermost_body(bodies, i) == body:
+            out.append(i)
+    return out
+
+
+def is_jsx_render_fn(text: str, body: tuple[int, int], bodies: list[tuple[int, int]]) -> bool:
+    """C'': function is a JSX render tree iff it has a JSX-opening return and no `return {` config/icon-props."""
+    kinds = [classify_return(text, i) for i in own_returns(text, body, bodies)]
+    return ("jsx" in kinds) and ("object" not in kinds)
 
 
 def find_keyword(text: str, word: str):
@@ -742,6 +937,9 @@ def _find_tern_colon(text: str, start: int, code: set[int]) -> int | None:
 
 
 def scan_if_ret(text: str) -> list[dict]:
+    """C'': if-ret only inside a .tsx function that itself (and its outermost) is JSX-render."""
+    bodies = find_function_bodies(text)
+    render_ok = {body: is_jsx_render_fn(text, body, bodies) for body in bodies}
     states: list[dict] = []
     for i in find_keyword(text, "if"):
         j = skip_ws_comments(text, i + 2)
@@ -763,6 +961,18 @@ def scan_if_ret(text: str) -> list[dict]:
             ok, name = is_ui_return(text, ret)
             if not ok:
                 continue
+            inner = innermost_body(bodies, ret)
+            outer = outermost_body(bodies, ret)
+            if inner is None or outer is None:
+                continue
+            # same function must open JSX; mixed `return {` config/icon-props → 0
+            if not render_ok.get(inner):
+                continue
+            # hook/template nested in a data function (outer is not a JSX tree) → 0
+            if inner != outer and not render_ok.get(outer):
+                continue
+            if not render_ok.get(outer):
+                continue
             states.append(
                 {
                     "kind": "if-ret",
@@ -772,35 +982,48 @@ def scan_if_ret(text: str) -> list[dict]:
                     "branch": "if",
                     "idx": i,
                     "ret_idx": ret,
+                    "fn": inner,
                 }
             )
     return states
 
 
 def scan_default(text: str, if_rets: list[dict]) -> list[dict]:
+    """Default is per-function, and only for C'' JSX-render functions that already have if-ret."""
     if not if_rets:
         return []
-    ui_returns: list[tuple[int, str]] = []
-    for i in find_keyword(text, "return"):
-        ok, name = is_ui_return(text, i)
-        if ok:
-            ui_returns.append((i, name))
-    if_ret_idxs = {s.get("ret_idx") for s in if_rets}
-    # last UI return that is not an if-ret
-    for idx, name in reversed(ui_returns):
-        if idx in if_ret_idxs:
+    bodies = find_function_bodies(text)
+    by_fn: dict[tuple[int, int], list[dict]] = defaultdict(list)
+    for s in if_rets:
+        fn = s.get("fn") or innermost_body(bodies, s.get("ret_idx", s["idx"]))
+        if fn is not None:
+            by_fn[fn].append(s)
+    out: list[dict] = []
+    for fn, frs in by_fn.items():
+        if not is_jsx_render_fn(text, fn, bodies):
             continue
-        return [
-            {
-                "kind": "default",
-                "line": line_of(text, idx),
-                "cond": "前述 if-ret 均不成立（default return）",
-                "render": name,
-                "branch": "default",
-                "idx": idx,
-            }
-        ]
-    return []
+        if_ret_idxs = {s.get("ret_idx") for s in frs}
+        ui_returns: list[tuple[int, str]] = []
+        for i in own_returns(text, fn, bodies):
+            ok, name = is_ui_return(text, i)
+            if ok:
+                ui_returns.append((i, name))
+        for idx, name in reversed(ui_returns):
+            if idx in if_ret_idxs:
+                continue
+            out.append(
+                {
+                    "kind": "default",
+                    "line": line_of(text, idx),
+                    "cond": "前述 if-ret 均不成立（default return）",
+                    "render": name,
+                    "branch": "default",
+                    "idx": idx,
+                    "fn": fn,
+                }
+            )
+            break
+    return out
 
 
 def scan_suspense(text: str, is_tsx: bool) -> list[dict]:
@@ -1285,8 +1508,8 @@ def render_full_md(files, rows, kinds, closure) -> str:
 | --- | --- |
 | and-show / and-hide | **仅 JSX 操作数**，且仅 `.tsx` / `.jsx`。`&&` 后（跳过空白/注释）是 `<`，或 `(` 且下一非空白 token 是 `<` / `{<` / 大写 JSX 标识。拒绝布尔 `const x = a &&`、`return a &&`、对象字段布尔、`if (a &&`、`&& (counter.x += 1)`。配对 shown+hidden。 |
 | tern-then / tern-else | **仅 JSX 操作数**，且仅 `.tsx` / `.jsx`。`cond ? <` 或 `cond ? (` 打开 JSX。拒绝 `?.`、`??`、泛型、`.match(/...?/)`、两边都不是 JSX 的 `a ? b : c`。配对 then+else。 |
-| if-ret | **仅 `.tsx` / `.jsx`**。`if (...)` 后紧跟或块首条 `return null` / `return <` / `return (` 且该 `(` 打开 JSX。永不收 `return () =>`、`return {`、`return false`、`return value`。`.ts` 的 `return null`（hook/lib「无对象」）不是渲染分支。 |
-| default | **仅 `.tsx` / `.jsx`**，且本文件已有 if-ret。最后一个非 if-ret 的 UI return 是 `return null` / `return <` / `return (`（JSX）。永不收 `return () =>` 或裸 `return;`。 |
+| if-ret | **仅 `.tsx` / `.jsx`（C''）**。`if (...)` 后紧跟或块首条 `return null` / `return <` / `return (` 且该 `(` 打开 JSX。**同一函数**还必须另有至少一处打开 JSX 的 return；若该函数所有非 null return 都是对象 / config / callback / 原始值（含 `return {` 图标或菜单配置），抽 0 行。嵌套函数还要求最外层函数也是 JSX-render（hook 里的 template / `.map` 不算）。永不收 `return () =>`、`return {`、`return false`、`return value` 作为 if-ret 本身。`.ts` 抽 0 行。 |
+| default | **仅 `.tsx` / `.jsx`（C''）**，且**同一函数**已有 if-ret。该函数最后一个非 if-ret 的 UI return 是 `return null` / `return <` / `return (`（JSX）。永不收 `return () =>` 或裸 `return;`。 |
 | suspense | JSX `<Suspense fallback=`。 |
 
 8 列：id / 表面 / 分支条件 / 渲染 / 到达配方或不可达 / 诚实 / 关联 / 出处。
@@ -1442,6 +1665,10 @@ rg '^\\| `state\\.' docs/qa/pm-feature-atlas/round-2/08-states.md | rg '\\.ts:[0
 # 条件列不得残留 JSX 的 leading >
 rg '^\\| `state\\.' docs/qa/pm-feature-atlas/round-2/08-states.md | rg '\\| > ' || true
 # expect 0 matches
+
+# C''：toolbar/config hook 不得进表
+rg '^\\| `state\\.' docs/qa/pm-feature-atlas/round-2/08-states.md | rg 'useNewDiscussionMessageAction|usePinMessageAction|useReadReceiptsDetailsAction|useReportMessageAction|useShowMessageReactionsAction|useWebDAVMessageAction|useAvatarTemplate|useRoomIcon|useShowSettingAlerts' || true
+# expect 0 matches
 ```
 
 树级证明：
@@ -1516,6 +1743,34 @@ TS_JUNK = (
     "renderLayoutBlock.ts",
 )
 
+TSX_JUNK = (
+    "useNewDiscussionMessageAction.tsx",
+    "usePinMessageAction.tsx",
+    "useReadReceiptsDetailsAction.tsx",
+    "useReportMessageAction.tsx",
+    "useShowMessageReactionsAction.tsx",
+    "useWebDAVMessageAction.tsx",
+    "useAvatarTemplate.tsx",
+    "useRoomIcon.tsx",
+    "useShowSettingAlerts.tsx",
+)
+
+KEEP_JSX = (
+    "ContentForDays.tsx",
+    "AdminUserForm.tsx",
+    "AdminUserInfoActions.tsx",
+    "normalizeThreadMessage.tsx",
+)
+
+KEEP_SITES = (
+    "useQuickActions.tsx:237",
+    "useSortModeItems.tsx:32",
+    "useSortModeItems.tsx:40",
+    "AdminUserForm.tsx:199",
+    "AdminUserInfoActions.tsx:33",
+    "normalizeThreadMessage.tsx",
+)
+
 
 def assert_no_leaks(rows: list[dict]) -> None:
     bad = [r["src"] for r in rows if any(site in r["src"] for site in LEAK_SITES)]
@@ -1530,6 +1785,15 @@ def assert_no_leaks(rows: list[dict]) -> None:
     gt = [f"{r['src']} cond={r['cond']!r}" for r in rows if r["cond"].lstrip().startswith(">")]
     if gt:
         raise SystemExit("LEADING_GT_COND " + " ; ".join(gt[:8]))
+    tsx_junk = [r["src"] for r in rows if any(name in r["file"] for name in TSX_JUNK)]
+    if tsx_junk:
+        raise SystemExit("TSX_JUNK_PRESENT " + " ".join(sorted(set(tsx_junk))[:12]))
+    missing_keep = [name for name in KEEP_JSX if not any(name in r["file"] for r in rows)]
+    if missing_keep:
+        raise SystemExit("KEEP_JSX_MISSING " + " ".join(missing_keep))
+    missing_sites = [site for site in KEEP_SITES if not any(site in r["src"] or site in r["file"] for r in rows)]
+    if missing_sites:
+        raise SystemExit("KEEP_SITES_MISSING " + " ".join(missing_sites))
 
 
 def sample_and_show(rows: list[dict], n: int = 20) -> None:
