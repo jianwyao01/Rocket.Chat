@@ -715,6 +715,24 @@
       "honesty": "[实测]",
       "arrival": "登录 → `/account/security`；展开 Two Factor Authentication；shot:account-security-2fa.png；TwoFactorEmail 开关",
       "shot": "account-security-2fa.png"
+    },
+    {
+      "id": "state.uiclient.generic-menu.62a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `#general`；focus 消息工具条 → More；shot:message-more-menu.png；sections → Menu",
+      "shot": "message-more-menu.png"
+    },
+    {
+      "id": "state.uiclient.generic-menu-item.22a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `#general`；focus 消息工具条 → More；shot:message-more-menu.png；各菜单项 icon",
+      "shot": "message-more-menu.png"
+    },
+    {
+      "id": "state.uiclient.generic-menu-item.24a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `#general`；focus 消息工具条 → More；shot:message-more-menu.png；各菜单项 content",
+      "shot": "message-more-menu.png"
     }
   ]
 }

@@ -97,9 +97,9 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 
 | 诚实 | 数 |
 | --- | ---: |
-| [待渲染实测] | 4102 |
+| [待渲染实测] | 4099 |
 | [不可达] | 0 |
-| [实测] | 119 |
+| [实测] | 122 |
 
 `[待渲染实测]+[不可达]+[实测] = 4221`。本卷只晋级已截图分支，**不是** live-closed。
 
@@ -119,9 +119,9 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | 登录 | `rocketchat.internal.admin.test` 成功 |
 | 产品 merge-base | `e519470` |
 
-Walk 并截图：login、account security / profile / preferences、home、`#general`（header / composer / message / toolbox）、channel info、members、directory channels / users / teams、Create channel / team / DM / discussion 弹层、account security 2FA（TOTP / Email）展开。
+Walk 并截图：login、account security / profile / preferences、home、`#general`（header / composer / message / toolbox / More 菜单）、channel info、members、directory channels / users / teams、Create channel / team / DM / discussion 弹层、account security 2FA（TOTP / Email）展开。
 
-未打开因而不晋级：toolbox More 菜单内层项、Create 弹层内 FieldError / broadcast hint、DM 弹层无 errors.users（0 行）、TOTP QR / backup codes（未开启）、E2EE accordion、Video/Voice call chrome、Game Center、Outlook、VoIP 组、Apps inject、federation External、SAML。
+未打开因而不晋级：Create 弹层内 FieldError / broadcast hint、DM 弹层无 errors.users（0 行）、TOTP QR / backup codes（未开启）、E2EE accordion、Video/Voice call chrome、Game Center、Outlook、VoIP 组、Apps inject、federation External、SAML。More 内层 Pin/Star/Follow/Copy/Edit/Delete 等是 hook 配置，闭集无独立 JSX 行，只晋级 GenericMenu sections / GenericMenuItem icon+content。
 
 截图目录：`docs/qa/pm-feature-atlas/round-2/shots/`。标签回写：同目录 `live-08-states.json` 只改诚实列，不改抽取器、不改 4221 行集。未点击可达行仍 `[待渲染实测]`。不要用 `[不可达]` 清零。本卷 **不是** live-closed。
 
@@ -4401,17 +4401,17 @@ Walk 并截图：login、account security / profile / preferences、home、`#gen
 | `state.uiclient.feature-preview-badge.10i` | uiclient | !unseenFeatures | null | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/FeaturePreview/FeaturePreviewBadge.tsx:10` |
 | `state.uiclient.feature-preview-badge.14d` | uiclient | 前述 if-ret 均不成立（default return） | Badge | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/FeaturePreview/FeaturePreviewBadge.tsx:14` |
 | `state.uiclient.generic-menu.62a1` | uiclient | !(sections) | null | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenu.tsx:62` |
-| `state.uiclient.generic-menu.62a0` | uiclient | sections | Menu | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenu.tsx:62` |
+| `state.uiclient.generic-menu.62a0` | uiclient | sections | Menu | 登录 → `#general`；focus 消息工具条 → More；shot:message-more-menu.png；sections → Menu | [实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenu.tsx:62` |
 | `state.uiclient.generic-menu.87a1` | uiclient | !(items) | null | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenu.tsx:87` |
 | `state.uiclient.generic-menu.87a0` | uiclient | items | Menu | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenu.tsx:87` |
 | `state.uiclient.generic-menu-item.21a1` | uiclient | !(gap) | null | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenuItem.tsx:21` |
 | `state.uiclient.generic-menu-item.21a0` | uiclient | gap | MenuItemColumn | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenuItem.tsx:21` |
 | `state.uiclient.generic-menu-item.22a1` | uiclient | !(icon) | null | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenuItem.tsx:22` |
-| `state.uiclient.generic-menu-item.22a0` | uiclient | icon | MenuItemIcon | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenuItem.tsx:22` |
+| `state.uiclient.generic-menu-item.22a0` | uiclient | icon | MenuItemIcon | 登录 → `#general`；focus 消息工具条 → More；shot:message-more-menu.png；各菜单项 icon | [实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenuItem.tsx:22` |
 | `state.uiclient.generic-menu-item.23a1` | uiclient | !(status) | null | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenuItem.tsx:23` |
 | `state.uiclient.generic-menu-item.23a0` | uiclient | status | MenuItemColumn | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenuItem.tsx:23` |
 | `state.uiclient.generic-menu-item.24a1` | uiclient | !(content) | null | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenuItem.tsx:24` |
-| `state.uiclient.generic-menu-item.24a0` | uiclient | content | MenuItemContent | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenuItem.tsx:24` |
+| `state.uiclient.generic-menu-item.24a0` | uiclient | content | MenuItemContent | 登录 → `#general`；focus 消息工具条 → More；shot:message-more-menu.png；各菜单项 content | [实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenuItem.tsx:24` |
 | `state.uiclient.generic-menu-item.25a1` | uiclient | !(addon) | null | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenuItem.tsx:25` |
 | `state.uiclient.generic-menu-item.25a0` | uiclient | addon | MenuItemInput | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/GenericMenu/GenericMenuItem.tsx:25` |
 | `state.uiclient.generic-table-header-cell.27a1` | uiclient | !(sort) | null | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/GenericTable/GenericTableHeaderCell.tsx:27` |
