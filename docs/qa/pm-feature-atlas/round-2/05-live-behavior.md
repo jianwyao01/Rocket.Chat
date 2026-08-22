@@ -317,7 +317,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | sidebar.sidepanel.unread-toggle | 副栏只看未读 | `副栏顶 heading→Unread ToggleSwitch` | secondarySidebar ON；项 none `SidePanelInternal.tsx:48-51` | [实测] ① Account → Feature preview 打开 Filters and secondary sidebar 后，副栏顶 All 旁 Unread ToggleSwitch（关）。② 未拨开。③ 刷新仍在。shots/shots46/01-feature-preview.png shots/shots46/02-home.png shots/shots46/sidebar.sidepanel.unread-toggle.png | `SidePanelInternal.tsx:48-51` | `nav.sort.group.unread` | `SidePanelInternal.tsx:51` |
 | sidebar.sidepanel.back | tablet 关闭副栏 | `副栏顶→Back` | secondarySidebar ON + `isTablet` `SidePanelInternal.tsx:44` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `SidePanelInternal.tsx:44` | `nav.sidebar.toggle` | `SidePanelInternal.tsx:44` |
 
-### `composer.*` — 20 个 id（实测 14 / 不可达 4 / 待渲染 2）
+### `composer.*` — 20 个 id（实测 15 / 不可达 4 / 待渲染 1）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -333,7 +333,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | composer.state.draft.reload | 整页刷新：server 优先，否则 local | A 打字（未切房、local 已写）→ F5 | `initialValue = serverDraft \ | [实测] ① #atlas-live composer 输入 vol5-draft-reload（未发送）→ /home → 回 /channel/atlas-live，输入框仍有该文本，侧栏 Draft: vol5-draft-reload。② 无写 REST。③ 刷新前草稿仍在。shots/shots43/composer.state.draft.reload.webp | localStorage` | `[读]` ①刷新后预填。②若从未 flush 且 local 还在则恢复；若已 flush 则 server。③`［待渲染实测］` 仅 server、无 local 的跨设备时序 | core |
 | composer.state.typing.truncated | ≥5 人截成 and others | ≥5 个 username | `maxUsernames=5` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `implicit.typing.display` | `ComposerUserActionIndicator.tsx:7,70-72` |
 | composer.state.location.prompt | 定位权限未决：先说明再 Continue | More → Share → `Location` | `MapView_Enabled`；geolocation；`MapView_GMapsAPIKey`；`!federated`；`!disableBasicActions` | [实测] ① #atlas-live More actions → Location → 模态 You will be asked for permissions + Continue/Cancel。② 未点 Continue 要定位。③ Escape。shots/shots47/85-location.png | core+setting | `composer.action.share-location` | `useShareLocationAction.tsx:17-31`；`ShareLocationModal.tsx:70-79` |
-| composer.state.location.denied | 定位拒绝或拿不到坐标 | Continue 后拒 / 无 position | `denied \ | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | !positionData` | `［待渲染实测］` ①modal `Cannot_share_your_location` 仅 Ok。②无 `chat.sendMessage`。③无消息 | core |
+| composer.state.location.denied | 定位拒绝或拿不到坐标 | Continue 后拒 / 无 position | `denied \ | [实测] ① CDP geolocation=denied 后 `#atlas-live` More→Location→Continue → 模态 “Cannot share your location…” / “The necessary browser permissions for location sharing are not granted” + Ok。② 无 sendMessage。③ 关模态。shots/shots53/11b-after-continue.png | !positionData` | `［待渲染实测］` ①modal `Cannot_share_your_location` 仅 Ok。②无 `chat.sendMessage`。③无消息 | core |
 | composer.state.location.share | 预览地图后发出 Point | 允许定位 → `Share` | granted + position | [实测] ① #atlas-live Location → Continue（context 已 grant geolocation）→ 模态 Share Location? + Share/Cancel。② 未点 Share 发 Point。③ Escape。shots/shots48/15-location-after.png | core+setting | `composer.send` | `ShareLocationModal.tsx:90-93` |
 | composer.state.webdav.add | 添加 WebDAV 账号 | More → Create new → `Add_Server` → 填表提交 | `Webdav_Integration_Enabled`；项 `disabled=!isSuccess` | [实测] ① #atlas-live More → Add Server → Add new WebDAV account（URL/Username/Password）。② 未连上真实服务器。③ Cancel。shots/shots38/composer.state.webdav.add.webp | core+setting | `composer.action.webdav-add` | `useWebdavActions.tsx:12-33` |
 | composer.state.webdav.pick | 从已连账户选文件入队 | More → 账户名 → picker 点文件 | query success 且有账户 | [实测] ① method.call addWebdavAccount 后 More → vol5-dav → Upload from vol5-dav，行 vol5.txt 6 Bytes。② 未点上传。③ 关模态。shots/shots47/86-webdav-picker.png | core+setting | `composer.action.webdav-upload` | `useWebdavActions.tsx:35-43`；`WebdavFilePickerModal.tsx:128-147` |
@@ -354,7 +354,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | shortcut.global.markAllAsRead.documented-unbound | 帮助里写了标全已读，client 无绑定 | 打开快捷键 modal 看到 Mark_all_as_read → 关掉 → 在房间按 Shift+Esc（Mac）或 Ctrl+Esc（其他） | **无** `tinykeys`/keydown 绑定（全 `client` 仅 modal 文案）。`KeyboardShortcutsModal.tsx:32-34` | [实测] ① 快捷键说明可见 Mark all as read；房间内 Shift+Escape 弹出确认（本轮 Cancel）。② 未执行清空。③ 确认关。shots/shots7/12-keyboard-shortcuts.webp shots/shots7/22-clear-unreads-confirm.webp | core（文档） | `implicit.unread.markAllRead` | `KeyboardShortcutsModal.tsx:32-34` |
 
-### `route.*` — 50 个 id（实测 41 / 不可达 6 / 待渲染 3）
+### `route.*` — 50 个 id（实测 42 / 不可达 6 / 待渲染 2）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -407,7 +407,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | route.oauth-authorize | 第三方应用 OAuth 授权同意 | 外站重定向 `/oauth/authorize?client_id=&redirect_uri=` | 未登录先登录壳；已登录拉 OAuth app 后同意/拒绝 `[读]` | [实测] ① 未登录打开 /oauth/authorize → 落到 /oauth/error/404，Error / Invalid OAuth client。② 无同意/拒绝钮。③ 刷新同错误页。shots/shots46/45-oauth-authorize.png shots/shots46/route.oauth-authorize.png | READ `/oauth/authorize`。许可证/EE 见门控 | `route.admin.third-party-login` | `startup/routes.tsx:235-238` `OAuthAuthorizationPage.tsx:10-31` `[读]` |
 | route.oauth-error | 显示 OAuth 错误页 | 失败回跳 `/oauth/error/:error` | 公开 | [实测] ① 地址栏打开 /oauth/error/invalid_request → Error + “Oops! Something went wrong. Please reload the page or contact an administrator.”。② 无。③ 刷新同 URL 仍 Error 页。shots/shots42/route.oauth-error.webp | READ `/oauth/error/:error`。许可证/EE 见门控 | `route.oauth-authorize` | `startup/routes.tsx:240-243` `[读]` |
 | route.saml | SAML IdP 回调后登录 | IdP 重定向 `/saml/:token` | 公开；`Meteor.loginWithSamlToken`；可能再跟邀请 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `Meteor.loginWithSamlToken`；`/saml/:token`。许可证/EE 见门控 | `route.login` `route.invite` | `startup/routes.tsx:245-248` `SAMLLoginRoute.tsx` `[读]` |
-| route.2fa | OAuth/现代登录流的 2FA 挑战 | 登录流送到 `/2fa/:method/:challengeId` | 公开挑战页 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | READ `/2fa/:method/:challengeId`。许可证/EE 见门控 | `route.login` `account.security` | `startup/routes.tsx:144-147` `OAuthTwoFactorAuthenticationRouter.tsx` `[读]` |
+| route.2fa | OAuth/现代登录流的 2FA 挑战 | 登录流送到 `/2fa/:method/:challengeId` | 公开挑战页 | [实测] ① 打开 `/2fa/totp/vol5-leftover-challenge` → 模态 “Two-factor authentication / Enter TOTP password” + Enter code here + Cancel / Verify。② 未填码、未 Verify。③ 关。shots/shots53/00-2fa-route.png | READ `/2fa/:method/:challengeId`。许可证/EE 见门控 | `route.login` `account.security` | `startup/routes.tsx:144-147` `OAuthTwoFactorAuthenticationRouter.tsx` `[读]` |
 
 ### `directory.*` — 4 个 id（实测 3 / 不可达 0 / 待渲染 1）
 
@@ -1252,7 +1252,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | mkt.app.releases | 看版本发布说明 | 详情 tab `Releases` | context≠private `AppDetailsPageTabs.tsx:54-58` | [不可达] 已打开 Marketplace Explore：heading Explore，“0 apps enabled”，“No app matches”。应用级控件未出现。本实例管理员无法造出 Marketplace 远程目录应用（limits.marketplaceApps 有额度但目录空）。 | versions | `mkt.app.update` | `AppDetailsPageTabs.tsx:54-58` `[读]` |
 | mkt.app.instances | 看集群实例状态 | 详情 tab `Instances` | **`manage-apps`** + installed + `hasCluster` `AppDetailsPageTabs.tsx:69-73` | [不可达] 已打开 Marketplace Explore：heading Explore，“0 apps enabled”，“No app matches”。应用级控件未出现。本实例管理员无法造出 Marketplace 远程目录应用（limits.marketplaceApps 有额度但目录空）。 | cluster | `mkt.app.logs.filter` | `AppDetailsPageTabs.tsx:69-73` `[读]` |
 
-### `tl.*` — 37 个 id（实测 28 / 不可达 5 / 待渲染 4）
+### `tl.*` — 37 个 id（实测 30 / 不可达 5 / 待渲染 2）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1289,8 +1289,8 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | tl.select.export.email | 把已选消息邮件发出 | `选择模式→Export Method=Send_email→填 To_users/To_additional_emails/Subject→Send` | 非 E2EE 默认此项。须 `messagesCount>0` 否则 Callout `Mail_Message_No_messages_selected_select_all`。 | [实测] ① #atlas-live Export messages → Send email（To/Subject/Send）。② 未发信。③ 关栏。shots/shots36/export-messages-methods.webp | `mail-messages`；所选 mids | room.toolbox.export-messages | `useRoomExportMutation.ts:7` |
 | tl.select.export.download | 下载已选为 JSON 或 PDF | `Export Method=Download_file→Output_format=JSON 或 PDF→Download` | E2EE 房强制 download。PDF 需 `export-messages-as-pdf`。JSON 客户端打包 `downloadJsonAs`（无 REST）。PDF 客户端 `@react-pdf/renderer` 生成（无 REST）。 | [实测] ① 同栏 Download file → JSON/PDF。② 未下载。③ 关栏。shots/shots36/export-download-json-pdf.webp | `export-messages-as-pdf`；Messages store | tl.select.toggle | `useDownloadExportMutation.ts:19`；`useExportMessagesAsPDFMutation.tsx` |
 | tl.action.link | 点消息/系统行 actionLinks 按钮 | `消息行或系统行→Button data-method-id` 文案 `t(i18nLabel)` 或 `label` | `message.actionLinks.length`。embedded 只 `fireGlobalEvent('click-action-link')`。非 embedded 需 `actionLinks.actions` 已 `register`；**develop 客户端 0 处 register**，点击会 `error-invalid-actionlink` [读]。 | [实测] ① `#atlas-live` 消息 “vol5 actionlink seed …” 下方 Join 钮。② 未点 Join。③ 刷新仍在。shots/shots52/25-action-link.png shots/shots52/28-toast-after-click.png | `actionLinks[]` `method_id` | tl.uikit.block | `MessageActions.tsx:24-36`；`actionLinks.ts:12-36` |
-| tl.uikit.block | 点 Apps UiKit 消息块控件 | `消息行→blocks 内按钮/选择` | `message.blocks` `RoomMessageContent.tsx:90-91`。默认 `emitInteraction`。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `message.blocks`；appId | msg.apps.action | `UiKitMessageBlock.tsx:15-26` |
-| tl.uikit.videoconf.join | 点 videoconf 块加入通话 | `videoconf 消息→块内 join` | `appId==='videoconf-core'` 且 `actionId==='join'`。calling/ringing 时 no-op `useMessageBlockContextValue.ts:28-30,46-50`。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | videoconf-core | room.toolbox.start-video-call | `useMessageBlockContextValue.ts:46-50` |
+| tl.uikit.block | 点 Apps UiKit 消息块控件 | `消息行→blocks 内按钮/选择` | `message.blocks` `RoomMessageContent.tsx:90-91`。默认 `emitInteraction`。 | [实测] ① `#atlas-live` 消息块按钮 “UiKit leftover”。② 未点。③ 刷新仍在。shots/shots53/50-atlas-live.png shots/shots53/51-uikit-block.png | `message.blocks`；appId | msg.apps.action | `UiKitMessageBlock.tsx:15-26` |
+| tl.uikit.videoconf.join | 点 videoconf 块加入通话 | `videoconf 消息→块内 join` | `appId==='videoconf-core'` 且 `actionId==='join'`。calling/ringing 时 no-op `useMessageBlockContextValue.ts:28-30,46-50`。 | [实测] ① `#atlas-live` video_conf 块 “Call ongoing” + 蓝 Join。② 未点 Join。③ 刷新仍在。shots/shots53/50-atlas-live.png shots/shots53/52-videoconf-join.png | videoconf-core | room.toolbox.start-video-call | `useMessageBlockContextValue.ts:46-50` |
 | tl.uikit.videoconf.callback | 点 videoconf 块回拨 | `videoconf 消息→块内 callBack` | `actionId==='callBack'`。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | videoconf-core | room.toolbox.start-video-call | `useMessageBlockContextValue.ts:53-55` |
 | tl.uikit.media-call.history | 从媒体通话块打开通话历史 | `消息行→块内 open-history` | `appId==='media-call-core'` `actionId==='open-history'`。 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | media-call-core | room.toolbox.start-voice-call | `useMessageBlockContextValue.ts:58-61` |
 
@@ -1333,10 +1333,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **811** |
+| 本卷 `[实测]` | 见上表 | **815** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **189** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **82** |
-| `811+189+82` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **78** |
+| `815+189+78` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
