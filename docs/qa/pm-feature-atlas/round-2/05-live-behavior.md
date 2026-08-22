@@ -228,7 +228,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | room.chrome.voip.forward | 房间语音条转接 | 同上 → `Forward` | disabled 当 connecting/reconnecting | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | connectionState | `room.chrome.voip.hangup` | `MediaCallRoomSection.tsx:125` |
 | room.chrome.voip.hangup | 房间语音条挂断 | 同上 → `Voice_call__user__hangup` | 同上 | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | peer displayName | `room.toolbox.start-voice-call` | `MediaCallRoomSection.tsx:126` |
 
-### `user.*` — 16 个 id（实测 13 / 不可达 0 / 待渲染 3）
+### `user.*` — 16 个 id（实测 14 / 不可达 0 / 待渲染 2）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -237,7 +237,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | user.action.direct-message | 对目标用户开/跳转 DM | `User_card 或 UserInfo → Direct_Message`；溢出 `…→More→Direct_Message` | `create-d` 或已有同名 subscription；且 `!embedded` `useUserInfoActions.ts:95`；`useDirectMessageAction.ts:14-16` | [实测] ① User Info button “Direct message”。② 未点。③ 栏仍在。 | `useDirectMessageAction.ts:18-23` | 卡片/侧栏/成员 kebab | `useUserInfoActions.ts:95` |
 | user.action.video-call | 从资料面对该用户发起视频 | `User_card/UserInfo → Video_call`（常为前 2–3 个图标） | 已有 DM 房间；`!federated`；`user._id!==own`；setting `VideoConf_Enable_DMs`；permission `call-management`；非 ringing/calling `useVideoCallAction.ts:36-38,54-55` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `useVideoCallAction.ts:39-60` | 与 `room.toolbox.start-video-call` 同栈 | `useUserInfoActions.ts:96` |
 | user.action.voice-call | 从资料面对该用户发起语音 | `User_card/UserInfo → Voice_call__user_` | voip≠unavailable；非 federated；非 block；`user._id!==own` `useUserMediaCallAction.ts:22-38`；state≠available 时 disabled | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `useUserMediaCallAction.ts:42-54` | `room.toolbox.start-voice-call` | `useUserInfoActions.ts:97` |
-| user.action.add-to-room | 把非成员加进当前房间 | `User_card/UserInfo → add-to-room`（仅 !isMember） | `!isMember`；`roomCanInvite`；`add-user-to-any-c-room` 或 `add-user-to-any-p-room` 或 `add-user-to-joined-room`；非 archived；非 blocked federation `useAddUserAction.ts:42-56` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `useAddUserAction.ts` | 仅非成员 | `useUserInfoActions.ts:98` |
+| user.action.add-to-room | 把非成员加进当前房间 | `User_card/UserInfo → add-to-room`（仅 !isMember） | `!isMember`；`roomCanInvite`；`add-user-to-any-c-room` 或 `add-user-to-any-p-room` 或 `add-user-to-joined-room`；非 archived；非 blocked federation `useAddUserAction.ts:42-56` | [实测] ① `#atlas-live` 点非成员 mention `rocket.cat` 用户卡：user-plus（add-to-room）。② 未点加入。③ 卡仍在。shots/shots55/b10-mention-card.png shots/shots55/b13-add-to-room.png | `useAddUserAction.ts` | 仅非成员 | `useUserInfoActions.ts:98` |
 | user.action.change-owner | 授予/撤销房间 owner | `User_card/UserInfo → More → Set_as_owner/Remove_as_owner` | `isMember`；`roomCanSetOwner`；非联邦需 `set-owner` `useChangeOwnerAction.tsx:54,66` | [实测] ① User Info “Set as owner”。② 未点。③ 栏仍在。 | `useChangeOwnerAction.tsx` | privileges 段 | `useUserInfoActions.ts:99` |
 | user.action.change-leader | 授予/撤销房间 leader | `…→More→Set_as_leader/Remove_as_leader` | `isMember`；`roomCanSetLeader`；`set-leader` `useChangeLeaderAction.ts:29,37` | [实测] ① 同菜单 Set as leader。② 未授予。③ 菜单关。shots/shots36/user-action-ignore-change-leader.webp | `useChangeLeaderAction.ts` | privileges | `useUserInfoActions.ts:100` |
 | user.action.change-moderator | 授予/撤销房间 moderator | `…→More→Set_as_moderator/Remove_as_moderator` | `isMember`；`roomCanSetModerator`；非联邦 `set-moderator` `useChangeModeratorAction.tsx` | [实测] ① 同 More → Set as moderator。② 未点。③ 菜单关。shots/shots22/user.action.mute.webp | `useChangeModeratorAction.tsx` | privileges | `useUserInfoActions.ts:101` |
@@ -317,7 +317,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | sidebar.sidepanel.unread-toggle | 副栏只看未读 | `副栏顶 heading→Unread ToggleSwitch` | secondarySidebar ON；项 none `SidePanelInternal.tsx:48-51` | [实测] ① Account → Feature preview 打开 Filters and secondary sidebar 后，副栏顶 All 旁 Unread ToggleSwitch（关）。② 未拨开。③ 刷新仍在。shots/shots46/01-feature-preview.png shots/shots46/02-home.png shots/shots46/sidebar.sidepanel.unread-toggle.png | `SidePanelInternal.tsx:48-51` | `nav.sort.group.unread` | `SidePanelInternal.tsx:51` |
 | sidebar.sidepanel.back | tablet 关闭副栏 | `副栏顶→Back` | secondarySidebar ON + `isTablet` `SidePanelInternal.tsx:44` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | `SidePanelInternal.tsx:44` | `nav.sidebar.toggle` | `SidePanelInternal.tsx:44` |
 
-### `composer.*` — 20 个 id（实测 15 / 不可达 4 / 待渲染 1）
+### `composer.*` — 20 个 id（实测 16 / 不可达 4 / 待渲染 0）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -331,7 +331,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | composer.action.apps | 运行 Apps Engine 注册的 messageBox 按钮 | More → Apps → 点 `{appId}/{actionId}` | `GET` actionButtons `context==='messageBoxAction'`；`useApplyButtonFilters` 按房间类型/角色/权限过滤。`useMessageboxAppsActionButtons.ts:13-25` | [不可达] 已打开 composer More 菜单，无 Apps 分段（本实例无 messageBoxAction 应用）。 | app | `composer.action.more-menu` | `useMessageboxAppsActionButtons.ts:12-61` |
 | composer.state.send.disabled.recording | 录音中 textarea/格式/emoji 禁；Send **不**因录音单独禁 | 点 `data-qa-id=audio-message`（或 video）进入录音 | `isRecording = isRecordingAudio \ | [不可达] 已打开 #atlas-live composer 工具栏与 More；Message_AudioRecorderEnabled=true，仍无 mic/record 钮，无法进入录音禁用 Send 态。 | isRecordingVideo`。Send 仍只看 empty/upload 公式 | `[读]` ①`textarea` `disabled`；emoji/format `disabled`；`role=group` `aria-label=Audio_recorder` 或 `role=dialog` `aria-label=Video_record`。②无 send REST。③录音态不 persist。`［待渲染实测］` 若录音前已有字，Send 是否仍可点 | core+setting |
 | composer.state.draft.reload | 整页刷新：server 优先，否则 local | A 打字（未切房、local 已写）→ F5 | `initialValue = serverDraft \ | [实测] ① #atlas-live composer 输入 vol5-draft-reload（未发送）→ /home → 回 /channel/atlas-live，输入框仍有该文本，侧栏 Draft: vol5-draft-reload。② 无写 REST。③ 刷新前草稿仍在。shots/shots43/composer.state.draft.reload.webp | localStorage` | `[读]` ①刷新后预填。②若从未 flush 且 local 还在则恢复；若已 flush 则 server。③`［待渲染实测］` 仅 server、无 local 的跨设备时序 | core |
-| composer.state.typing.truncated | ≥5 人截成 and others | ≥5 个 username | `maxUsernames=5` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `implicit.typing.display` | `ComposerUserActionIndicator.tsx:7,70-72` |
+| composer.state.typing.truncated | ≥5 人截成 and others | ≥5 个 username | `maxUsernames=5` | [实测] ① `#atlas-live` 同时 typer1–5 输入：composer 下 “typer2, typer3, typer4, typer5 and others are typing”。② 无写。③ 停输入后指示消失。shots/shots55/b-a0-typing.png | core | `implicit.typing.display` | `ComposerUserActionIndicator.tsx:7,70-72` |
 | composer.state.location.prompt | 定位权限未决：先说明再 Continue | More → Share → `Location` | `MapView_Enabled`；geolocation；`MapView_GMapsAPIKey`；`!federated`；`!disableBasicActions` | [实测] ① #atlas-live More actions → Location → 模态 You will be asked for permissions + Continue/Cancel。② 未点 Continue 要定位。③ Escape。shots/shots47/85-location.png | core+setting | `composer.action.share-location` | `useShareLocationAction.tsx:17-31`；`ShareLocationModal.tsx:70-79` |
 | composer.state.location.denied | 定位拒绝或拿不到坐标 | Continue 后拒 / 无 position | `denied \ | [实测] ① CDP geolocation=denied 后 `#atlas-live` More→Location→Continue → 模态 “Cannot share your location…” / “The necessary browser permissions for location sharing are not granted” + Ok。② 无 sendMessage。③ 关模态。shots/shots53/11b-after-continue.png | !positionData` | `［待渲染实测］` ①modal `Cannot_share_your_location` 仅 Ok。②无 `chat.sendMessage`。③无消息 | core |
 | composer.state.location.share | 预览地图后发出 Point | 允许定位 → `Share` | granted + position | [实测] ① #atlas-live Location → Continue（context 已 grant geolocation）→ 模态 Share Location? + Share/Cancel。② 未点 Share 发 Point。③ Escape。shots/shots48/15-location-after.png | core+setting | `composer.send` | `ShareLocationModal.tsx:90-93` |
@@ -450,7 +450,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | team.create | 用顶栏「新建」打开创建团队模态并建出团队主房间 | 顶栏 `+`（Create new）→ `Team` → 填名称等 → 提交 | 菜单项：`create-team` **且** (`create-c` OR `create-p`)；提交按钮再检 `create-team` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | READ `create-team`；`create-c`；`create-p`；`CreateTeamModal`；`channel`；`group`。许可证/EE 见门控 | `directory.teams` | `useCreateNewItems.ts:13-76` `CreateTeamModal.tsx:54,118+` `[读]` |
 
-### `page.*` — 623 个 id（实测 484 / 不可达 113 / 待渲染 26）
+### `page.*` — 623 个 id（实测 486 / 不可达 113 / 待渲染 24）
 
 | 稳定语义 id | 功能一句话 | 完整入口点击序列 | 门控 | 触发后果三件套 | 供给 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -469,7 +469,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.create.channel.broadcast | 开关广播（并连带只读） | 高级 → switch `Broadcast` | federated 时 disabled `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.create.channel.readonly` | `CreateChannelModal.tsx:309-319,135-137` `[读]` |
 | page.create.channel.cancel | 取消不建房 | 模态 → `Cancel` 或 `Close` | 无 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `nav.create.channel` | `CreateChannelModal.tsx:201,326` `[读]` |
 | page.create.channel.submit | 提交创建频道 | 填完 → `Create` | 同打开菜单；服务端再检 create-c/create-p `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `nav.create.channel` `team.create` | `CreateChannelModal.tsx:156-186,327-329` `[读]` |
-| page.create.channel.submit.permission-denied | 无权时提交失败 | 菜单因缓存仍可见但服务端拒（或只剩一种类型的锁）→ `Create` | 缺 `create-c`/`create-p` 或类型被锁 `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.create.channel.submit` | `CreateChannelModal.tsx:183-185` `[读]` |
+| page.create.channel.submit.permission-denied | 无权时提交失败 | 菜单因缓存仍可见但服务端拒（或只剩一种类型的锁）→ `Create` | 缺 `create-c`/`create-p` 或类型被锁 `[读]` | [实测] ① seeduser 打开 Create channel 后改 roles=guest，点 Create → toast “Not allowed [error-not-allowed]”。② 未建成。③ 模态仍开。shots/shots55/72-create-channel-denied.png | core | `page.create.channel.submit` | `CreateChannelModal.tsx:183-185` `[读]` |
 | page.create.channel.team-parent | 从团队频道列表建房时带上 teamId | 团队主房 → toolbox `Team_Channels` → 新建频道（`teamId`+`mainRoom`）→ 同表单 → `Create` | 团队内 `create-team-channel` / `create-team-group` 经 `useCreateChannelTypePermission(mainRoom._id)` `[读]` | [实测] ① atlas-team Team Channels → Create new 频道表单（团队上下文）。② 未提交。③ Cancel。shots/shots36/create-channel-team-parent.webp | core | `room.toolbox.team-channels` `page.create.channel.submit` | `CreateChannelModal.tsx:38-42,97,167-178` `[读]` |
 | page.create.team.name | 填写必填团队名 | `顶栏+→Team` → textbox `Teams_New_Name_Label` | 菜单：`create-team` AND (`create-c` OR `create-p`) `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core；提交 `POST /v1/teams.create` | `nav.create.team` `team.create` | `CreateTeamModal.tsx:169-191` `[读]` |
 | page.create.team.name.required | 空名提交被拦 | 名空 → `Create` | 同 name | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.create.team.name` | `CreateTeamModal.tsx:176` `[读]` |
@@ -484,7 +484,7 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | page.create.team.broadcast | 开关广播 | 高级 → `Teams_New_Broadcast_Label` | 无联邦锁（团队无 federated 字段）`[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.create.team.readonly` | `CreateTeamModal.tsx:264-274,104-110` `[读]` |
 | page.create.team.cancel | 取消不建团队 | `Cancel` 或 `Close` | 无 | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `nav.create.team` | `CreateTeamModal.tsx:162,281` `[读]` |
 | page.create.team.submit | 提交创建团队 | `Create` | 按钮 `disabled={!canCreateTeam}`（`create-team`）`[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `team.create` `directory.teams` | `CreateTeamModal.tsx:118-149,282-284` `[读]` |
-| page.create.team.submit.permission-denied | 无 create-team 时按钮不可点 | 侧门打开模态但缺 `create-team` → `Create` disabled | `!create-team` `[读]` | [待渲染实测] 入口对本实例已登录 admin 可达（或管理员可先造种子再走），本轮未点到该控件。 | core | `page.create.team.submit` | `CreateTeamModal.tsx:54,282` `[读]` |
+| page.create.team.submit.permission-denied | 无 create-team 时按钮不可点 | 侧门打开模态但缺 `create-team` → `Create` disabled | `!create-team` `[读]` | [实测] ① seeduser 打开 Create team 后改 roles=guest，**Create** disabled。② 未提交。③ 模态仍开。shots/shots55/81-create-team-after-revoke.png | core | `page.create.team.submit` | `CreateTeamModal.tsx:54,282` `[读]` |
 | page.create.discussion.parent | 选择父房间 | `顶栏+→Discussion` → combobox `Discussion_target_channel` / `Search_options` | 菜单：(`start-discussion` OR `start-discussion-other-user`) + `Discussion_enabled`；从消息「创建讨论」时 `defaultParentRoom` 只读 `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `nav.create.discussion` `room.toolbox.discussions` | `CreateDiscussion.tsx:120-150` `[读]` |
 | page.create.discussion.parent.required | 未选父房被拦 | 无 defaultParent → 不选房 → `Create` | `!defaultParentRoom` `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.create.discussion.parent` | `CreateDiscussion.tsx:134` `[读]` |
 | page.create.discussion.name | 填写讨论名 | 模态 → `Name`（required，气球图标） | 可带 `nameSuggestion` 预填 `[读]` | [实测] ① 本轮在运行实例上打开/看见该入口或控件（role+name 见截图目录 shots/）。② 无额外写 REST 或未捕获。③ 刷新后页/控件按该入口仍在或须再打开。 | core | `page.create.discussion.submit` | `CreateDiscussion.tsx:151-164` `[读]` |
@@ -1333,10 +1333,10 @@ rg -c '\[待渲染实测\]' /tmp/atlas-checklist/docs/qa/pm-feature-atlas
 | 清单行级 | `rg -c` 各文件之和 | **2264** |
 | 00 行级（~1117） | `rg -c '\[待渲染实测\]' 00-blueprint.md` | **1116** |
 | 闭包去重 id | 00 含标签 8 列行 unique | **1082** |
-| 本卷 `[实测]` | 见上表 | **823** |
+| 本卷 `[实测]` | 见上表 | **827** |
 | 本卷真 `[不可达]` | 已走入口后页/控件不在 | **189** |
-| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **70** |
-| `823+189+70` | | **1082** |
+| 本卷剩余待渲染行 | 可达但本轮未点（半角标签只在这些行） | **66** |
+| `827+189+66` | | **1082** |
 
 **禁止**为把 leftover 凑成 0 而把未点行改成不可达。半角字面量只出现在剩余未点行的三件套列，供 rg -o 计数。
 
