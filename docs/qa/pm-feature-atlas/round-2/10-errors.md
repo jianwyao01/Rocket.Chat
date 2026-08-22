@@ -9,7 +9,7 @@
   - **inline**：`isError` / `is*Error` 条件后渲染 States / GenericError / GenericNoResults / Callout / RetryButton / `*Error` 组件 / `*_not_found` 文案。
 - 客户端树：`apps/meteor/client`、`ee/client`、`app/**/client`、`ee/app/**/client`、`packages/{ui-client,ui-contexts,ui-voip,ui-video-conf,web-ui-registration,fuselage-ui-kit,gazzodown}`。排除 `server/`、`*.spec.*`、`*.test.*`、`*.stories.*`、`tests/`。
 - **排除**：`packages/livechat` 访客小部件（另一客户端；本树 0 处 `dispatchToastMessage`/`ToastMessages`）；toast **成功/info/warning**；仅 `console.*` 的 catch；`isError` 只用来 `return null`/隐藏水印/Community 标签（非错误 UI）；类型别名里的 `type: 'error'`（`toast.ts`、voip `requestToast` 类型）；`ToastMessagesProvider` / `QueryClientProviderMock` 的实现本身。
-- 诚实标记：每行 `[读]`。本环境 **无** Meteor 二进制、**无** mongod、**无** `node_modules`，boot **STOP**，故无 `[实测]`。不编造 live。
+- 诚实标记：默认 `[读]`。`[实测]` 只在本机触发并截到用户可见 toast / qmeta / inline 文案 + 恢复时升级。catch 只调 `getErrorMessage`、DOM 无 toast 的仍是 `[读]`。不盖「不可达」来缩小 leftover。**本卷未 live-closed。**
 - 8 列：稳定语义 id / 触发 / 用户看见 / 恢复 / 通道 / 表面 / 键或种类 / 出处。
 
 ## 2. Hunch 核验
@@ -26,6 +26,8 @@
 | `packages/livechat` Toast | **不成立** | hits=0 |
 
 走访文件 **3339**。表体数据行 **390** = toast 298 + qmeta 14 + inline 78。
+
+Live（2026-08-22，同一冻结，boot 已通）：**8 `[实测]` + 382 `[读]` = 390**。未把任何一行盖成不可达。Volume 10 **未** live-closed。
 
 ## 3. 闭集表（一行一路径）
 
@@ -69,7 +71,7 @@
 | `err.i.DeviceManagementInfoWithData.42` | 打开/加载 getSessionInfo 时 query isError | States 错误空态：`Device_Info` 「Device Info」；`Something_went_wrong` 「Something went wrong」；`We_Could_not_retrive_any_data` 「We couldn't retrive any data」 | 离开该页或刷新后重试 | `inline` | `admin` | Device_Info, Something_went_wrong, We_Could_not_retrive_any_data | `apps/meteor/client/views/admin/deviceManagement/DeviceManagementInfo/DeviceManagementInfoWithData.tsx:42` [读] |
 | `err.i.EmailInboxTable.110` | 打开/加载 headers 时 query isError | States 错误空态：`Something_went_wrong` 「Something went wrong」；`Reload_page` 「Reload Page」 | 点 Retry / Reload_page / refetch | `inline` | `admin` | Something_went_wrong, Reload_page | `apps/meteor/client/views/admin/emailInbox/EmailInboxTable.tsx:110` [读] |
 | `err.i.ImportProgressPage.167` | 打开/加载 progress 时 query isError | 行内错误文案：`Failed_To_Load_Import_Data` 「Failed to load import data」 | 离开该页或刷新后重试 | `inline` | `admin` | Failed_To_Load_Import_Data | `apps/meteor/client/views/admin/import/ImportProgressPage.tsx:167` [读] |
-| `err.i.EditIntegrationsPageWithData.36` | 打开/加载 getIntegrations 时 query isError | 行内错误文案：`Oops_page_not_found` 「Oops, page not found」 | 离开该页或刷新后重试 | `inline` | `admin` | Oops_page_not_found | `apps/meteor/client/views/admin/integrations/EditIntegrationsPageWithData.tsx:36` [读] |
+| `err.i.EditIntegrationsPageWithData.36` | 直达 `/admin/integrations/edit/incoming/not-a-real-id` | 行内文案：「Oops, page not found」 | 离开 Integrations 列表 | `inline` | `admin` | Oops_page_not_found | `apps/meteor/client/views/admin/integrations/EditIntegrationsPageWithData.tsx:36` [实测] `shots/vol10/06-integration-not-found.webp` + `-recover.webp` |
 | `err.i.IntegrationsTable.137` | 打开/加载 headers 时 query isError | States 错误空态：`Something_went_wrong` 「Something went wrong」；`Reload_page` 「Reload Page」 | 点 Retry / Reload_page / refetch | `inline` | `admin` | Something_went_wrong, Reload_page | `apps/meteor/client/views/admin/integrations/IntegrationsTable.tsx:137` [读] |
 | `err.i.InvitesPage.114` | 打开/加载 headers 时 query isError | States 错误空态：`Something_went_wrong` 「Something went wrong」；`Reload_page` 「Reload Page」 | 点 Retry / Reload_page / refetch | `inline` | `admin` | Something_went_wrong, Reload_page | `apps/meteor/client/views/admin/invites/InvitesPage.tsx:114` [读] |
 | `err.i.UserMessages.71` | 打开/加载 handleChange 时 query isError | States 错误空态：`Something_went_wrong` 「Something went wrong」；`Reload_page` 「Reload Page」 | 点 Retry / Reload_page / refetch | `inline` | `admin` | Something_went_wrong, Reload_page | `apps/meteor/client/views/admin/moderation/UserMessages.tsx:71` [读] |
@@ -78,7 +80,7 @@
 | `err.i.EditRolePageWithData.28` | 打开/加载 context 时 query isError | 整页/区块 GenericError | 离开该页或刷新后重试 | `inline` | `admin` | ui | `apps/meteor/client/views/admin/permissions/EditRolePageWithData.tsx:28` [读] |
 | `err.i.UsersInRoleTable.72` | 打开/加载 headers 时 query isError | 整页/区块 GenericError | 点 Retry / Reload_page / refetch | `inline` | `admin` | ui | `apps/meteor/client/views/admin/permissions/UsersInRole/UsersInRoleTable/UsersInRoleTable.tsx:72` [读] |
 | `err.i.RoomsTable.167` | 打开/加载 headers 时 query isError | States 错误空态：`Something_went_wrong` 「Something went wrong」；`Reload_page` 「Reload Page」 | 点 Retry / Reload_page / refetch | `inline` | `admin` | Something_went_wrong, Reload_page | `apps/meteor/client/views/admin/rooms/RoomsTable.tsx:167` [读] |
-| `err.i.AdminUserFormWithData.35` | 打开/加载 handleReload 时 query isError | Callout danger：`User_not_found` 「User not found」；`Edit_Federated_User_Not_Allowed` 「Not possible to edit a federated user」 | 点 Retry / Reload_page / refetch | `inline` | `admin` | User_not_found, Edit_Federated_User_Not_Allowed | `apps/meteor/client/views/admin/users/AdminUserFormWithData.tsx:35` [读] |
+| `err.i.AdminUserFormWithData.35` | 直达 `/admin/users/edit/not-a-real-uid-vol10` | Edit User 栏 Callout：「User not found」（本种子未见 federated 分支） | 离开到 `/admin/users`；Callout 随栏关闭 | `inline` | `admin` | User_not_found, Edit_Federated_User_Not_Allowed | `apps/meteor/client/views/admin/users/AdminUserFormWithData.tsx:35` [实测] `shots/vol10/05-user-not-found.webp` + `-recover.webp` |
 | `err.i.UsersTable.170` | 打开/加载 headers 时 query isError | GenericNoResults 错误空态：`Something_went_wrong` 「Something went wrong」；`Reload_page` 「Reload Page」；`Users_Table_Generic_No_users` 「No {{status}} users」 | 点 Retry / Reload_page / refetch | `inline` | `admin` | Something_went_wrong, Reload_page, Users_Table_Generic_No_users | `apps/meteor/client/views/admin/users/UsersTable/UsersTable.tsx:170` [读] |
 | `err.i.AnalyticsReports.41` | 打开/加载 AnalyticsReports 时 query isError | 行内错误文案：`Something_went_wrong_try_again_later` 「Something went wrong, try again later.」 | 离开该页或刷新后重试 | `inline` | `admin` | Something_went_wrong_try_again_later | `apps/meteor/client/views/admin/viewLogs/AnalyticsReports.tsx:41` [读] |
 | `err.i.WorkspaceRoute.37` | 打开/加载 handleClickDownloadInfo 时 query isError | Callout danger：`Workspace` 「Workspace」；`Refresh` 「Refresh」；`Error_loading_pages` 「Error loading pages」 | 离开该页或刷新后重试 | `inline` | `admin` | Workspace, Refresh, Error_loading_pages | `apps/meteor/client/views/admin/workspace/WorkspaceRoute.tsx:37` [读] |
@@ -207,8 +209,8 @@
 | 稳定语义 id | 触发 | 用户看见 | 恢复 | 通道 | 表面 | 键/种类 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `err.t.useInviteTokenMutation.18` | get Invite Room 失败 | error toast：`Failed_to_activate_invite_token` 「Failed to activate invite token」 | 关闭 toast；重试同一动作 | `toast` | `invite` | Failed_to_activate_invite_token | `apps/meteor/client/views/invite/hooks/useInviteTokenMutation.ts:18` [读] |
-| `err.t.useInviteTokenMutation.31` | get Invite Room — mutation/query onError | error toast：`Failed_to_activate_invite_token` 「Failed to activate invite token」 | 关闭 toast；重试同一动作 | `toast` | `invite` | Failed_to_activate_invite_token | `apps/meteor/client/views/invite/hooks/useInviteTokenMutation.ts:31` [读] |
-| `err.t.useValidateInviteQuery.42` | result — catch | error toast：`Failed_to_validate_invite_token` 「Failed to validate invite token」 | 关闭 toast；重试同一动作 | `toast` | `invite` | Failed_to_validate_invite_token | `apps/meteor/client/views/invite/hooks/useValidateInviteQuery.ts:42` [读] |
+| `err.t.useInviteTokenMutation.31` | 已登录访问 `/invite/not-a-real-token-vol10`（`useInviteToken` onError） | error toast：「Failed to activate invite token」 | 关闭 toast；落在 `/home` | `toast` | `invite` | Failed_to_activate_invite_token | `apps/meteor/client/views/invite/hooks/useInviteTokenMutation.ts:31` [实测] `shots/vol10/01-invite-invalid.webp` + `-recover.webp` |
+| `err.t.useValidateInviteQuery.42` | 访问 `/invite/not-a-real-token-vol10`（validateInviteToken catch） | error toast：「Failed to validate invite token」 | 关闭 toast；落在 `/home` | `toast` | `invite` | Failed_to_validate_invite_token | `apps/meteor/client/views/invite/hooks/useValidateInviteQuery.ts:42` [实测] `shots/vol10/01-invite-invalid.webp` + `-recover.webp` |
 
 ### 3.marketplace（12）
 
@@ -274,7 +276,7 @@
 | `err.i.ContactInfoHistory.98` | 打开/加载 hasSourceType 时 query isError | States 错误空态：`Something_went_wrong` 「Something went wrong」；`No_history_yet` 「No history yet」；`No_history_yet_description` 「The entire message history with this contact will appear here.」 | 离开该页或刷新后重试 | `inline` | `omnichannel` | Something_went_wrong, No_history_yet, No_history_yet_description, Showing_current_of_total | `apps/meteor/client/views/omnichannel/contactInfo/tabs/ContactInfoHistory/ContactInfoHistory.tsx:98` [读] |
 | `err.i.EditCustomFieldsWithData.24` | 打开/加载 getCustomFieldById 时 query isError | Callout danger：`Error` 「Error」 | 离开该页或刷新后重试 | `inline` | `omnichannel` | Error | `apps/meteor/client/views/omnichannel/customFields/EditCustomFieldsWithData.tsx:24` [读] |
 | `err.i.EditDepartmentWithAllowedForwardData.31` | 打开/加载 getDepartmentListByIds 时 query isError | 行内错误文案：`Not_Available` 「Not Available」 | 离开该页或刷新后重试 | `inline` | `omnichannel` | Not_Available | `apps/meteor/client/views/omnichannel/departments/EditDepartmentWithAllowedForwardData.tsx:31` [读] |
-| `err.i.EditDepartmentWithData.30` | 打开/加载 getDepartment 时 query isError | 行内错误文案：`Department_not_found` 「Department not found」；`Department_archived` 「Department archived」 | 离开该页或刷新后重试 | `inline` | `omnichannel` | Department_not_found, Department_archived | `apps/meteor/client/views/omnichannel/departments/EditDepartmentWithData.tsx:30` [读] |
+| `err.i.EditDepartmentWithData.30` | 直达 `/omnichannel/departments/edit/not-a-real-dept` | 行内文案：「Department not found」（本种子未见 archived 分支） | 离开 Departments | `inline` | `omnichannel` | Department_not_found, Department_archived | `apps/meteor/client/views/omnichannel/departments/EditDepartmentWithData.tsx:30` [实测] `shots/vol10/07-department-not-found.webp` + `-recover.webp` |
 | `err.i.NewDepartment.30` | 打开/加载 getDepartmentCreationAvailable 时 query isError | Callout danger：`Unavailable` 「Unavailable」；`New_Department` 「New Department」 | 离开该页或刷新后重试 | `inline` | `omnichannel` | Unavailable, New_Department | `apps/meteor/client/views/omnichannel/departments/NewDepartment.tsx:30` [读] |
 | `err.i.DepartmentField.21` | 打开/加载 DepartmentField 时 query isError | 行内错误文案：`Something_went_wrong` 「Something went wrong」；`Department_not_found` 「Department not found」 | 离开该页或刷新后重试 | `inline` | `omnichannel` | Something_went_wrong, Department_not_found | `apps/meteor/client/views/omnichannel/directory/chats/ChatInfo/DepartmentField.tsx:21` [读] |
 | `err.i.DepartmentField.22` | 打开/加载 DepartmentField 时 query isError | 行内错误文案：`Department_not_found` 「Department not found」 | 离开该页或刷新后重试 | `inline` | `omnichannel` | Department_not_found | `apps/meteor/client/views/omnichannel/directory/chats/ChatInfo/DepartmentField.tsx:22` [读] |
@@ -363,11 +365,11 @@
 | 稳定语义 id | 触发 | 用户看见 | 恢复 | 通道 | 表面 | 键/种类 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `err.i.ImageGalleryData.19` | 打开/加载 ImageGalleryData 时 query isError | ImageGalleryError | 离开该页或刷新后重试 | `inline` | `room` | ui | `apps/meteor/client/views/room/ImageGallery/ImageGalleryData.tsx:19` [读] |
-| `err.i.RoomOpener.40` | 打开/加载 RoomOpener 时 query isError | States 错误空态：`core.Error` | 离开该页或刷新后重试 | `inline` | `room` | core.Error | `apps/meteor/client/views/room/RoomOpener.tsx:40` [读] |
+| `err.i.RoomOpener.40` | 直达 `/channel/not-a-real-room-vol10`（`useOpenRoom` isError → `RoomNotFoundError`） | NotFoundState：「Room not found」；「The room does not exist or you may not have access permission」；Homepage | 点 Homepage → `/home` | `inline` | `room` | Room_not_found, Room_not_exist_or_not_permission | `apps/meteor/client/views/room/RoomOpener.tsx:40` [实测] `shots/vol10/11-room-not-found.webp` + `-recover.webp` |
 | `err.i.RoomOpenerEmbedded.61` | 打开/加载 rid 时 query isError | States 错误空态：`core.Error` | 离开该页或刷新后重试 | `inline` | `room` | core.Error | `apps/meteor/client/views/room/RoomOpenerEmbedded.tsx:61` [读] |
 | `err.i.MessageSearchTab.123` | 打开/加载 all 时 query isError | Callout danger：`Search_current_provider_not_active` 「Current Search Provider is not active」 | 离开该页或刷新后重试 | `inline` | `room` | Search_current_provider_not_active | `apps/meteor/client/views/room/contextualBar/MessageSearchTab/MessageSearchTab.tsx:123` [读] |
 | `err.i.InviteUsersWithData.93` | 打开/加载 handleGenerateLink 时 query isError | InviteUsersError 栏 | 离开该页或刷新后重试 | `inline` | `room` | ui | `apps/meteor/client/views/room/contextualBar/RoomMembers/InviteUsers/InviteUsersWithData.tsx:93` [读] |
-| `err.i.UserInfoWithData.110` | 打开/加载 user 时 query isError | Callout danger：`User_not_found` 「User not found」 | 离开该页或刷新后重试 | `inline` | `room` | User_not_found | `apps/meteor/client/views/room/contextualBar/UserInfo/UserInfoWithData.tsx:110` [读] |
+| `err.i.UserInfoWithData.110` | 直达 `/channel/general/members-list/not-a-real-user-vol10` | User Info 栏 Callout：「User not found」 | 关栏 → `#general` | `inline` | `room` | User_not_found | `apps/meteor/client/views/room/contextualBar/UserInfo/UserInfoWithData.tsx:110` [实测] `shots/vol10/12-room-user-not-found.webp` + `-recover.webp` |
 | `err.q.useMessageSearchQuery.30` | result — react-query 失败（ToastMessagesProvider.onError） | error toast：query meta `errorToastMessage`：`Search_message_search_failed` 「Search request failed」 | 关闭 toast；刷新或重进该页 | `qmeta` | `room` | Search_message_search_failed | `apps/meteor/client/views/room/contextualBar/MessageSearchTab/hooks/useMessageSearchQuery.ts:30` [读] |
 | `err.t.VideoMessageRecorder.106` | handle Cancel 失败 | error toast：`Browser_does_not_support_recording_video` 「Your browser does not support recording video」 | 关闭 toast；重试同一动作 | `toast` | `room` | Browser_does_not_support_recording_video | `apps/meteor/client/views/composer/VideoMessageRecorder/VideoMessageRecorder.tsx:106` [读] |
 | `err.t.useQuickActions.87` | handle Request Transcript — catch | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `room` | api | `apps/meteor/client/views/room/Header/Omnichannel/QuickActions/hooks/useQuickActions.tsx:87` [读] |
@@ -460,7 +462,7 @@
 | `err.t.processMessageEditing.29` | mid — catch | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `shell` | api | `apps/meteor/client/lib/chats/flows/processMessageEditing.ts:29` [读] |
 | `err.t.processMessageUploads.155` | composed Message — catch | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `shell` | api | `apps/meteor/client/lib/chats/flows/processMessageUploads.ts:155` [读] |
 | `err.t.processSetReaction.31` | last Message — catch | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `shell` | api | `apps/meteor/client/lib/chats/flows/processSetReaction.ts:31` [读] |
-| `err.t.processTooLongMessage.20` | convert Long Messages To Attachment 失败 | error toast：`Message_too_long` 「Message too long」 | 关闭 toast；按文案改正输入后再提交 | `toast` | `shell` | Message_too_long | `apps/meteor/client/lib/chats/flows/processTooLongMessage.ts:20` [读] |
+| `err.t.processTooLongMessage.20` | `#general` 发送 ≥81 字（本种子 `Message_MaxAllowedSize=80` 且关闭转附件） | error toast：「Message too long」 | 关闭 toast；超长稿仍留在 composer | `toast` | `shell` | Message_too_long | `apps/meteor/client/lib/chats/flows/processTooLongMessage.ts:20` [实测] `shots/vol10/02-message-too-long.webp` + `-recover.webp` |
 | `err.t.requestMessageDeletion.11` | request Message Deletion 失败 | error toast：`Message_deleting_blocked` 「This message cannot be deleted anymore」 | 关闭 toast；检查权限/房间设置后再试 | `toast` | `shell` | Message_deleting_blocked | `apps/meteor/client/lib/chats/flows/requestMessageDeletion.ts:11` [读] |
 | `err.t.sendMessage.76` | send Message — catch | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `shell` | api | `apps/meteor/client/lib/chats/flows/sendMessage.ts:76` [读] |
 | `err.t.sendMessage.123` | original Message — catch | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `shell` | api | `apps/meteor/client/lib/chats/flows/sendMessage.ts:123` [读] |
@@ -523,20 +525,54 @@
 - **server-only 抛错**：未到客户端渲染的 REST/Meteor 错误不入本册（用户只在客户端看到 toast/States 时才算）。
 - **Apps 运行时错误文案**：`handleAPIError` 的 `Apps_Error_${error}` 是开放后缀，本行只记调用点。
 
-## 5. Boot（无假 live）
+## 5. Boot（2026-08-22 第二轮，已通）
 
-本 run 尝试 boot 的证据（2026-08-22）：
+跳过 docker compose（overlayfs）。与 Volume 5 同一路径：
 
 ```
-which meteor → 空
-which mongod → 空
-ls apps/meteor/node_modules → No such file
-ls /workspace/node_modules → No such file
-ss -lntp → 无 3000/27017
-apps/meteor/.meteor/release → METEOR@3.4.1（仅 release pin，无工具链）
+Mongo 8.0.12 tarball ubuntu2404 + rs0 127.0.0.1:27017
+nvm 22.22.3；Meteor 3.4.1；deno 2.3.1
+yarn install；turbo build --filter=@rocket.chat/meteor... --filter=!@rocket.chat/meteor（60/60，i18n resources=68）
+MONGO_URL='mongodb://127.0.0.1:27017/rocketchat?replicaSet=rs0&directConnection=true&retryWrites=false'
+ROOT_URL=http://127.0.0.1:3000 OVERWRITE_SETTING_Show_Setup_Wizard=completed TEST_MODE=true
+cd apps/meteor && meteor npm run dsv
 ```
 
-**STOP**。没有已登录 RC Web，没有 `[实测]`。下表全部 `[读]`。不把 `[读]` 升级成 `[活]`。
+横幅：`Rocket.Chat 8.8.0-develop` / Node 22.22.1 / Mongo 8.0.12 / Site URL `http://127.0.0.1:3000` / **Commit Hash `b1f15b2f27`**（本 docs 分支 HEAD）。产品 merge-base 仍是 **`e519470d35`**。
+
+`curl /` → **200**。`POST /api/v1/login` `rocketchat.internal.admin.test` / `rocketchat.internal.admin.test` → **success**。
+
+上一轮「无 meteor / 无 mongo / STOP」作废。
+
+## 7. Live 等式（未关闭）
+
+**8 + 382 = 390**。`[实测]` 只这 8 行（截图在 `shots/vol10/`）。下面不是表体，不计入 `rg '^\| \`err\.'`：
+
+1. `err.t.useValidateInviteQuery.42` — Failed to validate invite token — 关 toast；`/home`
+2. `err.t.useInviteTokenMutation.31` — Failed to activate invite token — 关 toast；`/home`
+3. `err.t.processTooLongMessage.20` — Message too long — 关 toast；超长稿仍在 composer
+4. `err.i.AdminUserFormWithData.35` — User not found — 离开 Edit User 栏
+5. `err.i.EditIntegrationsPageWithData.36` — Oops, page not found — 离开 Integrations
+6. `err.i.EditDepartmentWithData.30` — Department not found — 离开 Departments
+7. `err.i.RoomOpener.40` — Room not found / The room does not exist or you may not have access permission — Homepage → `/home`
+8. `err.i.UserInfoWithData.110` — User not found（#general User Info 栏）— 关栏
+
+本种子走过但 **不升**（DOM 对不上该行，不盖不可达）：
+
+- `err.i.MessageSearchTab.123`：`/channel/general/rocket-search` 显示 **No results found**，Search Provider 在本种子是活的，没有 Callout。
+- `err.t.CreateChannelModal.184`：重名 `general` 是字段红字 **The channel '#general' already exists.**，不是 catch toast。
+- `err.t.requestMessageDeletion.11`：删 `vol10-seed-delete-me` 出确认框 **Are you sure?**，不是 `Message_deleting_blocked` toast（未关 `Message_AllowDeleting`）。
+- `err.t.RegisterForm.116`：注册页是字段 **Name required** / 密码复杂度，不是 `error-too-many-requests` toast。
+- `err.t.useInviteTokenMutation.18`（onSuccess 且无 `room.name`）：本种子走的是 onError `.31`，没截到 `.18`。
+- `err.i.AgentInfo.42`：`/omnichannel/agents/info/not-a-real-agent-vol10` 是 **Application Error / The application GUI just crashed.**，不是 `User_not_found`（`13-agent-not-found-miss.webp`）。
+- `err.i.AppInstances.53`：`/marketplace/explore/info/…/instances` 停在 App Info skeleton，没有「App not found」（`14-app-not-found-miss.webp`）。
+- `err.i.EditRolePageWithData.28`：假 role 走的是 line 20 Callout **Invalid role**，不是 line 28 `GenericError`（`15-role-not-found.webp`）。
+- `err.i.OAuthAuthorizationPage.27`：`/oauth/authorize` 与假 `client_id` 都被服务端重定向到 `/oauth/error/404` 的 `OAuthErrorPage`（「Error」/「Invalid OAuth client」）。该页不在 390 闭集，不是 AuthorizationPage isError（`16-oauth-error.webp`、`18-oauth-authorize.webp`）。
+- composer 上传（`FileUpload_MaxFileSize=10`）：composer 卡片红字 **Upload failed**，没有 toast，不升 `processMessageUploads` / `uploadFiles` 任一行（`17-upload-fail-inline.webp`）。
+- `Avatar_format_invalid`：`.txt` 走 `isValidImageFormat` 只 `resolve(false)`，一般不抛 toast。
+- 2FA：`TEST_MODE` 短路，本轮没做成。
+
+Volume 10 **未** live-closed。不发明功能总数。
 
 ## 6. 目标文件分类（证明已扫）
 
@@ -1053,5 +1089,13 @@ PY
 
 期望：`WALK 3339` / `TOAST_API 275` / `TOASTMSG 5` / `ROWS 390` / `UNIQ 390` / `CLASS6 275` / `SYMDIFF_TOAST_API []` / `ISERROR 114` / `CLASS7 114` / `SYMDIFF_ISERROR []`。
 
-等式：**298 + 14 + 78 = 390**。
+```bash
+rg -c '\[实测\]' docs/qa/pm-feature-atlas/round-2/10-errors.md
+# 表体 8 行 + 正文提及；表体用：
+rg -c '^\| `err\.[^`]+` .*\[实测\]' docs/qa/pm-feature-atlas/round-2/10-errors.md
+# expect 8
+```
+
+闭集等式：**298 + 14 + 78 = 390**。
+Live 等式：**8 `[实测]` + 382 `[读]` = 390**。Volume 10 未 live-closed。
 toast API 分类等式见 §6。
