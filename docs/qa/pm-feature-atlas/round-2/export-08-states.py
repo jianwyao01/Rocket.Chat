@@ -480,6 +480,8 @@ def clean_expr(s: str, n: int = 100) -> str:
     s = re.sub(r"/\*.*?\*/", "", s, flags=re.S)
     s = re.sub(r"\s+", " ", s).strip()
     s = re.sub(r"^(return|const|let|var)\s+", "", s)
+    # E': leftover from JSX `=>` / `{expr &&` / `> {`
+    s = re.sub(r"^[>{}\s]+", "", s)
     s = s.strip(" \t{}")
     s = s.replace("|", "¦")
     if len(s) > n:
@@ -531,7 +533,11 @@ def expr_before(text: str, op_idx: int) -> str:
                 start = j + 1
                 break
             if c == "=" and not (j > 0 and text[j - 1] in "!<>=:") and not (j + 1 < len(text) and text[j + 1] == "="):
-                start = j + 1
+                # `=>` arrow: start after `>` so cond is not `> roomList[index]`
+                if j + 1 < len(text) and text[j + 1] == ">":
+                    start = j + 2
+                else:
+                    start = j + 1
                 break
         j -= 1
     else:
@@ -833,12 +839,15 @@ def scan_file(p: Path) -> list[dict]:
     surface = surface_of(rp)
     stem = kebab(p.stem)
     is_tsx = p.suffix in {".tsx", ".jsx"}
+    # B': .ts / .js extract ZERO rows. return null in a hook/lib is not a render branch.
+    if not is_tsx:
+        return []
     states: list[dict] = []
-    states.extend(scan_and_tern(text, is_tsx))
+    states.extend(scan_and_tern(text, True))
     if_rets = scan_if_ret(text)
     states.extend(if_rets)
     states.extend(scan_default(text, if_rets))
-    states.extend(scan_suspense(text, is_tsx))
+    states.extend(scan_suspense(text, True))
 
     out = []
     for s in states:
@@ -1266,7 +1275,7 @@ def render_full_md(files, rows, kinds, closure) -> str:
 | --- | --- |
 | `jsx-branch` | 抽出 ≥1 个条件渲染分支 |
 | `jsx-linear` | `.tsx` / `.jsx` 无抽出分支（直线渲染） |
-| `no-jsx` | 无 JSX 条件渲染（`.ts` 模块 / 类型 / 纯逻辑） |
+| `no-jsx` | 无 JSX 条件渲染。**所有 `.ts` / `.js` 候选文件都落在此类**（抽 0 行；hook/lib 的 `return null` 不是渲染分支） |
 | `excluded-spec` | `*.spec.*` / `*.test.*` / `tests/` |
 | `excluded-stories` | `*.stories.*` / `stories/` |
 
@@ -1274,15 +1283,15 @@ def render_full_md(files, rows, kinds, closure) -> str:
 
 | kind | 规则 |
 | --- | --- |
-| and-show / and-hide | **仅 JSX 操作数**。`&&` 后（跳过空白/注释）是 `<`，或 `(` 且下一非空白 token 是 `<` / `{<` / 大写 JSX 标识。拒绝 `const x = a &&`、`return a &&` 布尔、对象字段布尔、`if (a &&`、`&& (counter.x += 1)`。`.ts` 不抽 AND。配对 shown+hidden。 |
-| tern-then / tern-else | **仅 JSX 操作数**。`cond ? <` 或 `cond ? (` 打开 JSX。拒绝 `?.`、`??`、泛型、`.match(/...?/)`、两边都不是 JSX 的 `a ? b : c`。`.ts` 不抽 TERN。配对 then+else。 |
-| if-ret | `if (...)` 后紧跟或块首条 `return null` / `return <` / `return (` 且该 `(` 打开 JSX。永不收 `return () =>`、`return {`、`return false`、`return value`。 |
-| default | 仅当本文件已有 if-ret，且最后一个非 if-ret 的 UI return 是 `return null` / `return <` / `return (`（JSX）。永不收 effect cleanup `return () =>` 或裸 `return;`。 |
+| and-show / and-hide | **仅 JSX 操作数**，且仅 `.tsx` / `.jsx`。`&&` 后（跳过空白/注释）是 `<`，或 `(` 且下一非空白 token 是 `<` / `{<` / 大写 JSX 标识。拒绝布尔 `const x = a &&`、`return a &&`、对象字段布尔、`if (a &&`、`&& (counter.x += 1)`。配对 shown+hidden。 |
+| tern-then / tern-else | **仅 JSX 操作数**，且仅 `.tsx` / `.jsx`。`cond ? <` 或 `cond ? (` 打开 JSX。拒绝 `?.`、`??`、泛型、`.match(/...?/)`、两边都不是 JSX 的 `a ? b : c`。配对 then+else。 |
+| if-ret | **仅 `.tsx` / `.jsx`**。`if (...)` 后紧跟或块首条 `return null` / `return <` / `return (` 且该 `(` 打开 JSX。永不收 `return () =>`、`return {`、`return false`、`return value`。`.ts` 的 `return null`（hook/lib「无对象」）不是渲染分支。 |
+| default | **仅 `.tsx` / `.jsx`**，且本文件已有 if-ret。最后一个非 if-ret 的 UI return 是 `return null` / `return <` / `return (`（JSX）。永不收 `return () =>` 或裸 `return;`。 |
 | suspense | JSX `<Suspense fallback=`。 |
 
 8 列：id / 表面 / 分支条件 / 渲染 / 到达配方或不可达 / 诚实 / 关联 / 出处。
 
-渲染列写 **子节点名**（组件/标签/`null`），不写 `&&` / `return (` 操作符。条件列只写布尔表达式，不含 `return` / `const x =`。
+渲染列写 **子节点名**（组件/标签/`null`），不写 `&&` / `return (` 操作符。条件列只写布尔表达式，不含 `return` / `const x =`，并剥掉 JSX 残留的前导 `>` / `{`。`.ts` 文件抽 **0** 行。
 
 诚实：本环境 Meteor boot 失败 → **STOP live，无假 DOM**。未点击可达行一律 `[待渲染实测]`。仅字面量恒假才标 `[不可达]`。不扫 develop。不发明 DOM。
 
@@ -1419,11 +1428,19 @@ PY
 # expect SYMDIFF [] ; COUNT @@NFILES@@ @@NFILES@@
 ```
 
-泄漏点必须缺席（旧抽取器的非 JSX 行）：
+泄漏点必须缺席：
 
 ```bash
 rg -n 'useSearchItems\\.ts:156|useSearchItems\\.ts:21|useAISearchRooms\\.ts:34|useFingerprintChange\\.tsx:65|useQuickActions\\.tsx:268|useQuickActions\\.tsx:279|useQuickActions\\.tsx:289|useQuickActions\\.tsx:295|useRoomList\\.ts:81|useRoomList\\.ts:167' \\
   docs/qa/pm-feature-atlas/round-2/08-states.md
+# expect 0 matches
+
+# 表体不得出现 .ts:line（§1 提到 exporter 路径除外）
+rg '^\\| `state\\.' docs/qa/pm-feature-atlas/round-2/08-states.md | rg '\\.ts:[0-9]+' || true
+# expect 0 matches
+
+# 条件列不得残留 JSX 的 leading >
+rg '^\\| `state\\.' docs/qa/pm-feature-atlas/round-2/08-states.md | rg '\\| > ' || true
 # expect 0 matches
 ```
 
@@ -1464,11 +1481,55 @@ LEAK_SITES = [
     "useRoomList.ts:167",
 ]
 
+TS_JUNK = (
+    "minimongo/Cursor.ts",
+    "minimongo/LocalCollection.ts",
+    "minimongo/common.ts",
+    "lib/e2ee/rocketchat.e2e.ts",
+    "lib/getPageMeta.ts",
+    "hooks/useFormatMemorySize.ts",
+    "ClassificationBanner/lib/engine.ts",
+    "StepsLinkedList.ts",
+    "useCopyAction.ts",
+    "useDeleteMessageAction.ts",
+    "useEditMessageAction.ts",
+    "useFollowMessageAction.ts",
+    "useMarkAsUnreadMessageAction.ts",
+    "useReplyInDMAction.ts",
+    "useStarMessageAction.ts",
+    "useTranslateAction.ts",
+    "useUnFollowMessageAction.ts",
+    "useUnpinMessageAction.ts",
+    "useUnstarMessageAction.ts",
+    "useViewOriginalTranslationAction.ts",
+    "useLoadSurroundingMessages.ts",
+    "useTryToJumpToMessage.ts",
+    "useTryToJumpToThreadMessage.ts",
+    "useAudioStream.ts",
+    "useMediaSessionInstance.ts",
+    "useScreenShareStreams.ts",
+    "DraggableCore.ts",
+    "useOmnichannelPrioritiesConfig.ts",
+    "useLicenseLimitsByBehavior.ts",
+    "useCurrentModal.ts",
+    "SurfaceRenderer.ts",
+    "renderLayoutBlock.ts",
+)
+
 
 def assert_no_leaks(rows: list[dict]) -> None:
     bad = [r["src"] for r in rows if any(site in r["src"] for site in LEAK_SITES)]
     if bad:
         raise SystemExit("LEAK_SITES_PRESENT " + " ".join(sorted(set(bad))))
+    ts_rows = [r["src"] for r in rows if re.search(r"\.ts:\d+$", r["src"])]
+    if ts_rows:
+        raise SystemExit("TS_ROWS_PRESENT " + " ".join(ts_rows[:12]))
+    junk = [r["src"] for r in rows if any(name in r["file"] for name in TS_JUNK)]
+    if junk:
+        raise SystemExit("TS_JUNK_PRESENT " + " ".join(sorted(set(junk))[:12]))
+    gt = [f"{r['src']} cond={r['cond']!r}" for r in rows if r["cond"].lstrip().startswith(">")]
+    if gt:
+        raise SystemExit("LEADING_GT_COND " + " ; ".join(gt[:8]))
 
 
 def sample_and_show(rows: list[dict], n: int = 20) -> None:
