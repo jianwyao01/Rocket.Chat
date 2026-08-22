@@ -1,0 +1,648 @@
+{
+  "freeze": "e519470d35b6caf5b228d81aef41c86aab3051f4",
+  "note": "Overlay only. Extractor unchanged. Not live-closed. Do not stamp 不可达.",
+  "promoted": [
+    {
+      "id": "state.root.authentication-check.25i",
+      "honesty": "[实测]",
+      "arrival": "打开 `/` 或 `/home` 主壳；shot:home.png；登录后主壳 LoggedInArea",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.root.authentication-check.41d",
+      "honesty": "[实测]",
+      "arrival": "打开 `/` 或 `/home` 主壳；shot:login.png；Meteor.logout 后 LoginPage",
+      "shot": "login.png"
+    },
+    {
+      "id": "state.root.password-change-check.20d",
+      "honesty": "[实测]",
+      "arrival": "打开 `/` 或 `/home` 主壳；shot:home.png；已登录且不要求改密",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.root.two-factor-auth-setup-check.28d",
+      "honesty": "[实测]",
+      "arrival": "打开 `/` 或 `/home` 主壳；shot:home.png；不强制 2FA 安装 → LayoutWithSidebar",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.root.username-check.41d",
+      "honesty": "[实测]",
+      "arrival": "打开 `/` 或 `/home` 主壳；shot:home.png；已有 username → PasswordChangeCheck",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.root.main-layout.29d",
+      "honesty": "[实测]",
+      "arrival": "打开 `/` 或 `/home` 主壳；shot:home.png；非 embedded → Preload",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.root.layout-with-sidebar.59a0",
+      "honesty": "[实测]",
+      "arrival": "打开 `/` 或 `/home` 主壳；embedded layout；shot:home.png；非 embedded → NavBar",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.root.layout-with-sidebar.66a0",
+      "honesty": "[实测]",
+      "arrival": "打开 `/` 或 `/home` 主壳；shot:home.png；非 embedded → FeaturePreview/Sidebar",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.root.preload.22d",
+      "honesty": "[实测]",
+      "arrival": "打开 `/` 或 `/home` 主壳；shot:home.png；subscriptions ready",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.root.login-page.30d",
+      "honesty": "[实测]",
+      "arrival": "打开 `/` 或 `/home` 主壳；shot:login.png；非 iframe 登录壳 → RegistrationRoute",
+      "shot": "login.png"
+    },
+    {
+      "id": "state.navbar.nav-bar.13a0",
+      "honesty": "[实测]",
+      "arrival": "登录后顶栏；shot:home.png；search 未展开 → NavBarPagesSection",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.navbar.nav-bar.15a0",
+      "honesty": "[实测]",
+      "arrival": "登录后顶栏；shot:home.png；search 未展开 → NavBarControlsSection",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.navbar.nav-bar-controls-section.32d",
+      "honesty": "[实测]",
+      "arrival": "登录后顶栏；shot:home.png；桌面 → NavBarSection",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.navbar.nav-bar-controls-section.35a0",
+      "honesty": "[实测]",
+      "arrival": "登录后顶栏；shot:home.png；Omnichannel 组（Contact Center / 接听）",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.navbar.nav-bar-controls-section.38t0",
+      "honesty": "[实测]",
+      "arrival": "登录后顶栏；shot:home.png；已登录 UserMenu",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.navbar.nav-bar-navigation.27a0",
+      "honesty": "[实测]",
+      "arrival": "登录后顶栏；shot:home.png；非 mobile 历史导航",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.navbar.nav-bar-item-home-page.20t0",
+      "honesty": "[实测]",
+      "arrival": "登录后顶栏；shot:home.png；Home 按钮",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.navbar.nav-bar-pages-group.23a0",
+      "honesty": "[实测]",
+      "arrival": "登录后顶栏；shot:home.png；非 tablet 展开 Pages",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.navbar.nav-bar-pages-group.29a0",
+      "honesty": "[实测]",
+      "arrival": "登录后顶栏；shot:home.png；Marketplace 菜单",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.navbar.nav-bar-pages-group.30a0",
+      "honesty": "[实测]",
+      "arrival": "登录后顶栏；shot:home.png；Display/Sort",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.home.home-page.13d",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/home`；shot:home.png；/home DefaultHomePage",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.home.default-home-page.37a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/home`；shot:home.png；Add users 卡",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.home.default-home-page.38a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/home`；shot:home.png；Create channels 卡",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.home.default-home-page.43a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/home`；shot:home.png；Custom content 卡（admin）",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.home.home-page-header.15a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/home`；shot:home.png；Customize 按钮",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.home.custom-content-card.52i",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/home`；shot:home.png；admin Custom content Card",
+      "shot": "home.png"
+    },
+    {
+      "id": "state.sidebar.room-list.67a0",
+      "honesty": "[实测]",
+      "arrival": "登录后侧栏；shot:room-general.png；#general RoomListRow",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.sidebar.sidebar-item-template-with-data.136a0",
+      "honesty": "[实测]",
+      "arrival": "登录后侧栏；shot:room-general.png；频道头像",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.sidebar.sidebar-footer-watermark.28d",
+      "honesty": "[实测]",
+      "arrival": "登录后侧栏；shot:room-general.png；Powered by Rocket.Chat Community",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.sidebar.medium.32a0",
+      "honesty": "[实测]",
+      "arrival": "登录后侧栏；shot:room-general.png；medium 视图 kebab 菜单",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.account.account-router.28t0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/account`；shot:account-profile.png；Account children + SidebarPortal",
+      "shot": "account-profile.png"
+    },
+    {
+      "id": "state.account.account-security-route.17d",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/account/security`；shot:account-security.png；/account/security",
+      "shot": "account-security.png"
+    },
+    {
+      "id": "state.account.account-security-page.48a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/account/security`；shot:account-security.png；允许改密 → Password 表单",
+      "shot": "account-security.png"
+    },
+    {
+      "id": "state.account.account-security-page.58a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/account/security`；shot:account-security.png；2FA AccordionItem",
+      "shot": "account-security.png"
+    },
+    {
+      "id": "state.account.change-password.96a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/account/security`；shot:account-security.png；PasswordVerifier 规则列表",
+      "shot": "account-security.png"
+    },
+    {
+      "id": "state.uiclient.password-verifier-list.22d",
+      "honesty": "[实测]",
+      "arrival": "被 meteor 客户端宿主挂载；shot:account-security.png；Password must have 列表",
+      "shot": "account-security.png"
+    },
+    {
+      "id": "state.account.account-profile-route.13d",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/account/profile`；shot:account-profile.png；/account/profile",
+      "shot": "account-profile.png"
+    },
+    {
+      "id": "state.account.account-profile-form.280a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/account/profile`；shot:account-profile.png；You can use emoji FieldHint",
+      "shot": "account-profile.png"
+    },
+    {
+      "id": "state.account.account-profile-form.412a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/account/profile`；shot:account-profile.png；Custom Fields 组",
+      "shot": "account-profile.png"
+    },
+    {
+      "id": "state.account.account-preferences-page.88a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/account/preferences`；shot:account-preferences.png；My Data 手风琴",
+      "shot": "account-preferences.png"
+    },
+    {
+      "id": "state.comp.header.16a0",
+      "honesty": "[实测]",
+      "arrival": "登录后主壳（由 client/main.ts 闭包挂载）；shot:account-security.png；Account 侧栏标题区",
+      "shot": "account-security.png"
+    },
+    {
+      "id": "state.comp.header.18a0",
+      "honesty": "[实测]",
+      "arrival": "登录后主壳（由 client/main.ts 闭包挂载）；shot:account-security.png；Account 标题",
+      "shot": "account-security.png"
+    },
+    {
+      "id": "state.comp.header.23a0",
+      "honesty": "[实测]",
+      "arrival": "登录后主壳（由 client/main.ts 闭包挂载）；shot:account-security.png；Account Close",
+      "shot": "account-security.png"
+    },
+    {
+      "id": "state.comp.sidebar-items-assembler.21t0",
+      "honesty": "[实测]",
+      "arrival": "登录后主壳（由 client/main.ts 闭包挂载）；shot:account-security.png；Account 导航项",
+      "shot": "account-security.png"
+    },
+    {
+      "id": "state.comp.sidebar-navigation-item.37d",
+      "honesty": "[实测]",
+      "arrival": "登录后主壳（由 client/main.ts 闭包挂载）；shot:account-security.png；Profile/Preferences/Security 等项",
+      "shot": "account-security.png"
+    },
+    {
+      "id": "state.comp.sidebar-navigation-item.39a0",
+      "honesty": "[实测]",
+      "arrival": "登录后主壳（由 client/main.ts 闭包挂载）；shot:account-security.png；导航项图标",
+      "shot": "account-security.png"
+    },
+    {
+      "id": "state.room.room-route.34d",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；/channel/general RoomOpener",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.room-opener.35a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；房间查询成功 RoomProvider",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.room-opener.58d",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；RoomLayout",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.room.50d",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；ChatProvider",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.room.61t1",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；房间加密开；shot:room-general.png；非 E2EE setup → MediaCallRoom/RoomBody",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.room.70a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-channel-settings.png；打开 channel-settings / members 面板",
+      "shot": "room-channel-settings.png"
+    },
+    {
+      "id": "state.room.header.38d",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；普通频道 RoomHeader",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.header-icon-with-room.18d",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；频道 HeaderIcon",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.room-header.56a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；房间 toolbox 可见",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.room-toolbox.52a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；featured 动作后 Divider（Video call）",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.room-toolbox.54a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；Options kebab",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.room-foreword.14i",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；频道 Start of conversation",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.parent-room.17d",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；无 parent/team 芯片",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.composer-container.79d",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；可写 Composer 默认",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.composer-message.91d",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；MessageBox",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.message-box.489a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；格式化工具条",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.message-box.513a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；canSend 发送区",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.message-box-formatting-toolbar.26a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-general.png；带 icon 的 featured formatter（Emoji/Bold…）",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.room.room-info-router.30d",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-channel-settings.png；Channel info 只读",
+      "shot": "room-channel-settings.png"
+    },
+    {
+      "id": "state.room.room-info.55t1",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-channel-settings.png；无 Back → ContextualbarIcon",
+      "shot": "room-channel-settings.png"
+    },
+    {
+      "id": "state.room.room-info.57a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-channel-settings.png；Channel info Close",
+      "shot": "room-channel-settings.png"
+    },
+    {
+      "id": "state.room.room-info.68a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-channel-settings.png；More GenericMenu",
+      "shot": "room-channel-settings.png"
+    },
+    {
+      "id": "state.room.room-info.87a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-channel-settings.png；标题 #general",
+      "shot": "room-channel-settings.png"
+    },
+    {
+      "id": "state.room.room-members-with-data.118d",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-members.png；Members 列表默认",
+      "shot": "room-members.png"
+    },
+    {
+      "id": "state.room.room-members.147a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-members.png；Members Close",
+      "shot": "room-members.png"
+    },
+    {
+      "id": "state.room.room-members.180a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-members.png；成员查询成功",
+      "shot": "room-members.png"
+    },
+    {
+      "id": "state.room.room-members.182a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-members.png；1 个成员",
+      "shot": "room-members.png"
+    },
+    {
+      "id": "state.room.room-members.191a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-members.png；成员 Virtualized 列表",
+      "shot": "room-members.png"
+    },
+    {
+      "id": "state.room.room-members.216a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-members.png；Invite/Add footer",
+      "shot": "room-members.png"
+    },
+    {
+      "id": "state.room.room-members.219a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-members.png；Invite Link",
+      "shot": "room-members.png"
+    },
+    {
+      "id": "state.room.room-members.231a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-members.png；Add",
+      "shot": "room-members.png"
+    },
+    {
+      "id": "state.room.room-members-row.24d",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开任意房间；shot:room-members.png；admin 成员行",
+      "shot": "room-members.png"
+    },
+    {
+      "id": "state.message.room-message.124a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开有消息的房间；shot:room-general.png；消息头像",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.message.room-message.140a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开有消息的房间；shot:room-general.png；非 sequential MessageHeader",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.message.room-message.141t1",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开有消息的房间；shot:room-general.png；非 ignored → RoomMessageContent",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.message.room-message-content.67a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开有消息的房间；shot:room-general.png；markdown 正文",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.message.room-message-content.69a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开有消息的房间；房间加密开；shot:room-general.png；MessageContentBody",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.message.message-header.66a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开有消息的房间；shot:room-general.png；用户名",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.message.message-header.73a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → 打开有消息的房间；shot:room-general.png；Admin 角色",
+      "shot": "room-general.png"
+    },
+    {
+      "id": "state.directory.directory-page.59a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-channels.png；Channels tab",
+      "shot": "directory-channels.png"
+    },
+    {
+      "id": "state.directory.directory-page.60a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-users.png；Users tab",
+      "shot": "directory-users.png"
+    },
+    {
+      "id": "state.directory.directory-page.61a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-teams.png；Teams tab",
+      "shot": "directory-teams.png"
+    },
+    {
+      "id": "state.directory.channels-tab.9i",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-channels.png；ChannelsTable",
+      "shot": "directory-channels.png"
+    },
+    {
+      "id": "state.directory.channels-table.50a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-channels.png；宽屏表头",
+      "shot": "directory-channels.png"
+    },
+    {
+      "id": "state.directory.channels-table.62a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-channels.png；宽屏表头",
+      "shot": "directory-channels.png"
+    },
+    {
+      "id": "state.directory.channels-table.74a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-channels.png；宽屏表头",
+      "shot": "directory-channels.png"
+    },
+    {
+      "id": "state.directory.channels-table.110a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-channels.png；general 行",
+      "shot": "directory-channels.png"
+    },
+    {
+      "id": "state.directory.channels-table-row.27a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-channels.png；general 头像",
+      "shot": "directory-channels.png"
+    },
+    {
+      "id": "state.directory.channels-table-row.43a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-channels.png；Created at 单元格",
+      "shot": "directory-channels.png"
+    },
+    {
+      "id": "state.directory.channels-table-row.48a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-channels.png；Last Message 单元格",
+      "shot": "directory-channels.png"
+    },
+    {
+      "id": "state.directory.channels-table-row.53a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-channels.png；Belongs To 单元格",
+      "shot": "directory-channels.png"
+    },
+    {
+      "id": "state.directory.room-tags.15a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-channels.png；default Tag",
+      "shot": "directory-channels.png"
+    },
+    {
+      "id": "state.directory.users-tab.14i",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-users.png；UsersTable",
+      "shot": "directory-users.png"
+    },
+    {
+      "id": "state.directory.users-table.45a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-users.png；Email 列（full info）",
+      "shot": "directory-users.png"
+    },
+    {
+      "id": "state.directory.users-table.69a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-users.png；宽屏用户表头",
+      "shot": "directory-users.png"
+    },
+    {
+      "id": "state.directory.users-table.114a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-users.png；admin 用户行",
+      "shot": "directory-users.png"
+    },
+    {
+      "id": "state.directory.users-table-row.32a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-users.png；用户头像",
+      "shot": "directory-users.png"
+    },
+    {
+      "id": "state.directory.users-table-row.49a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-users.png；Email 单元格",
+      "shot": "directory-users.png"
+    },
+    {
+      "id": "state.directory.users-table-row.53a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-users.png；宽屏用户单元格",
+      "shot": "directory-users.png"
+    },
+    {
+      "id": "state.directory.teams-tab.9i",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；shot:directory-teams.png；TeamsTable",
+      "shot": "directory-teams.png"
+    },
+    {
+      "id": "state.directory.teams-table.112a0",
+      "honesty": "[实测]",
+      "arrival": "登录 → `/directory`；空列表/无数据；shot:directory-teams.png；No results found",
+      "shot": "directory-teams.png"
+    }
+  ]
+}

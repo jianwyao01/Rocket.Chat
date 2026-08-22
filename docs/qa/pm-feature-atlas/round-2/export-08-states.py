@@ -1414,6 +1414,36 @@ def md_escape(s: str) -> str:
     return s.replace("|", "¦").replace("\n", " ")
 
 
+LIVE_OVERLAY = Path(__file__).with_name("live-08-states.json")
+
+
+def apply_live_overlay(rows: list[dict]) -> None:
+    """Tag overlay only. Does not add/remove/reorder extracted states."""
+    if not LIVE_OVERLAY.exists():
+        return
+    data = json.loads(LIVE_OVERLAY.read_text(encoding="utf-8"))
+    promoted = data.get("promoted") or []
+    by_id: dict[str, dict] = {}
+    for item in promoted:
+        sid = item.get("id")
+        if not sid:
+            raise SystemExit("LIVE_OVERLAY_MISSING_ID")
+        if item.get("honesty") != "[实测]":
+            raise SystemExit("LIVE_OVERLAY_BAD_HONESTY " + str(sid))
+        by_id[sid] = item
+    known = {r["id"] for r in rows}
+    unknown = sorted(set(by_id) - known)
+    if unknown:
+        raise SystemExit("LIVE_UNKNOWN_IDS " + " ".join(unknown[:12]))
+    for r in rows:
+        ov = by_id.get(r["id"])
+        if not ov:
+            continue
+        r["honesty"] = "[实测]"
+        if ov.get("arrival"):
+            r["arrival"] = ov["arrival"]
+
+
 def emit_count(files, rows, kinds, closure):
     c = Counter(kinds.values())
     print("SHA_EXPECT", SHA)
@@ -1613,7 +1643,7 @@ def render_full_md(files, rows, kinds, closure) -> str:
 
 渲染列写 **子节点名**（组件/标签/`null`），不写 `&&` / `return (` 操作符。条件列只写布尔表达式，不含 `return` / `const x =`，并剥掉 JSX 残留的前导 `>` / `{`。`.ts` 文件抽 **0** 行。
 
-诚实：本环境 Meteor boot 失败 → **STOP live，无假 DOM**。未点击可达行一律 `[待渲染实测]`。仅字面量恒假才标 `[不可达]`。不扫 develop。不发明 DOM。
+诚实：Meteor `dsv` 200 后，只把已截图且对照源码确认的渲染分支标 `[实测]`。未点击可达行一律 `[待渲染实测]`。仅字面量恒假才标 `[不可达]`。不扫 develop。不发明 DOM。本卷 **不是** live-closed。
 
 ## 2. 目标树证明（本冻结）
 
@@ -1672,25 +1702,29 @@ kind 等式（只核行数）：`@@KIND_EQ@@ = @@NSTATES@@`。
 | [不可达] | @@H_UNR@@ |
 | [实测] | @@H_LIVE@@ |
 
-`[待渲染实测]+[不可达]+[实测] = @@H_SUM@@`。本卷 `[实测]=0`（boot STOP）。
+`[待渲染实测]+[不可达]+[实测] = @@H_SUM@@`。本卷只晋级已截图分支，**不是** live-closed。
 
 表面分表行数之和必须等于 STATES：`@@SURF_EQ@@ = @@NSTATES@@`。
 
-## 5. Live boot（STOP）
+## 5. Live boot（部分实测，未闭合）
 
-尝试过、失败、停止。**无假 DOM。**
+旧 STOP（livechat `dist` ENOENT）已作废。本环境跳过 docker compose，按已验证路径起服。**无假 DOM。**
 
 | 步 | 结果 |
 | --- | --- |
 | Meteor 3.4.1 | 已安装（与 `apps/meteor/.meteor/release` 一致） |
-| Mongo 7.0.24 单节点 rs0 | `127.0.0.1:27017` PRIMARY |
-| Node 22.22.3 + yarn install | 完成（peer 警告，非 fatal） |
-| meteor npm run dsv 第 1 次 | FAIL：`rocketchat-i18n/i18n` symlink 指向尚未构建的 `packages/i18n/dist/resources` |
-| yarn workspace tools + i18n build | 成功；symlink 可 listdir 68 个 json |
-| meteor npm run dsv 第 2 次 | FAIL：`packages/livechat/dist` / `index.html` ENOENT |
-| 后续 | **STOP live**。不再为假页面补 dist / 编 DOM |
+| Mongo 8.0.12 tarball 单节点 rs0 | `127.0.0.1:27017` PRIMARY |
+| Node 22.22.3 + yarn + deno 2.3.1 | 已就绪 |
+| i18n / livechat dist | 已构建 |
+| `apps/meteor && meteor npm run dsv` | `http://127.0.0.1:3000` 与 `/api/info` 200 |
+| 登录 | `rocketchat.internal.admin.test` 成功 |
+| 产品 merge-base | `e519470` |
 
-因此表体不写 `[实测]`，不截图，不编造 DOM。可达未点击 = `[待渲染实测]`。不要用 `[不可达]` 清零剩余行。
+Walk 并截图：login、account security / profile / preferences、home、`#general`（header / composer / message）、channel info、members、directory channels / users / teams。
+
+未打开因而不晋级：message toolbox 内层按钮、Create channel/team/dm/discussion 弹层、E2EE accordion、Video/Voice call chrome、Game Center、Outlook、VoIP 组、Apps inject、federation External、SAML。
+
+截图目录：`docs/qa/pm-feature-atlas/round-2/shots/`。标签回写：同目录 `live-08-states.json` 只改诚实列，不改抽取器、不改 4221 行集。未点击可达行仍 `[待渲染实测]`。不要用 `[不可达]` 清零。本卷 **不是** live-closed。
 
 ## 6. 闭集表（一行一分支）
 
@@ -1788,7 +1822,7 @@ find apps/meteor/app -type d -name client | wc -l
 - 不扫 `apps/meteor/server`、`ee/server`、`ee/apps`（无 client UI）。
 - spec/stories 已分类，不抽 state。
 - setting/permission 闭集是 vol 6/7；本卷只在「关联」列回指字面量。
-- 无 `[实测]` 行。boot 修好后只能把已点击行升级为 `[实测]`，不能把未点击行改成不可达来清零。
+- 只能把已截图行升级为 `[实测]`，不能把未点击行改成不可达来清零。本卷不是 live-closed。
 - 本卷没有功能总数。
 """
     for key, val in tokens.items():
@@ -1936,6 +1970,7 @@ def main(argv=None):
     files = target_files()
     closure = import_closure()
     rows, kinds = build_rows(files, closure)
+    apply_live_overlay(rows)
     if args.count or args.verify or args.write_md or not any([args.files, args.json, args.tables, args.sample_and]):
         emit_count(files, rows, kinds, closure)
     if args.verify:

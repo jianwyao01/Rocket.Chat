@@ -42,7 +42,7 @@
 
 渲染列写 **子节点名**（组件/标签/`null`），不写 `&&` / `return (` 操作符。条件列只写布尔表达式，不含 `return` / `const x =`，并剥掉 JSX 残留的前导 `>` / `{`。`.ts` 文件抽 **0** 行。
 
-诚实：本环境 Meteor boot 失败 → **STOP live，无假 DOM**。未点击可达行一律 `[待渲染实测]`。仅字面量恒假才标 `[不可达]`。不扫 develop。不发明 DOM。
+诚实：Meteor `dsv` 200 后，只把已截图且对照源码确认的渲染分支标 `[实测]`。未点击可达行一律 `[待渲染实测]`。仅字面量恒假才标 `[不可达]`。不扫 develop。不发明 DOM。本卷 **不是** live-closed。
 
 ## 2. 目标树证明（本冻结）
 
@@ -97,29 +97,33 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 
 | 诚实 | 数 |
 | --- | ---: |
-| [待渲染实测] | 4221 |
+| [待渲染实测] | 4114 |
 | [不可达] | 0 |
-| [实测] | 0 |
+| [实测] | 107 |
 
-`[待渲染实测]+[不可达]+[实测] = 4221`。本卷 `[实测]=0`（boot STOP）。
+`[待渲染实测]+[不可达]+[实测] = 4221`。本卷只晋级已截图分支，**不是** live-closed。
 
 表面分表行数之和必须等于 STATES：`129 + 1067 + 12 + 80 + 2 + 17 + 184 + 35 + 4 + 82 + 4 + 13 + 4 + 5 + 4 + 6 + 222 + 252 + 75 + 102 + 8 + 794 + 17 + 24 + 4 + 4 + 689 + 39 + 34 + 63 + 64 + 71 + 8 + 103 = 4221`。
 
-## 5. Live boot（STOP）
+## 5. Live boot（部分实测，未闭合）
 
-尝试过、失败、停止。**无假 DOM。**
+旧 STOP（livechat `dist` ENOENT）已作废。本环境跳过 docker compose，按已验证路径起服。**无假 DOM。**
 
 | 步 | 结果 |
 | --- | --- |
 | Meteor 3.4.1 | 已安装（与 `apps/meteor/.meteor/release` 一致） |
-| Mongo 7.0.24 单节点 rs0 | `127.0.0.1:27017` PRIMARY |
-| Node 22.22.3 + yarn install | 完成（peer 警告，非 fatal） |
-| meteor npm run dsv 第 1 次 | FAIL：`rocketchat-i18n/i18n` symlink 指向尚未构建的 `packages/i18n/dist/resources` |
-| yarn workspace tools + i18n build | 成功；symlink 可 listdir 68 个 json |
-| meteor npm run dsv 第 2 次 | FAIL：`packages/livechat/dist` / `index.html` ENOENT |
-| 后续 | **STOP live**。不再为假页面补 dist / 编 DOM |
+| Mongo 8.0.12 tarball 单节点 rs0 | `127.0.0.1:27017` PRIMARY |
+| Node 22.22.3 + yarn + deno 2.3.1 | 已就绪 |
+| i18n / livechat dist | 已构建 |
+| `apps/meteor && meteor npm run dsv` | `http://127.0.0.1:3000` 与 `/api/info` 200 |
+| 登录 | `rocketchat.internal.admin.test` 成功 |
+| 产品 merge-base | `e519470` |
 
-因此表体不写 `[实测]`，不截图，不编造 DOM。可达未点击 = `[待渲染实测]`。不要用 `[不可达]` 清零剩余行。
+Walk 并截图：login、account security / profile / preferences、home、`#general`（header / composer / message）、channel info、members、directory channels / users / teams。
+
+未打开因而不晋级：message toolbox 内层按钮、Create channel/team/dm/discussion 弹层、E2EE accordion、Video/Voice call chrome、Game Center、Outlook、VoIP 组、Apps inject、federation External、SAML。
+
+截图目录：`docs/qa/pm-feature-atlas/round-2/shots/`。标签回写：同目录 `live-08-states.json` 只改诚实列，不改抽取器、不改 4221 行集。未点击可达行仍 `[待渲染实测]`。不要用 `[不可达]` 清零。本卷 **不是** live-closed。
 
 ## 6. 闭集表（一行一分支）
 
@@ -131,30 +135,30 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `state.root.app-layout.92s` | root | Suspense fallback（子树未 ready） | PageLoading | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/AppLayout.tsx:92` |
 | `state.root.app-root.38s` | root | Suspense fallback（子树未 ready） | PageLoading | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/AppRoot.tsx:38` |
-| `state.root.authentication-check.25i` | root | user | LoggedInArea | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/AuthenticationCheck.tsx:25` |
+| `state.root.authentication-check.25i` | root | user | LoggedInArea | 打开 `/` 或 `/home` 主壳；shot:home.png；登录后主壳 LoggedInArea | [实测] | （无） | `apps/meteor/client/views/root/MainLayout/AuthenticationCheck.tsx:25` |
 | `state.root.authentication-check.33i` | root | !forceLogin && guest | RegistrationRoute | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/AuthenticationCheck.tsx:33` |
 | `state.root.authentication-check.37i` | root | !forceLogin && allowAnonymousRead | UsernameCheck | 打开 `/` 或 `/home` 主壳；匿名读 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/AuthenticationCheck.tsx:37` |
-| `state.root.authentication-check.41d` | root | 前述 if-ret 均不成立（default return） | LoginPage | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/AuthenticationCheck.tsx:41` |
+| `state.root.authentication-check.41d` | root | 前述 if-ret 均不成立（default return） | LoginPage | 打开 `/` 或 `/home` 主壳；shot:login.png；Meteor.logout 后 LoginPage | [实测] | （无） | `apps/meteor/client/views/root/MainLayout/AuthenticationCheck.tsx:41` |
 | `state.root.embedded-preload.85i` | root | !ready ¦¦ (shouldFetch && isLoading) | PageLoading | 打开 `/` 或 `/home` 主壳；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/EmbeddedPreload.tsx:85` |
 | `state.root.embedded-preload.89d` | root | 前述 if-ret 均不成立（default return） | <> | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/EmbeddedPreload.tsx:89` |
 | `state.root.layout-with-sidebar.59a1` | root | !(!embeddedLayout) | null | 打开 `/` 或 `/home` 主壳；embedded layout | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/LayoutWithSidebar.tsx:59` |
-| `state.root.layout-with-sidebar.59a0` | root | !embeddedLayout | NavBar | 打开 `/` 或 `/home` 主壳；embedded layout | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/LayoutWithSidebar.tsx:59` |
+| `state.root.layout-with-sidebar.59a0` | root | !embeddedLayout | NavBar | 打开 `/` 或 `/home` 主壳；embedded layout；shot:home.png；非 embedded → NavBar | [实测] | （无） | `apps/meteor/client/views/root/MainLayout/LayoutWithSidebar.tsx:59` |
 | `state.root.layout-with-sidebar.66a1` | root | !(!removeSidenav) | null | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/LayoutWithSidebar.tsx:66` |
-| `state.root.layout-with-sidebar.66a0` | root | !removeSidenav | FeaturePreview | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/LayoutWithSidebar.tsx:66` |
+| `state.root.layout-with-sidebar.66a0` | root | !removeSidenav | FeaturePreview | 打开 `/` 或 `/home` 主壳；shot:home.png；非 embedded → FeaturePreview/Sidebar | [实测] | （无） | `apps/meteor/client/views/root/MainLayout/LayoutWithSidebar.tsx:66` |
 | `state.root.login-page.26i` | root | iframeLoginUrl | iframe | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/LoginPage.tsx:26` |
-| `state.root.login-page.30d` | root | 前述 if-ret 均不成立（default return） | <> | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/LoginPage.tsx:30` |
+| `state.root.login-page.30d` | root | 前述 if-ret 均不成立（default return） | <> | 打开 `/` 或 `/home` 主壳；shot:login.png；非 iframe 登录壳 → RegistrationRoute | [实测] | （无） | `apps/meteor/client/views/root/MainLayout/LoginPage.tsx:30` |
 | `state.root.login-page.32a1` | root | !(showForcedLogoutBanner) | null | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/LoginPage.tsx:32` |
 | `state.root.login-page.32a0` | root | showForcedLogoutBanner | LoggedOutBanner | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/LoginPage.tsx:32` |
 | `state.root.main-layout.19i` | root | isEmbeddedLayout | EmbeddedPreload | 打开 `/` 或 `/home` 主壳；embedded layout | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/MainLayout.tsx:19` |
 | `state.root.main-layout.23s` | root | Suspense fallback（子树未 ready） | null | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/MainLayout.tsx:23` |
-| `state.root.main-layout.29d` | root | 前述 if-ret 均不成立（default return） | Preload | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/MainLayout.tsx:29` |
+| `state.root.main-layout.29d` | root | 前述 if-ret 均不成立（default return） | Preload | 打开 `/` 或 `/home` 主壳；shot:home.png；非 embedded → Preload | [实测] | （无） | `apps/meteor/client/views/root/MainLayout/MainLayout.tsx:29` |
 | `state.root.main-layout.32s` | root | Suspense fallback（子树未 ready） | null | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/MainLayout.tsx:32` |
 | `state.root.main-layout-style-tags.13a1` | root | !(theme === 'dark') | null | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/MainLayoutStyleTags.tsx:13` |
 | `state.root.main-layout-style-tags.13a0` | root | theme === 'dark' | PaletteStyleTag | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/MainLayoutStyleTags.tsx:13` |
 | `state.root.password-change-check.16i` | root | requirePasswordChange | ResetPasswordPage | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/PasswordChangeCheck.tsx:16` |
-| `state.root.password-change-check.20d` | root | 前述 if-ret 均不成立（default return） | TwoFactorAuthSetupCheck | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/PasswordChangeCheck.tsx:20` |
+| `state.root.password-change-check.20d` | root | 前述 if-ret 均不成立（default return） | TwoFactorAuthSetupCheck | 打开 `/` 或 `/home` 主壳；shot:home.png；已登录且不要求改密 | [实测] | （无） | `apps/meteor/client/views/root/MainLayout/PasswordChangeCheck.tsx:20` |
 | `state.root.preload.18i` | root | !ready | PageLoading | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/Preload.tsx:18` |
-| `state.root.preload.22d` | root | 前述 if-ret 均不成立（default return） | <> | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/Preload.tsx:22` |
+| `state.root.preload.22d` | root | 前述 if-ret 均不成立（default return） | <> | 打开 `/` 或 `/home` 主壳；shot:home.png；subscriptions ready | [实测] | （无） | `apps/meteor/client/views/root/MainLayout/Preload.tsx:22` |
 | `state.root.register-username.97t1` | root | !(!hideLogo && customLogo) | <> | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/RegisterUsername.tsx:97` |
 | `state.root.register-username.97t0` | root | !hideLogo && customLogo | Box | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/RegisterUsername.tsx:97` |
 | `state.root.register-username.105a1` | root | !(!isLoading) | null | 打开 `/` 或 `/home` 主壳；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/RegisterUsername.tsx:105` |
@@ -162,10 +166,10 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.root.register-username.115a1` | root | !(errors.username) | null | 打开 `/` 或 `/home` 主壳；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/RegisterUsername.tsx:115` |
 | `state.root.register-username.115a0` | root | errors.username | FieldError | 打开 `/` 或 `/home` 主壳；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/RegisterUsername.tsx:115` |
 | `state.root.two-factor-auth-setup-check.18i` | root | require2faSetup | Box | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/TwoFactorAuthSetupCheck.tsx:18` |
-| `state.root.two-factor-auth-setup-check.28d` | root | 前述 if-ret 均不成立（default return） | LayoutWithSidebar | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/TwoFactorAuthSetupCheck.tsx:28` |
+| `state.root.two-factor-auth-setup-check.28d` | root | 前述 if-ret 均不成立（default return） | LayoutWithSidebar | 打开 `/` 或 `/home` 主壳；shot:home.png；不强制 2FA 安装 → LayoutWithSidebar | [实测] | （无） | `apps/meteor/client/views/root/MainLayout/TwoFactorAuthSetupCheck.tsx:28` |
 | `state.root.username-check.33i` | root | isLoading | HomeSkeleton | 打开 `/` 或 `/home` 主壳；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/UsernameCheck.tsx:33` |
 | `state.root.username-check.37i` | root | shouldRegisterUsername | RegisterUsername | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/UsernameCheck.tsx:37` |
-| `state.root.username-check.41d` | root | 前述 if-ret 均不成立（default return） | PasswordChangeCheck | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/MainLayout/UsernameCheck.tsx:41` |
+| `state.root.username-check.41d` | root | 前述 if-ret 均不成立（default return） | PasswordChangeCheck | 打开 `/` 或 `/home` 主壳；shot:home.png；已有 username → PasswordChangeCheck | [实测] | （无） | `apps/meteor/client/views/root/MainLayout/UsernameCheck.tsx:41` |
 | `state.root.outermost-error-boundary.43i` | root | BugsnagErrorBoundary | BugsnagErrorBoundary | 打开 `/` 或 `/home` 主壳；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/root/OutermostErrorBoundary.tsx:43` |
 | `state.root.outermost-error-boundary.47d` | root | 前述 if-ret 均不成立（default return） | ErrorBoundary | 打开 `/` 或 `/home` 主壳 | [待渲染实测] | （无） | `apps/meteor/client/views/root/OutermostErrorBoundary.tsx:47` |
 
@@ -174,16 +178,16 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | id | 表面 | 分支条件 | 渲染 | 到达配方 | 诚实 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `state.home.default-home-page.37a1` | home | !(canAddUsers) | null | 登录 → `/home` | [待渲染实测] | （无） | `apps/meteor/client/views/home/DefaultHomePage.tsx:37` |
-| `state.home.default-home-page.37a0` | home | canAddUsers | AddUsersCard | 登录 → `/home` | [待渲染实测] | （无） | `apps/meteor/client/views/home/DefaultHomePage.tsx:37` |
+| `state.home.default-home-page.37a0` | home | canAddUsers | AddUsersCard | 登录 → `/home`；shot:home.png；Add users 卡 | [实测] | （无） | `apps/meteor/client/views/home/DefaultHomePage.tsx:37` |
 | `state.home.default-home-page.38a1` | home | !(canCreateChannel) | null | 登录 → `/home` | [待渲染实测] | （无） | `apps/meteor/client/views/home/DefaultHomePage.tsx:38` |
-| `state.home.default-home-page.38a0` | home | canCreateChannel | CreateChannelsCard | 登录 → `/home` | [待渲染实测] | （无） | `apps/meteor/client/views/home/DefaultHomePage.tsx:38` |
+| `state.home.default-home-page.38a0` | home | canCreateChannel | CreateChannelsCard | 登录 → `/home`；shot:home.png；Create channels 卡 | [实测] | （无） | `apps/meteor/client/views/home/DefaultHomePage.tsx:38` |
 | `state.home.default-home-page.43a1` | home | !((isAdmin ¦¦ (isCustomContentVisible && !isCustomContentBodyEmpty))) | null | 登录 → `/home` | [待渲染实测] | （无） | `apps/meteor/client/views/home/DefaultHomePage.tsx:43` |
-| `state.home.default-home-page.43a0` | home | (isAdmin ¦¦ (isCustomContentVisible && !isCustomContentBodyEmpty)) | CustomContentCard | 登录 → `/home` | [待渲染实测] | （无） | `apps/meteor/client/views/home/DefaultHomePage.tsx:43` |
+| `state.home.default-home-page.43a0` | home | (isAdmin ¦¦ (isCustomContentVisible && !isCustomContentBodyEmpty)) | CustomContentCard | 登录 → `/home`；shot:home.png；Custom content 卡（admin） | [实测] | （无） | `apps/meteor/client/views/home/DefaultHomePage.tsx:43` |
 | `state.home.home-page.9i` | home | customOnly | CustomHomePage | 登录 → `/home` | [待渲染实测] | （无） | `apps/meteor/client/views/home/HomePage.tsx:9` |
-| `state.home.home-page.13d` | home | 前述 if-ret 均不成立（default return） | DefaultHomePage | 登录 → `/home` | [待渲染实测] | （无） | `apps/meteor/client/views/home/HomePage.tsx:13` |
+| `state.home.home-page.13d` | home | 前述 if-ret 均不成立（default return） | DefaultHomePage | 登录 → `/home`；shot:home.png；/home DefaultHomePage | [实测] | （无） | `apps/meteor/client/views/home/HomePage.tsx:13` |
 | `state.home.home-page-header.15a1` | home | !(canEditLayout) | null | 登录 → `/home` | [待渲染实测] | （无） | `apps/meteor/client/views/home/HomePageHeader.tsx:15` |
-| `state.home.home-page-header.15a0` | home | canEditLayout | Button | 登录 → `/home` | [待渲染实测] | （无） | `apps/meteor/client/views/home/HomePageHeader.tsx:15` |
-| `state.home.custom-content-card.52i` | home | isAdmin | Card | 登录 → `/home` | [待渲染实测] | （无） | `apps/meteor/client/views/home/cards/CustomContentCard.tsx:52` |
+| `state.home.home-page-header.15a0` | home | canEditLayout | Button | 登录 → `/home`；shot:home.png；Customize 按钮 | [实测] | （无） | `apps/meteor/client/views/home/HomePageHeader.tsx:15` |
+| `state.home.custom-content-card.52i` | home | isAdmin | Card | 登录 → `/home`；shot:home.png；admin Custom content Card | [实测] | （无） | `apps/meteor/client/views/home/cards/CustomContentCard.tsx:52` |
 | `state.home.custom-content-card.89i` | home | !willNotShowCustomContent && !isCustomContentOnly | Card | 登录 → `/home` | [待渲染实测] | （无） | `apps/meteor/client/views/home/cards/CustomContentCard.tsx:89` |
 | `state.home.custom-content-card.98d` | home | 前述 if-ret 均不成立（default return） | CustomHomepageContent | 登录 → `/home` | [待渲染实测] | （无） | `apps/meteor/client/views/home/cards/CustomContentCard.tsx:98` |
 
@@ -192,9 +196,9 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | id | 表面 | 分支条件 | 渲染 | 到达配方 | 诚实 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `state.navbar.nav-bar.13a1` | navbar | !(!navbar.searchExpanded) | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBar.tsx:13` |
-| `state.navbar.nav-bar.13a0` | navbar | !navbar.searchExpanded | NavBarPagesSection | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBar.tsx:13` |
+| `state.navbar.nav-bar.13a0` | navbar | !navbar.searchExpanded | NavBarPagesSection | 登录后顶栏；shot:home.png；search 未展开 → NavBarPagesSection | [实测] | （无） | `apps/meteor/client/navbar/NavBar.tsx:13` |
 | `state.navbar.nav-bar.15a1` | navbar | !(!navbar.searchExpanded) | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBar.tsx:15` |
-| `state.navbar.nav-bar.15a0` | navbar | !navbar.searchExpanded | NavBarControlsSection | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBar.tsx:15` |
+| `state.navbar.nav-bar.15a0` | navbar | !navbar.searchExpanded | NavBarControlsSection | 登录后顶栏；shot:home.png；search 未展开 → NavBarControlsSection | [实测] | （无） | `apps/meteor/client/navbar/NavBar.tsx:15` |
 | `state.navbar.nav-bar-controls-menu.31i` | navbar | sections.length === 0 | null | 登录后顶栏；空列表/无数据 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsMenu.tsx:31` |
 | `state.navbar.nav-bar-controls-menu.35d` | navbar | 前述 if-ret 均不成立（default return） | GenericMenu | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsMenu.tsx:35` |
 | `state.navbar.nav-bar-controls-section.20i` | navbar | isMobile | NavBarSection | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsSection.tsx:20` |
@@ -202,27 +206,27 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.navbar.nav-bar-controls-section.23a0` | navbar | (showOmnichannel ¦¦ callAction) | NavBarControlsWithData | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsSection.tsx:23` |
 | `state.navbar.nav-bar-controls-section.26t1` | navbar | !(user) | NavBarItemLoginPage | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsSection.tsx:26` |
 | `state.navbar.nav-bar-controls-section.26t0` | navbar | user | UserMenu | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsSection.tsx:26` |
-| `state.navbar.nav-bar-controls-section.32d` | navbar | 前述 if-ret 均不成立（default return） | NavBarSection | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsSection.tsx:32` |
+| `state.navbar.nav-bar-controls-section.32d` | navbar | 前述 if-ret 均不成立（default return） | NavBarSection | 登录后顶栏；shot:home.png；桌面 → NavBarSection | [实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsSection.tsx:32` |
 | `state.navbar.nav-bar-controls-section.34a1` | navbar | !(callAction) | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsSection.tsx:34` |
 | `state.navbar.nav-bar-controls-section.34a0` | navbar | callAction | NavBarVoipGroup | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsSection.tsx:34` |
 | `state.navbar.nav-bar-controls-section.35a1` | navbar | !(showOmnichannel) | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsSection.tsx:35` |
-| `state.navbar.nav-bar-controls-section.35a0` | navbar | showOmnichannel | NavBarOmnichannelGroup | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsSection.tsx:35` |
+| `state.navbar.nav-bar-controls-section.35a0` | navbar | showOmnichannel | NavBarOmnichannelGroup | 登录后顶栏；shot:home.png；Omnichannel 组（Contact Center / 接听） | [实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsSection.tsx:35` |
 | `state.navbar.nav-bar-controls-section.38t1` | navbar | !(user) | NavBarItemLoginPage | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsSection.tsx:38` |
-| `state.navbar.nav-bar-controls-section.38t0` | navbar | user | UserMenu | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsSection.tsx:38` |
+| `state.navbar.nav-bar-controls-section.38t0` | navbar | user | UserMenu | 登录后顶栏；shot:home.png；已登录 UserMenu | [实测] | （无） | `apps/meteor/client/navbar/NavBarControls/NavBarControlsSection.tsx:38` |
 | `state.navbar.nav-bar-navigation.27a1` | navbar | !(!isMobile) | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarNavigation.tsx:27` |
-| `state.navbar.nav-bar-navigation.27a0` | navbar | !isMobile | Box | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarNavigation.tsx:27` |
+| `state.navbar.nav-bar-navigation.27a0` | navbar | !isMobile | Box | 登录后顶栏；shot:home.png；非 mobile 历史导航 | [实测] | （无） | `apps/meteor/client/navbar/NavBarNavigation.tsx:27` |
 | `state.navbar.nav-bar-item-omnichannel-queue.11i` | navbar | !isEnabled | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarOmnichannelGroup/NavBarItemOmnichannelQueue.tsx:11` |
 | `state.navbar.nav-bar-item-omnichannel-queue.15d` | navbar | 前述 if-ret 均不成立（default return） | NavBarItem | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarOmnichannelGroup/NavBarItemOmnichannelQueue.tsx:15` |
 | `state.navbar.nav-bar-item-home-page.20t1` | navbar | !(showHome) | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/NavBarItemHomePage.tsx:20` |
-| `state.navbar.nav-bar-item-home-page.20t0` | navbar | showHome | NavBarItem | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/NavBarItemHomePage.tsx:20` |
+| `state.navbar.nav-bar-item-home-page.20t0` | navbar | showHome | NavBarItem | 登录后顶栏；shot:home.png；Home 按钮 | [实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/NavBarItemHomePage.tsx:20` |
 | `state.navbar.nav-bar-pages-group.22a1` | navbar | !(isTablet) | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/NavBarPagesGroup.tsx:22` |
 | `state.navbar.nav-bar-pages-group.22a0` | navbar | isTablet | NavBarPagesStackMenu | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/NavBarPagesGroup.tsx:22` |
 | `state.navbar.nav-bar-pages-group.23a1` | navbar | !(!isTablet) | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/NavBarPagesGroup.tsx:23` |
-| `state.navbar.nav-bar-pages-group.23a0` | navbar | !isTablet | <> | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/NavBarPagesGroup.tsx:23` |
+| `state.navbar.nav-bar-pages-group.23a0` | navbar | !isTablet | <> | 登录后顶栏；shot:home.png；非 tablet 展开 Pages | [实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/NavBarPagesGroup.tsx:23` |
 | `state.navbar.nav-bar-pages-group.29a1` | navbar | !(showMarketplace && !isMobile) | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/NavBarPagesGroup.tsx:29` |
-| `state.navbar.nav-bar-pages-group.29a0` | navbar | showMarketplace && !isMobile | NavBarItemMarketPlaceMenu | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/NavBarPagesGroup.tsx:29` |
+| `state.navbar.nav-bar-pages-group.29a0` | navbar | showMarketplace && !isMobile | NavBarItemMarketPlaceMenu | 登录后顶栏；shot:home.png；Marketplace 菜单 | [实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/NavBarPagesGroup.tsx:29` |
 | `state.navbar.nav-bar-pages-group.30a1` | navbar | !(!isMobile) | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/NavBarPagesGroup.tsx:30` |
-| `state.navbar.nav-bar-pages-group.30a0` | navbar | !isMobile | NavBarItemSort | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/NavBarPagesGroup.tsx:30` |
+| `state.navbar.nav-bar-pages-group.30a0` | navbar | !isMobile | NavBarItemSort | 登录后顶栏；shot:home.png；Display/Sort | [实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/NavBarPagesGroup.tsx:30` |
 | `state.navbar.create-channel-modal.225a1` | navbar | !(errors.name) | null | 登录后顶栏；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateChannelModal.tsx:225` |
 | `state.navbar.create-channel-modal.225a0` | navbar | errors.name | FieldError | 登录后顶栏；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateChannelModal.tsx:225` |
 | `state.navbar.create-channel-modal.226a1` | navbar | !(!allowSpecialNames) | null | 登录后顶栏 | [待渲染实测] | （无） | `apps/meteor/client/navbar/NavBarPagesGroup/actions/CreateChannelModal.tsx:226` |
@@ -309,15 +313,15 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.sidebar.extended.69a1` | sidebar | !(menu) | null | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/Item/Extended.tsx:69` |
 | `state.sidebar.extended.69a0` | sidebar | menu | SidebarV2ItemMenu | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/Item/Extended.tsx:69` |
 | `state.sidebar.medium.32a1` | sidebar | !(menu) | null | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/Item/Medium.tsx:32` |
-| `state.sidebar.medium.32a0` | sidebar | menu | SidebarV2ItemMenu | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/Item/Medium.tsx:32` |
+| `state.sidebar.medium.32a0` | sidebar | menu | SidebarV2ItemMenu | 登录后侧栏；shot:room-general.png；medium 视图 kebab 菜单 | [实测] | （无） | `apps/meteor/client/sidebar/Item/Medium.tsx:32` |
 | `state.sidebar.room-list.67a1` | sidebar | !(roomList[index]) | null | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/RoomList/RoomList.tsx:67` |
-| `state.sidebar.room-list.67a0` | sidebar | roomList[index] | RoomListRow | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/RoomList/RoomList.tsx:67` |
+| `state.sidebar.room-list.67a0` | sidebar | roomList[index] | RoomListRow | 登录后侧栏；shot:room-general.png；#general RoomListRow | [实测] | （无） | `apps/meteor/client/sidebar/RoomList/RoomList.tsx:67` |
 | `state.sidebar.sidebar-item-template-with-data.101a1` | sidebar | !(videoConfActions) | null | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/RoomList/SidebarItemTemplateWithData.tsx:101` |
 | `state.sidebar.sidebar-item-template-with-data.101a0` | sidebar | videoConfActions | SidebarV2Actions | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/RoomList/SidebarItemTemplateWithData.tsx:101` |
 | `state.sidebar.sidebar-item-template-with-data.114t1` | sidebar | !(message) | null | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/RoomList/SidebarItemTemplateWithData.tsx:114` |
 | `state.sidebar.sidebar-item-template-with-data.114t0` | sidebar | message | span | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/RoomList/SidebarItemTemplateWithData.tsx:114` |
 | `state.sidebar.sidebar-item-template-with-data.136a1` | sidebar | !(AvatarTemplate) | null | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/RoomList/SidebarItemTemplateWithData.tsx:136` |
-| `state.sidebar.sidebar-item-template-with-data.136a0` | sidebar | AvatarTemplate | AvatarTemplate | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/RoomList/SidebarItemTemplateWithData.tsx:136` |
+| `state.sidebar.sidebar-item-template-with-data.136a0` | sidebar | AvatarTemplate | AvatarTemplate | 登录后侧栏；shot:room-general.png；频道头像 | [实测] | （无） | `apps/meteor/client/sidebar/RoomList/SidebarItemTemplateWithData.tsx:136` |
 | `state.sidebar.sidebar-portal.11i` | sidebar | !sidebarRoot | null | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/SidebarPortal.tsx:11` |
 | `state.sidebar.sidebar-portal.15d` | sidebar | 前述 if-ret 均不成立（default return） | <> | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/SidebarPortal.tsx:15` |
 | `state.sidebar.sidebar-region.105a1` | sidebar | !(sidebar.shouldToggle) | null | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/SidebarRegion.tsx:105` |
@@ -331,7 +335,7 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.sidebar.sidebar-footer-watermark.14i` | sidebar | response.isLoading ¦¦ response.isError | null | 登录后侧栏；等查询 in-flight；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/footer/SidebarFooterWatermark.tsx:14` |
 | `state.sidebar.sidebar-footer-watermark.18i` | sidebar | licenseName.isError ¦¦ licenseName.isLoading | null | 登录后侧栏；等查询 in-flight；让该查询/mutation 失败；EE license 开/关 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/footer/SidebarFooterWatermark.tsx:18` |
 | `state.sidebar.sidebar-footer-watermark.24i` | sidebar | license?.activeModules.includes('hide-watermark') && !license.trial | null | 登录后侧栏；EE license 开/关 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/footer/SidebarFooterWatermark.tsx:24` |
-| `state.sidebar.sidebar-footer-watermark.28d` | sidebar | 前述 if-ret 均不成立（default return） | FooterContent | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/footer/SidebarFooterWatermark.tsx:28` |
+| `state.sidebar.sidebar-footer-watermark.28d` | sidebar | 前述 if-ret 均不成立（default return） | FooterContent | 登录后侧栏；shot:room-general.png；Powered by Rocket.Chat Community | [实测] | （无） | `apps/meteor/client/sidebar/footer/SidebarFooterWatermark.tsx:28` |
 | `state.sidebar.federated-room-list.57i` | sidebar | isPending | Throbber | 登录后侧栏；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/sidebar/header/MatrixFederationSearch/FederatedRoomList.tsx:57` |
 | `state.sidebar.federated-room-list.62d` | sidebar | 前述 if-ret 均不成立（default return） | Box | 登录后侧栏 | [待渲染实测] | （无） | `apps/meteor/client/sidebar/header/MatrixFederationSearch/FederatedRoomList.tsx:62` |
 | `state.sidebar.federated-room-list.71t1` | sidebar | !(isFetchingNextPage) | null | 登录后侧栏；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/sidebar/header/MatrixFederationSearch/FederatedRoomList.tsx:71` |
@@ -462,9 +466,9 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.room.header.26i` | room | subscription && isInviteSubscription(subscription) | RoomInviteHeader | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/Header.tsx:26` |
 | `state.room.header.30i` | room | room.t === 'l' | OmnichannelRoomHeader | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/Header.tsx:30` |
 | `state.room.header.34i` | room | shouldDisplayE2EESetup | RoomHeaderE2EESetup | 登录 → 打开任意房间；房间加密开 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/Header.tsx:34` |
-| `state.room.header.38d` | room | 前述 if-ret 均不成立（default return） | RoomHeader | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/Header.tsx:38` |
+| `state.room.header.38d` | room | 前述 if-ret 均不成立（default return） | RoomHeader | 登录 → 打开任意房间；shot:room-general.png；普通频道 RoomHeader | [实测] | （无） | `apps/meteor/client/views/room/Header/Header.tsx:38` |
 | `state.room.header-icon-with-room.14i` | room | isOmnichannelRoom(room) | OmnichannelRoomIcon | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/HeaderIconWithRoom.tsx:14` |
-| `state.room.header-icon-with-room.18d` | room | 前述 if-ret 均不成立（default return） | HeaderIcon | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/HeaderIconWithRoom.tsx:18` |
+| `state.room.header-icon-with-room.18d` | room | 前述 if-ret 均不成立（default return） | HeaderIcon | 登录 → 打开任意房间；shot:room-general.png；频道 HeaderIcon | [实测] | （无） | `apps/meteor/client/views/room/Header/HeaderIconWithRoom.tsx:18` |
 | `state.room.omnichannel-room-header.23a1` | room | !((previousRouteName === 'omnichannel-directory' ¦¦ previousRouteName === 'omnichannel-current-chats')) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/Omnichannel/OmnichannelRoomHeader.tsx:23` |
 | `state.room.omnichannel-room-header.23a0` | room | (previousRouteName === 'omnichannel-directory' ¦¦ previousRouteName === 'omnichannel-current-chats') | HeaderToolbar | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/Omnichannel/OmnichannelRoomHeader.tsx:23` |
 | `state.room.quick-action-options.32a1` | room | !(isVisible) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/Omnichannel/QuickActions/QuickActionOptions.tsx:32` |
@@ -481,7 +485,7 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.room.parent-discussion-with-data.15d` | room | 前述 if-ret 均不成立（default return） | ParentDiscussion | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/ParentRoom/ParentDiscussion/ParentDiscussionWithData.tsx:15` |
 | `state.room.parent-room.9i` | room | room.prid | ParentDiscussion | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/ParentRoom/ParentRoom.tsx:9` |
 | `state.room.parent-room.13i` | room | room.teamId && !room.teamMain | ParentTeam | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/ParentRoom/ParentRoom.tsx:13` |
-| `state.room.parent-room.17d` | room | 前述 if-ret 均不成立（default return） | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/ParentRoom/ParentRoom.tsx:17` |
+| `state.room.parent-room.17d` | room | 前述 if-ret 均不成立（default return） | null | 登录 → 打开任意房间；shot:room-general.png；无 parent/team 芯片 | [实测] | （无） | `apps/meteor/client/views/room/Header/ParentRoom/ParentRoom.tsx:17` |
 | `state.room.parent-room-button.7i` | room | loading | Skeleton | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/ParentRoom/ParentRoomButton.tsx:7` |
 | `state.room.parent-room-button.11d` | room | 前述 if-ret 均不成立（default return） | IconButton | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/ParentRoom/ParentRoomButton.tsx:11` |
 | `state.room.parent-team.54i` | room | teamInfoError ¦¦ !shouldDisplayTeam | null | 登录 → 打开任意房间；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/ParentRoom/ParentTeam.tsx:54` |
@@ -489,16 +493,16 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.room.room-header.47a1` | room | !(isRoomFederated(room)) | null | 登录 → 打开任意房间；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/RoomHeader.tsx:47` |
 | `state.room.room-header.47a0` | room | isRoomFederated(room) | FederatedRoomOriginServer | 登录 → 打开任意房间；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/RoomHeader.tsx:47` |
 | `state.room.room-header.56a1` | room | !(slots.toolbox?.hidden !== true) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/RoomHeader.tsx:56` |
-| `state.room.room-header.56a0` | room | slots.toolbox?.hidden !== true | Suspense | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/RoomHeader.tsx:56` |
+| `state.room.room-header.56a0` | room | slots.toolbox?.hidden !== true | Suspense | 登录 → 打开任意房间；shot:room-general.png；房间 toolbox 可见 | [实测] | （无） | `apps/meteor/client/views/room/Header/RoomHeader.tsx:56` |
 | `state.room.room-header.57s` | room | Suspense fallback（子树未 ready） | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/RoomHeader.tsx:57` |
 | `state.room.room-header-e2-eesetup.14i` | room | e2eeState === 'SAVE_PASSWORD' ¦¦ e2eeState === 'ENTER_PASSWORD' ¦¦ e2eRoomState === 'WAITING_KEYS' | RoomHeader | 登录 → 打开任意房间；房间加密开 | [待渲染实测] | SAVE_PASSWORD；ENTER_PASSWORD；WAITING_KEYS | `apps/meteor/client/views/room/Header/RoomHeaderE2EESetup.tsx:14` |
 | `state.room.room-header-e2-eesetup.27d` | room | 前述 if-ret 均不成立（default return） | RoomHeader | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/RoomHeaderE2EESetup.tsx:27` |
 | `state.room.room-member-status.18i` | room | !presence?.statusText && !presence?.statusExpiresAt | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/RoomMemberStatus.tsx:18` |
 | `state.room.room-member-status.22d` | room | 前述 if-ret 均不成立（default return） | MarkdownText | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/RoomMemberStatus.tsx:22` |
 | `state.room.room-toolbox.52a1` | room | !(featuredActions.length > 0) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/RoomToolbox/RoomToolbox.tsx:52` |
-| `state.room.room-toolbox.52a0` | room | featuredActions.length > 0 | HeaderToolbarDivider | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/RoomToolbox/RoomToolbox.tsx:52` |
+| `state.room.room-toolbox.52a0` | room | featuredActions.length > 0 | HeaderToolbarDivider | 登录 → 打开任意房间；shot:room-general.png；featured 动作后 Divider（Video call） | [实测] | （无） | `apps/meteor/client/views/room/Header/RoomToolbox/RoomToolbox.tsx:52` |
 | `state.room.room-toolbox.54a1` | room | !(showKebabMenu) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/RoomToolbox/RoomToolbox.tsx:54` |
-| `state.room.room-toolbox.54a0` | room | showKebabMenu | GenericMenu | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/RoomToolbox/RoomToolbox.tsx:54` |
+| `state.room.room-toolbox.54a0` | room | showKebabMenu | GenericMenu | 登录 → 打开任意房间；shot:room-general.png；Options kebab | [实测] | （无） | `apps/meteor/client/views/room/Header/RoomToolbox/RoomToolbox.tsx:54` |
 | `state.room.room-topic.24i` | room | !topic && !canEditTopic | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/RoomTopic.tsx:24` |
 | `state.room.room-topic.28i` | room | !topic && canEditTopic | Box | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/RoomTopic.tsx:28` |
 | `state.room.room-topic.36d` | room | 前述 if-ret 均不成立（default return） | MarkdownText | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Header/RoomTopic.tsx:36` |
@@ -534,11 +538,11 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.room.message-list-item.97a1` | room | !(system) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/MessageList/MessageListItem.tsx:97` |
 | `state.room.message-list-item.97a0` | room | system | SystemMessage | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/MessageList/MessageListItem.tsx:97` |
 | `state.room.room.42i` | room | subscription && isInviteSubscription(subscription) | FocusScope | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Room.tsx:42` |
-| `state.room.room.50d` | room | 前述 if-ret 均不成立（default return） | ChatProvider | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Room.tsx:50` |
-| `state.room.room.61t1` | room | !(shouldDisplayE2EESetup) | MediaCallRoom | 登录 → 打开任意房间；房间加密开 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Room.tsx:61` |
+| `state.room.room.50d` | room | 前述 if-ret 均不成立（default return） | ChatProvider | 登录 → 打开任意房间；shot:room-general.png；ChatProvider | [实测] | （无） | `apps/meteor/client/views/room/Room.tsx:50` |
+| `state.room.room.61t1` | room | !(shouldDisplayE2EESetup) | MediaCallRoom | 登录 → 打开任意房间；房间加密开；shot:room-general.png；非 E2EE setup → MediaCallRoom/RoomBody | [实测] | （无） | `apps/meteor/client/views/room/Room.tsx:61` |
 | `state.room.room.61t0` | room | shouldDisplayE2EESetup | RoomE2EESetup | 登录 → 打开任意房间；房间加密开 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Room.tsx:61` |
 | `state.room.room.70a1` | room | !(toolbox.tab?.tabComponent) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Room.tsx:70` |
-| `state.room.room.70a0` | room | toolbox.tab?.tabComponent | ErrorBoundary | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Room.tsx:70` |
+| `state.room.room.70a0` | room | toolbox.tab?.tabComponent | ErrorBoundary | 登录 → 打开任意房间；shot:room-channel-settings.png；打开 channel-settings / members 面板 | [实测] | （无） | `apps/meteor/client/views/room/Room.tsx:70` |
 | `state.room.room.73s` | room | Suspense fallback（子树未 ready） | ContextualbarSkeleton | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Room.tsx:73` |
 | `state.room.room.77a1` | room | !(contextualBarView) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Room.tsx:77` |
 | `state.room.room.77a0` | room | contextualBarView | ErrorBoundary | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/Room.tsx:77` |
@@ -549,12 +553,12 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.room.room-opener.34a1` | room | !(isLoading) | null | 登录 → 打开任意房间；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomOpener.tsx:34` |
 | `state.room.room-opener.34a0` | room | isLoading | RoomSkeleton | 登录 → 打开任意房间；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomOpener.tsx:34` |
 | `state.room.room-opener.35a1` | room | !(isSuccess) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomOpener.tsx:35` |
-| `state.room.room-opener.35a0` | room | isSuccess | RoomProvider | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomOpener.tsx:35` |
+| `state.room.room-opener.35a0` | room | isSuccess | RoomProvider | 登录 → 打开任意房间；shot:room-general.png；房间查询成功 RoomProvider | [实测] | （无） | `apps/meteor/client/views/room/RoomOpener.tsx:35` |
 | `state.room.room-opener.42i` | room | error instanceof OldUrlRoomError | RoomSkeleton | 登录 → 打开任意房间；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomOpener.tsx:42` |
 | `state.room.room-opener.46i` | room | error instanceof RoomNotFoundError | RoomNotFound | 登录 → 打开任意房间；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomOpener.tsx:46` |
 | `state.room.room-opener.50i` | room | error instanceof NotSubscribedToRoomError | NotSubscribedRoom | 登录 → 打开任意房间；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomOpener.tsx:50` |
 | `state.room.room-opener.54i` | room | error instanceof NotAuthorizedError | NotAuthorizedPage | 登录 → 打开任意房间；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomOpener.tsx:54` |
-| `state.room.room-opener.58d` | room | 前述 if-ret 均不成立（default return） | RoomLayout | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomOpener.tsx:58` |
+| `state.room.room-opener.58d` | room | 前述 if-ret 均不成立（default return） | RoomLayout | 登录 → 打开任意房间；shot:room-general.png；RoomLayout | [实测] | （无） | `apps/meteor/client/views/room/RoomOpener.tsx:58` |
 | `state.room.room-opener-embedded.54s` | room | Suspense fallback（子树未 ready） | RoomSkeleton | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomOpenerEmbedded.tsx:54` |
 | `state.room.room-opener-embedded.55a1` | room | !(isLoading) | null | 登录 → 打开任意房间；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomOpenerEmbedded.tsx:55` |
 | `state.room.room-opener-embedded.55a0` | room | isLoading | RoomSkeleton | 登录 → 打开任意房间；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomOpenerEmbedded.tsx:55` |
@@ -566,7 +570,7 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.room.room-opener-embedded.75i` | room | error instanceof NotAuthorizedError | NotAuthorizedPage | 登录 → 打开任意房间；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomOpenerEmbedded.tsx:75` |
 | `state.room.room-opener-embedded.79d` | room | 前述 if-ret 均不成立（default return） | RoomLayout | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomOpenerEmbedded.tsx:79` |
 | `state.room.room-route.30i` | room | isEmbeddedLayout | RoomOpenerEmbedded | 登录 → 打开任意房间；embedded layout | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomRoute.tsx:30` |
-| `state.room.room-route.34d` | room | 前述 if-ret 均不成立（default return） | RoomOpener | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/RoomRoute.tsx:34` |
+| `state.room.room-route.34d` | room | 前述 if-ret 均不成立（default return） | RoomOpener | 登录 → 打开任意房间；shot:room-general.png；/channel/general RoomOpener | [实测] | （无） | `apps/meteor/client/views/room/RoomRoute.tsx:34` |
 | `state.room.share-location-modal.70i` | room | permissionLoading ¦¦ permissionState === 'prompt' | GenericModal | 登录 → 打开任意房间；切换对应权限 | [待渲染实测] | （无） | `apps/meteor/client/views/room/ShareLocation/ShareLocationModal.tsx:70` |
 | `state.room.share-location-modal.82i` | room | permissionState === 'denied' ¦¦ !positionData | GenericModal | 登录 → 打开任意房间；切换对应权限 | [待渲染实测] | （无） | `apps/meteor/client/views/room/ShareLocation/ShareLocationModal.tsx:82` |
 | `state.room.share-location-modal.90d` | room | 前述 if-ret 均不成立（default return） | GenericModal | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/ShareLocation/ShareLocationModal.tsx:90` |
@@ -590,7 +594,7 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.room.room-body.176a0` | room | Boolean(unread) | UnreadMessagesIndicator | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/body/RoomBody.tsx:176` |
 | `state.room.room-body.192t1` | room | !(!canPreview) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/body/RoomBody.tsx:192` |
 | `state.room.room-body.192t0` | room | !canPreview | div | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/body/RoomBody.tsx:192` |
-| `state.room.room-foreword.14i` | room | !isDirectMessageRoom(room) | Box | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/body/RoomForeword/RoomForeword.tsx:14` |
+| `state.room.room-foreword.14i` | room | !isDirectMessageRoom(room) | Box | 登录 → 打开任意房间；shot:room-general.png；频道 Start of conversation | [实测] | （无） | `apps/meteor/client/views/room/body/RoomForeword/RoomForeword.tsx:14` |
 | `state.room.room-foreword.24i` | room | !usernames ¦¦ usernames.length < 1 | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/body/RoomForeword/RoomForeword.tsx:24` |
 | `state.room.room-foreword.28d` | room | 前述 if-ret 均不成立（default return） | Box | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/body/RoomForeword/RoomForeword.tsx:28` |
 | `state.room.room-foreword-username-list-item.18a1` | room | !(isLoading) | null | 登录 → 打开任意房间；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/room/body/RoomForeword/RoomForewordUsernameListItem.tsx:18` |
@@ -642,13 +646,13 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.room.composer-container.67i` | room | mustJoinWithCode | ComposerJoinWithPassword | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/ComposerContainer.tsx:67` |
 | `state.room.composer-container.71i` | room | isBlockedOrBlocker | ComposerBlocked | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/ComposerContainer.tsx:71` |
 | `state.room.composer-container.75i` | room | isSelectingMessages | ComposerSelectMessages | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/ComposerContainer.tsx:75` |
-| `state.room.composer-container.79d` | room | 前述 if-ret 均不成立（default return） | <> | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/ComposerContainer.tsx:79` |
+| `state.room.composer-container.79d` | room | 前述 if-ret 均不成立（default return） | <> | 登录 → 打开任意房间；shot:room-general.png；可写 Composer 默认 | [实测] | （无） | `apps/meteor/client/views/room/composer/ComposerContainer.tsx:79` |
 | `state.room.composer-federation.17i` | room | blocked | ComposerFederationInvalidVersion | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/ComposerFederation/ComposerFederation.tsx:17` |
 | `state.room.composer-federation.21i` | room | !federationEnabled | ComposerFederationDisabled | 登录 → 打开任意房间；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/ComposerFederation/ComposerFederation.tsx:21` |
 | `state.room.composer-federation.25i` | room | !federationModuleEnabled | ComposerFederationJoinRoomDisabled | 登录 → 打开任意房间；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/ComposerFederation/ComposerFederation.tsx:25` |
 | `state.room.composer-federation.29d` | room | 前述 if-ret 均不成立（default return） | <> | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/ComposerFederation/ComposerFederation.tsx:29` |
 | `state.room.composer-message.87i` | room | !publicationReady | ComposerSkeleton | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/ComposerMessage.tsx:87` |
-| `state.room.composer-message.91d` | room | 前述 if-ret 均不成立（default return） | MessageBox | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/ComposerMessage.tsx:91` |
+| `state.room.composer-message.91d` | room | 前述 if-ret 均不成立（default return） | MessageBox | 登录 → 打开任意房间；shot:room-general.png；MessageBox | [实测] | （无） | `apps/meteor/client/views/room/composer/ComposerMessage.tsx:91` |
 | `state.room.composer-omnichannel.26i` | room | !open | <> | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/ComposerOmnichannel/ComposerOmnichannel.tsx:26` |
 | `state.room.composer-omnichannel.35i` | room | isRoomOverMacLimit | <> | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/ComposerOmnichannel/ComposerOmnichannel.tsx:35` |
 | `state.room.composer-omnichannel.44i` | room | onHold | <> | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/ComposerOmnichannel/ComposerOmnichannel.tsx:44` |
@@ -670,15 +674,15 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.room.message-box.466a1` | room | !(isRecordingAudio) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBox.tsx:466` |
 | `state.room.message-box.466a0` | room | isRecordingAudio | AudioMessageRecorder | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBox.tsx:466` |
 | `state.room.message-box.489a1` | room | !(chat.composer && formatters.length > 0) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBox.tsx:489` |
-| `state.room.message-box.489a0` | room | chat.composer && formatters.length > 0 | MessageBoxFormattingToolbar | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBox.tsx:489` |
+| `state.room.message-box.489a0` | room | chat.composer && formatters.length > 0 | MessageBoxFormattingToolbar | 登录 → 打开任意房间；shot:room-general.png；格式化工具条 | [实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBox.tsx:489` |
 | `state.room.message-box.508a1` | room | !(!canSend) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBox.tsx:508` |
 | `state.room.message-box.508a0` | room | !canSend | MessageComposerButton | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBox.tsx:508` |
 | `state.room.message-box.513a1` | room | !(canSend) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBox.tsx:513` |
-| `state.room.message-box.513a0` | room | canSend | <> | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBox.tsx:513` |
+| `state.room.message-box.513a0` | room | canSend | <> | 登录 → 打开任意房间；shot:room-general.png；canSend 发送区 | [实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBox.tsx:513` |
 | `state.room.message-box.515a1` | room | !(isEditing) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBox.tsx:515` |
 | `state.room.message-box.515a0` | room | isEditing | MessageComposerButton | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBox.tsx:515` |
 | `state.room.message-box-formatting-toolbar.26a1` | room | !('icon' in featuredFormatter) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBoxFormattingToolbar/MessageBoxFormattingToolbar.tsx:26` |
-| `state.room.message-box-formatting-toolbar.26a0` | room | 'icon' in featuredFormatter | MessageComposerAction | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBoxFormattingToolbar/MessageBoxFormattingToolbar.tsx:26` |
+| `state.room.message-box-formatting-toolbar.26a0` | room | 'icon' in featuredFormatter | MessageComposerAction | 登录 → 打开任意房间；shot:room-general.png；带 icon 的 featured formatter（Emoji/Bold…） | [实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBoxFormattingToolbar/MessageBoxFormattingToolbar.tsx:26` |
 | `state.room.message-box-formatting-toolbar.44t1` | room | !('icon' in formatter) | span | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBoxFormattingToolbar/MessageBoxFormattingToolbar.tsx:44` |
 | `state.room.message-box-formatting-toolbar.44t0` | room | 'icon' in formatter | MessageComposerAction | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBoxFormattingToolbar/MessageBoxFormattingToolbar.tsx:44` |
 | `state.room.message-box-hint.31i` | room | !isEditing && !isUnencryptedHintVisible && !isReadOnly | null | 登录 → 打开任意房间；房间加密开；只读/归档房 | [待渲染实测] | （无） | `apps/meteor/client/views/room/composer/messageBox/MessageBoxHint.tsx:31` |
@@ -779,16 +783,16 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.room.edit-room-info.529a0` | room | retentionOverrideGlobal | <> | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/EditRoomInfo/EditRoomInfo.tsx:529` |
 | `state.room.room-info-abacsection.25i` | room | !abacEnabled ¦¦ !showAttributesInRoom ¦¦ !room.abacAttributes?.length | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/ABAC/RoomInfoABACSection.tsx:25` |
 | `state.room.room-info-abacsection.29d` | room | 前述 if-ret 均不成立（default return） | <> | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/ABAC/RoomInfoABACSection.tsx:29` |
-| `state.room.room-info.55t1` | room | !(onClickBack) | ContextualbarIcon | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:55` |
+| `state.room.room-info.55t1` | room | !(onClickBack) | ContextualbarIcon | 登录 → 打开任意房间；shot:room-channel-settings.png；无 Back → ContextualbarIcon | [实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:55` |
 | `state.room.room-info.55t0` | room | onClickBack | ContextualbarBack | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:55` |
 | `state.room.room-info.57a1` | room | !(onClickClose) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:57` |
-| `state.room.room-info.57a0` | room | onClickClose | ContextualbarClose | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:57` |
+| `state.room.room-info.57a0` | room | onClickClose | ContextualbarClose | 登录 → 打开任意房间；shot:room-channel-settings.png；Channel info Close | [实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:57` |
 | `state.room.room-info.68a1` | room | !(menu) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:68` |
-| `state.room.room-info.68a0` | room | menu | GenericMenu | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:68` |
+| `state.room.room-info.68a0` | room | menu | GenericMenu | 登录 → 打开任意房间；shot:room-channel-settings.png；More GenericMenu | [实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:68` |
 | `state.room.room-info.79a1` | room | !(archived) | null | 登录 → 打开任意房间；只读/归档房 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:79` |
 | `state.room.room-info.79a0` | room | archived | InfoPanelSection | 登录 → 打开任意房间；只读/归档房 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:79` |
 | `state.room.room-info.87a1` | room | !(roomTitle) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:87` |
-| `state.room.room-info.87a0` | room | roomTitle | InfoPanelSection | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:87` |
+| `state.room.room-info.87a0` | room | roomTitle | InfoPanelSection | 登录 → 打开任意房间；shot:room-channel-settings.png；标题 #general | [实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:87` |
 | `state.room.room-info.94a1` | room | !(broadcast) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:94` |
 | `state.room.room-info.94a0` | room | broadcast | InfoPanelField | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:94` |
 | `state.room.room-info.102a1` | room | !(description && description !== '') | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:102` |
@@ -800,7 +804,7 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.room.room-info.129a1` | room | !(retentionPolicy?.isActive) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:129` |
 | `state.room.room-info.129a0` | room | retentionPolicy?.isActive | RetentionPolicyCallout | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfo/RoomInfo.tsx:129` |
 | `state.room.room-info-router.26i` | room | isEditing | EditRoomInfoWithData | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfoRouter.tsx:26` |
-| `state.room.room-info-router.30d` | room | 前述 if-ret 均不成立（default return） | RoomInfo | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfoRouter.tsx:30` |
+| `state.room.room-info-router.30d` | room | 前述 if-ret 均不成立（default return） | RoomInfo | 登录 → 打开任意房间；shot:room-channel-settings.png；Channel info 只读 | [实测] | （无） | `apps/meteor/client/views/room/contextualBar/Info/RoomInfoRouter.tsx:30` |
 | `state.room.message-list-tab.57a1` | room | !(queryResult.isLoading) | null | 登录 → 打开任意房间；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/MessageListTab.tsx:57` |
 | `state.room.message-list-tab.57a0` | room | queryResult.isLoading | Box | 登录 → 打开任意房间；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/MessageListTab.tsx:57` |
 | `state.room.message-list-tab.62a1` | room | !(queryResult.isSuccess) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/MessageListTab.tsx:62` |
@@ -899,25 +903,25 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.room.invite-users-with-data.112i` | room | isSuccess | InviteUsers | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/InviteUsers/InviteUsersWithData.tsx:112` |
 | `state.room.invite-users-with-data.124d` | room | 前述 if-ret 均不成立（default return） | InviteUsersError | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/InviteUsers/InviteUsersWithData.tsx:124` |
 | `state.room.room-members.147a1` | room | !(onClickClose) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:147` |
-| `state.room.room-members.147a0` | room | onClickClose | ContextualbarClose | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:147` |
+| `state.room.room-members.147a0` | room | onClickClose | ContextualbarClose | 登录 → 打开任意房间；shot:room-members.png；Members Close | [实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:147` |
 | `state.room.room-members.170a1` | room | !(isPending) | null | 登录 → 打开任意房间；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:170` |
 | `state.room.room-members.170a0` | room | isPending | Box | 登录 → 打开任意房间；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:170` |
 | `state.room.room-members.175a1` | room | !(error) | null | 登录 → 打开任意房间；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:175` |
 | `state.room.room-members.175a0` | room | error | Box | 登录 → 打开任意房间；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:175` |
 | `state.room.room-members.180a1` | room | !(isSuccess) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:180` |
-| `state.room.room-members.180a0` | room | isSuccess | <> | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:180` |
+| `state.room.room-members.180a0` | room | isSuccess | <> | 登录 → 打开任意房间；shot:room-members.png；成员查询成功 | [实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:180` |
 | `state.room.room-members.182a1` | room | !(members.length > 0) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:182` |
-| `state.room.room-members.182a0` | room | members.length > 0 | Box | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:182` |
+| `state.room.room-members.182a0` | room | members.length > 0 | Box | 登录 → 打开任意房间；shot:room-members.png；1 个成员 | [实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:182` |
 | `state.room.room-members.190a1` | room | !(members.length <= 0) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:190` |
 | `state.room.room-members.190a0` | room | members.length <= 0 | ContextualbarEmptyContent | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:190` |
 | `state.room.room-members.191a1` | room | !(members.length > 0) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:191` |
-| `state.room.room-members.191a0` | room | members.length > 0 | VirtualizedScrollbars | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:191` |
+| `state.room.room-members.191a0` | room | members.length > 0 | VirtualizedScrollbars | 登录 → 打开任意房间；shot:room-members.png；成员 Virtualized 列表 | [实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:191` |
 | `state.room.room-members.216a1` | room | !(!isDirect && (onClickInvite ¦¦ onClickAdd)) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:216` |
-| `state.room.room-members.216a0` | room | !isDirect && (onClickInvite ¦¦ onClickAdd) | ContextualbarFooter | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:216` |
+| `state.room.room-members.216a0` | room | !isDirect && (onClickInvite ¦¦ onClickAdd) | ContextualbarFooter | 登录 → 打开任意房间；shot:room-members.png；Invite/Add footer | [实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:216` |
 | `state.room.room-members.219a1` | room | !(onClickInvite) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:219` |
-| `state.room.room-members.219a0` | room | onClickInvite | Button | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:219` |
+| `state.room.room-members.219a0` | room | onClickInvite | Button | 登录 → 打开任意房间；shot:room-members.png；Invite Link | [实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:219` |
 | `state.room.room-members.231a1` | room | !(onClickAdd) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:231` |
-| `state.room.room-members.231a0` | room | onClickAdd | Button | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:231` |
+| `state.room.room-members.231a0` | room | onClickAdd | Button | 登录 → 打开任意房间；shot:room-members.png；Add | [实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembers.tsx:231` |
 | `state.room.room-members-actions.25i` | room | !menuOptions | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembersActions.tsx:25` |
 | `state.room.room-members-actions.28d` | room | 前述 if-ret 均不成立（default return） | GenericMenu | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembersActions.tsx:28` |
 | `state.room.room-members-item.95t1` | room | !(federated) | ReactiveUserStatus | 登录 → 打开任意房间；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembersItem.tsx:95` |
@@ -929,11 +933,11 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.room.room-members-item.105t1` | room | !(showButton) | IconButton | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembersItem.tsx:105` |
 | `state.room.room-members-item.105t0` | room | showButton | UserActions | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembersItem.tsx:105` |
 | `state.room.room-members-row.20i` | room | !user?._id | RoomMembersItem.Skeleton | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembersRow.tsx:20` |
-| `state.room.room-members-row.24d` | room | 前述 if-ret 均不成立（default return） | RoomMembersItem | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembersRow.tsx:24` |
+| `state.room.room-members-row.24d` | room | 前述 if-ret 均不成立（default return） | RoomMembersItem | 登录 → 打开任意房间；shot:room-members.png；admin 成员行 | [实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembersRow.tsx:24` |
 | `state.room.room-members-with-data.98i` | room | state.tab === ROOM_MEMBERS_TABS.INFO && state.user?.id | UserInfoWithData | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembersWithData.tsx:98` |
 | `state.room.room-members-with-data.110i` | room | state.tab === ROOM_MEMBERS_TABS.INVITE | InviteUsers | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembersWithData.tsx:110` |
 | `state.room.room-members-with-data.114i` | room | state.tab === ROOM_MEMBERS_TABS.ADD | AddUsers | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembersWithData.tsx:114` |
-| `state.room.room-members-with-data.118d` | room | 前述 if-ret 均不成立（default return） | RoomMembers | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembersWithData.tsx:118` |
+| `state.room.room-members-with-data.118d` | room | 前述 if-ret 均不成立（default return） | RoomMembers | 登录 → 打开任意房间；shot:room-members.png；Members 列表默认 | [实测] | （无） | `apps/meteor/client/views/room/contextualBar/RoomMembers/RoomMembersWithData.tsx:118` |
 | `state.room.thread.113a1` | room | !(mainMessageQueryResult.isLoading) | null | 登录 → 打开任意房间；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Threads/Thread.tsx:113` |
 | `state.room.thread.113a0` | room | mainMessageQueryResult.isLoading | Skeleton | 登录 → 打开任意房间；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Threads/Thread.tsx:113` |
 | `state.room.thread.114a1` | room | !(mainMessageQueryResult.isSuccess) | null | 登录 → 打开任意房间 | [待渲染实测] | （无） | `apps/meteor/client/views/room/contextualBar/Threads/Thread.tsx:114` |
@@ -1146,9 +1150,9 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.message.message-collapsible.29a0` | message | hasDownload && link | AttachmentDownload | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/MessageCollapsible.tsx:29` |
 | `state.message.message-content-body.21s` | message | Suspense fallback（子树未 ready） | Skeleton | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/MessageContentBody.tsx:21` |
 | `state.message.message-header.66a1` | message | !(showUsername) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/MessageHeader.tsx:66` |
-| `state.message.message-header.66a0` | message | showUsername | <> | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/MessageHeader.tsx:66` |
+| `state.message.message-header.66a0` | message | showUsername | <> | 登录 → 打开有消息的房间；shot:room-general.png；用户名 | [实测] | （无） | `apps/meteor/client/components/message/MessageHeader.tsx:66` |
 | `state.message.message-header.73a1` | message | !(shouldShowRolesList) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/MessageHeader.tsx:73` |
-| `state.message.message-header.73a0` | message | shouldShowRolesList | MessageRoles | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/MessageHeader.tsx:73` |
+| `state.message.message-header.73a0` | message | shouldShowRolesList | MessageRoles | 登录 → 打开有消息的房间；shot:room-general.png；Admin 角色 | [实测] | （无） | `apps/meteor/client/components/message/MessageHeader.tsx:73` |
 | `state.message.message-header.77a1` | message | !(message.private) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/MessageHeader.tsx:77` |
 | `state.message.message-header.77a0` | message | message.private | MessageStatusPrivateIndicator | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/MessageHeader.tsx:77` |
 | `state.message.message-toolbar-holder.41a1` | message | !(showToolbar && depsQueryResult.isSuccess && depsQueryResult.data.room) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/MessageToolbarHolder.tsx:41` |
@@ -1291,14 +1295,14 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.message.reply-in-thread-message-action.31i` | message | isFederationBlocked | null | 登录 → 打开有消息的房间；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/items/actions/ReplyInThreadMessageAction.tsx:31` |
 | `state.message.reply-in-thread-message-action.35d` | message | 前述 if-ret 均不成立（default return） | MessageToolbarItem | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/toolbar/items/actions/ReplyInThreadMessageAction.tsx:35` |
 | `state.message.room-message.124a1` | message | !(!sequential && message.u.username && !selecting && showUserAvatar) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:124` |
-| `state.message.room-message.124a0` | message | !sequential && message.u.username && !selecting && showUserAvatar | MessageAvatar | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:124` |
+| `state.message.room-message.124a0` | message | !sequential && message.u.username && !selecting && showUserAvatar | MessageAvatar | 登录 → 打开有消息的房间；shot:room-general.png；消息头像 | [实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:124` |
 | `state.message.room-message.136a1` | message | !(selecting) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:136` |
 | `state.message.room-message.136a0` | message | selecting | CheckBox | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:136` |
 | `state.message.room-message.137a1` | message | !(sequential) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:137` |
 | `state.message.room-message.137a0` | message | sequential | StatusIndicators | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:137` |
 | `state.message.room-message.140a1` | message | !(!sequential) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:140` |
-| `state.message.room-message.140a0` | message | !sequential | MessageHeader | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:140` |
-| `state.message.room-message.141t1` | message | !(ignored) | RoomMessageContent | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:141` |
+| `state.message.room-message.140a0` | message | !sequential | MessageHeader | 登录 → 打开有消息的房间；shot:room-general.png；非 sequential MessageHeader | [实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:140` |
+| `state.message.room-message.141t1` | message | !(ignored) | RoomMessageContent | 登录 → 打开有消息的房间；shot:room-general.png；非 ignored → RoomMessageContent | [实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:141` |
 | `state.message.room-message.141t0` | message | ignored | IgnoredContent | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:141` |
 | `state.message.room-message.147a1` | message | !(!message.private && message?.e2e !== 'pending' && !selecting) | null | 登录 → 打开有消息的房间；房间加密开 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:147` |
 | `state.message.room-message.147a0` | message | !message.private && message?.e2e !== 'pending' && !selecting | MessageToolbarHolder | 登录 → 打开有消息的房间；房间加密开 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/RoomMessage.tsx:147` |
@@ -1343,9 +1347,9 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.message.room-message-content.60a1` | message | !(!!quotes?.length) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/room/RoomMessageContent.tsx:60` |
 | `state.message.room-message-content.60a0` | message | !!quotes?.length | Attachments | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/room/RoomMessageContent.tsx:60` |
 | `state.message.room-message-content.67a1` | message | !(!normalizedMessage.blocks?.length && !!normalizedMessage.md?.length) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/room/RoomMessageContent.tsx:67` |
-| `state.message.room-message-content.67a0` | message | !normalizedMessage.blocks?.length && !!normalizedMessage.md?.length | <> | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/room/RoomMessageContent.tsx:67` |
+| `state.message.room-message-content.67a0` | message | !normalizedMessage.blocks?.length && !!normalizedMessage.md?.length | <> | 登录 → 打开有消息的房间；shot:room-general.png；markdown 正文 | [实测] | （无） | `apps/meteor/client/components/message/variants/room/RoomMessageContent.tsx:67` |
 | `state.message.room-message-content.69a1` | message | !((!encrypted ¦¦ normalizedMessage.e2e === 'done')) | null | 登录 → 打开有消息的房间；房间加密开 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/room/RoomMessageContent.tsx:69` |
-| `state.message.room-message-content.69a0` | message | (!encrypted ¦¦ normalizedMessage.e2e === 'done') | MessageContentBody | 登录 → 打开有消息的房间；房间加密开 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/room/RoomMessageContent.tsx:69` |
+| `state.message.room-message-content.69a0` | message | (!encrypted ¦¦ normalizedMessage.e2e === 'done') | MessageContentBody | 登录 → 打开有消息的房间；房间加密开；shot:room-general.png；MessageContentBody | [实测] | （无） | `apps/meteor/client/components/message/variants/room/RoomMessageContent.tsx:69` |
 | `state.message.room-message-content.82a1` | message | !(!!attachments) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/room/RoomMessageContent.tsx:82` |
 | `state.message.room-message-content.82a0` | message | !!attachments | Attachments | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/room/RoomMessageContent.tsx:82` |
 | `state.message.room-message-content.90a1` | message | !(normalizedMessage.blocks) | null | 登录 → 打开有消息的房间 | [待渲染实测] | （无） | `apps/meteor/client/components/message/variants/room/RoomMessageContent.tsx:90` |
@@ -1438,7 +1442,7 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | id | 表面 | 分支条件 | 渲染 | 到达配方 | 诚实 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `state.account.account-router.28t1` | account | !(children) | PageSkeleton | 登录 → `/account` | [待渲染实测] | （无） | `apps/meteor/client/views/account/AccountRouter.tsx:28` |
-| `state.account.account-router.28t0` | account | children | Suspense | 登录 → `/account` | [待渲染实测] | （无） | `apps/meteor/client/views/account/AccountRouter.tsx:28` |
+| `state.account.account-router.28t0` | account | children | Suspense | 登录 → `/account`；shot:account-profile.png；Account children + SidebarPortal | [实测] | （无） | `apps/meteor/client/views/account/AccountRouter.tsx:28` |
 | `state.account.account-router.30s` | account | Suspense fallback（子树未 ready） | PageSkeleton | 登录 → `/account` | [待渲染实测] | （无） | `apps/meteor/client/views/account/AccountRouter.tsx:30` |
 | `state.account.accessibility-page.192a1` | account | !(displayRolesEnabled) | null | 登录 → `/account/accessibility-and-appearance` | [待渲染实测] | （无） | `apps/meteor/client/views/account/accessibility/AccessibilityPage.tsx:192` |
 | `state.account.accessibility-page.192a0` | account | displayRolesEnabled | Field | 登录 → `/account/accessibility-and-appearance` | [待渲染实测] | （无） | `apps/meteor/client/views/account/accessibility/AccessibilityPage.tsx:192` |
@@ -1467,7 +1471,7 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.account.preferences-conversation-transcript.45a1` | account | !(!canSendTranscriptEmailPermission) | null | 登录 omni 代理 → `/account/omnichannel`；切换对应权限 | [待渲染实测] | （无） | `apps/meteor/client/views/account/omnichannel/PreferencesConversationTranscript.tsx:45` |
 | `state.account.preferences-conversation-transcript.45a0` | account | !canSendTranscriptEmailPermission | Tag | 登录 omni 代理 → `/account/omnichannel`；切换对应权限 | [待渲染实测] | （无） | `apps/meteor/client/views/account/omnichannel/PreferencesConversationTranscript.tsx:45` |
 | `state.account.account-preferences-page.88a1` | account | !(dataDownloadEnabled) | null | 登录 → `/account/preferences` | [待渲染实测] | （无） | `apps/meteor/client/views/account/preferences/AccountPreferencesPage.tsx:88` |
-| `state.account.account-preferences-page.88a0` | account | dataDownloadEnabled | PreferencesMyDataSection | 登录 → `/account/preferences` | [待渲染实测] | （无） | `apps/meteor/client/views/account/preferences/AccountPreferencesPage.tsx:88` |
+| `state.account.account-preferences-page.88a0` | account | dataDownloadEnabled | PreferencesMyDataSection | 登录 → `/account/preferences`；shot:account-preferences.png；My Data 手风琴 | [实测] | （无） | `apps/meteor/client/views/account/preferences/AccountPreferencesPage.tsx:88` |
 | `state.account.my-data-modal.32a1` | account | !(text) | null | 登录 → `/account/preferences` | [待渲染实测] | （无） | `apps/meteor/client/views/account/preferences/MyDataModal.tsx:32` |
 | `state.account.my-data-modal.32a0` | account | text | ModalContent | 登录 → `/account/preferences` | [待渲染实测] | （无） | `apps/meteor/client/views/account/preferences/MyDataModal.tsx:32` |
 | `state.account.preferences-notifications-section.103a1` | account | !(notificationsPermission === 'granted') | null | 登录 → `/account/preferences`；切换对应权限 | [待渲染实测] | （无） | `apps/meteor/client/views/account/preferences/PreferencesNotificationsSection.tsx:103` |
@@ -1493,7 +1497,7 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.account.account-profile-form.279a1` | account | !(!allowUserStatusMessageChange) | null | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileForm.tsx:279` |
 | `state.account.account-profile-form.279a0` | account | !allowUserStatusMessageChange | FieldHint | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileForm.tsx:279` |
 | `state.account.account-profile-form.280a1` | account | !(allowUserStatusMessageChange) | null | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileForm.tsx:280` |
-| `state.account.account-profile-form.280a0` | account | allowUserStatusMessageChange | FieldHint | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileForm.tsx:280` |
+| `state.account.account-profile-form.280a0` | account | allowUserStatusMessageChange | FieldHint | 登录 → `/account/profile`；shot:account-profile.png；You can use emoji FieldHint | [实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileForm.tsx:280` |
 | `state.account.account-profile-form.303a1` | account | !(statusDuration === 'custom') | null | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileForm.tsx:303` |
 | `state.account.account-profile-form.303a0` | account | statusDuration === 'custom' | Box | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileForm.tsx:303` |
 | `state.account.account-profile-form.338a1` | account | !(errors.statusDuration) | null | 登录 → `/account/profile`；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileForm.tsx:338` |
@@ -1507,19 +1511,19 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.account.account-profile-form.410a1` | account | !(!allowEmailChange) | null | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileForm.tsx:410` |
 | `state.account.account-profile-form.410a0` | account | !allowEmailChange | FieldHint | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileForm.tsx:410` |
 | `state.account.account-profile-form.412a1` | account | !(customFieldsMetadata) | null | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileForm.tsx:412` |
-| `state.account.account-profile-form.412a0` | account | customFieldsMetadata | CustomFieldsForm | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileForm.tsx:412` |
+| `state.account.account-profile-form.412a0` | account | customFieldsMetadata | CustomFieldsForm | 登录 → `/account/profile`；shot:account-profile.png；Custom Fields 组 | [实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileForm.tsx:412` |
 | `state.account.account-profile-page.131a1` | account | !(allowDeleteOwnAccount) | null | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfilePage.tsx:131` |
 | `state.account.account-profile-page.131a0` | account | allowDeleteOwnAccount | Button | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfilePage.tsx:131` |
 | `state.account.account-profile-route.9i` | account | !canViewProfile | NotAuthorizedPage | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileRoute.tsx:9` |
-| `state.account.account-profile-route.13d` | account | 前述 if-ret 均不成立（default return） | AccountProfilePage | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileRoute.tsx:13` |
+| `state.account.account-profile-route.13d` | account | 前述 if-ret 均不成立（default return） | AccountProfilePage | 登录 → `/account/profile`；shot:account-profile.png；/account/profile | [实测] | （无） | `apps/meteor/client/views/account/profile/AccountProfileRoute.tsx:13` |
 | `state.account.action-confirm-modal.57t1` | account | !(isPassword) | TextInput | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/ActionConfirmModal.tsx:57` |
 | `state.account.action-confirm-modal.57t0` | account | isPassword | PasswordInput | 登录 → `/account/profile` | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/ActionConfirmModal.tsx:57` |
 | `state.account.action-confirm-modal.80a1` | account | !(errors.credential) | null | 登录 → `/account/profile`；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/ActionConfirmModal.tsx:80` |
 | `state.account.action-confirm-modal.80a0` | account | errors.credential | FieldError | 登录 → `/account/profile`；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/account/profile/ActionConfirmModal.tsx:80` |
 | `state.account.account-security-page.48a1` | account | !(allowPasswordChange) | null | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:48` |
-| `state.account.account-security-page.48a0` | account | allowPasswordChange | FormProvider | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:48` |
+| `state.account.account-security-page.48a0` | account | allowPasswordChange | FormProvider | 登录 → `/account/security`；shot:account-security.png；允许改密 → Password 表单 | [实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:48` |
 | `state.account.account-security-page.58a1` | account | !((twoFactorTOTP ¦¦ showEmailTwoFactor) && twoFactorEnabled) | null | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:58` |
-| `state.account.account-security-page.58a0` | account | (twoFactorTOTP ¦¦ showEmailTwoFactor) && twoFactorEnabled | AccordionItem | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:58` |
+| `state.account.account-security-page.58a0` | account | (twoFactorTOTP ¦¦ showEmailTwoFactor) && twoFactorEnabled | AccordionItem | 登录 → `/account/security`；shot:account-security.png；2FA AccordionItem | [实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:58` |
 | `state.account.account-security-page.60a1` | account | !(require2faSetup) | null | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:60` |
 | `state.account.account-security-page.60a0` | account | require2faSetup | Callout | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:60` |
 | `state.account.account-security-page.65a1` | account | !(twoFactorTOTP) | null | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:65` |
@@ -1529,7 +1533,7 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.account.account-security-page.69a1` | account | !(e2eEnabled) | null | 登录 → `/account/security`；房间加密开 | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:69` |
 | `state.account.account-security-page.69a0` | account | e2eEnabled | AccordionItem | 登录 → `/account/security`；房间加密开 | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityPage.tsx:69` |
 | `state.account.account-security-route.13i` | account | !canViewSecurity | NotAuthorizedPage | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityRoute.tsx:13` |
-| `state.account.account-security-route.17d` | account | 前述 if-ret 均不成立（default return） | AccountSecurityPage | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityRoute.tsx:17` |
+| `state.account.account-security-route.17d` | account | 前述 if-ret 均不成立（default return） | AccountSecurityPage | 登录 → `/account/security`；shot:account-security.png；/account/security | [实测] | （无） | `apps/meteor/client/views/account/security/AccountSecurityRoute.tsx:17` |
 | `state.account.change-passphrase.137a1` | account | !(errors.passphrase) | null | 登录 → `/account/security`；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/ChangePassphrase.tsx:137` |
 | `state.account.change-passphrase.137a0` | account | errors.passphrase | FieldError | 登录 → `/account/security`；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/ChangePassphrase.tsx:137` |
 | `state.account.change-passphrase.142t1` | account | !(keysExist) | FieldHint | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/ChangePassphrase.tsx:142` |
@@ -1543,7 +1547,7 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.account.change-password.91a1` | account | !(errors?.password) | null | 登录 → `/account/security`；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/ChangePassword.tsx:91` |
 | `state.account.change-password.91a0` | account | errors?.password | FieldError | 登录 → `/account/security`；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/ChangePassword.tsx:91` |
 | `state.account.change-password.96a1` | account | !(allowPasswordChange) | null | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/ChangePassword.tsx:96` |
-| `state.account.change-password.96a0` | account | allowPasswordChange | PasswordVerifier | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/ChangePassword.tsx:96` |
+| `state.account.change-password.96a0` | account | allowPasswordChange | PasswordVerifier | 登录 → `/account/security`；shot:account-security.png；PasswordVerifier 规则列表 | [实测] | （无） | `apps/meteor/client/views/account/security/ChangePassword.tsx:96` |
 | `state.account.change-password.122a1` | account | !(errors.confirmationPassword) | null | 登录 → `/account/security`；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/ChangePassword.tsx:122` |
 | `state.account.change-password.122a0` | account | errors.confirmationPassword | FieldError | 登录 → `/account/security`；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/ChangePassword.tsx:122` |
 | `state.account.two-factor-totp.156a1` | account | !(!totpEnabled && registeringTotp) | null | 登录 → `/account/security` | [待渲染实测] | （无） | `apps/meteor/client/views/account/security/TwoFactorTOTP.tsx:156` |
@@ -3672,44 +3676,44 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.directory.directory-page.52a1` | directory | !(federationEnabled) | null | 登录 → `/directory`；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/DirectoryPage.tsx:52` |
 | `state.directory.directory-page.52a0` | directory | federationEnabled | TabsItem | 登录 → `/directory`；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/DirectoryPage.tsx:52` |
 | `state.directory.directory-page.59a1` | directory | !(tab === 'channels') | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/DirectoryPage.tsx:59` |
-| `state.directory.directory-page.59a0` | directory | tab === 'channels' | ChannelsTab | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/DirectoryPage.tsx:59` |
+| `state.directory.directory-page.59a0` | directory | tab === 'channels' | ChannelsTab | 登录 → `/directory`；shot:directory-channels.png；Channels tab | [实测] | （无） | `apps/meteor/client/views/directory/DirectoryPage.tsx:59` |
 | `state.directory.directory-page.60a1` | directory | !(tab === 'users') | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/DirectoryPage.tsx:60` |
-| `state.directory.directory-page.60a0` | directory | tab === 'users' | UsersTab | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/DirectoryPage.tsx:60` |
+| `state.directory.directory-page.60a0` | directory | tab === 'users' | UsersTab | 登录 → `/directory`；shot:directory-users.png；Users tab | [实测] | （无） | `apps/meteor/client/views/directory/DirectoryPage.tsx:60` |
 | `state.directory.directory-page.61a1` | directory | !(tab === 'teams') | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/DirectoryPage.tsx:61` |
-| `state.directory.directory-page.61a0` | directory | tab === 'teams' | TeamsTab | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/DirectoryPage.tsx:61` |
+| `state.directory.directory-page.61a0` | directory | tab === 'teams' | TeamsTab | 登录 → `/directory`；shot:directory-teams.png；Teams tab | [实测] | （无） | `apps/meteor/client/views/directory/DirectoryPage.tsx:61` |
 | `state.directory.directory-page.62a1` | directory | !(federationEnabled && tab === 'external') | null | 登录 → `/directory`；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/DirectoryPage.tsx:62` |
 | `state.directory.directory-page.62a0` | directory | federationEnabled && tab === 'external' | UsersTab | 登录 → `/directory`；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/DirectoryPage.tsx:62` |
 | `state.directory.room-tags.15a1` | directory | !(room.default) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/RoomTags.tsx:15` |
-| `state.directory.room-tags.15a0` | directory | room.default | Tag | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/RoomTags.tsx:15` |
+| `state.directory.room-tags.15a0` | directory | room.default | Tag | 登录 → `/directory`；shot:directory-channels.png；default Tag | [实测] | （无） | `apps/meteor/client/views/directory/RoomTags.tsx:15` |
 | `state.directory.room-tags.16a1` | directory | !(room.featured) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/RoomTags.tsx:16` |
 | `state.directory.room-tags.16a0` | directory | room.featured | Tag | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/RoomTags.tsx:16` |
-| `state.directory.channels-tab.9i` | directory | canViewPublicRooms | ChannelsTable | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTab.tsx:9` |
+| `state.directory.channels-tab.9i` | directory | canViewPublicRooms | ChannelsTable | 登录 → `/directory`；shot:directory-channels.png；ChannelsTable | [实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTab.tsx:9` |
 | `state.directory.channels-tab.13d` | directory | 前述 if-ret 均不成立（default return） | NotAuthorizedPage | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTab.tsx:13` |
 | `state.directory.channels-table.50a1` | directory | !(mediaQuery) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:50` |
-| `state.directory.channels-table.50a0` | directory | mediaQuery | GenericTableHeaderCell | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:50` |
+| `state.directory.channels-table.50a0` | directory | mediaQuery | GenericTableHeaderCell | 登录 → `/directory`；shot:directory-channels.png；宽屏表头 | [实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:50` |
 | `state.directory.channels-table.62a1` | directory | !(mediaQuery) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:62` |
-| `state.directory.channels-table.62a0` | directory | mediaQuery | GenericTableHeaderCell | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:62` |
+| `state.directory.channels-table.62a0` | directory | mediaQuery | GenericTableHeaderCell | 登录 → `/directory`；shot:directory-channels.png；宽屏表头 | [实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:62` |
 | `state.directory.channels-table.74a1` | directory | !(mediaQuery) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:74` |
-| `state.directory.channels-table.74a0` | directory | mediaQuery | GenericTableHeaderCell | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:74` |
+| `state.directory.channels-table.74a0` | directory | mediaQuery | GenericTableHeaderCell | 登录 → `/directory`；shot:directory-channels.png；宽屏表头 | [实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:74` |
 | `state.directory.channels-table.102a1` | directory | !(isLoading) | null | 登录 → `/directory`；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:102` |
 | `state.directory.channels-table.102a0` | directory | isLoading | GenericTable | 登录 → `/directory`；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:102` |
 | `state.directory.channels-table.110a1` | directory | !(data?.result && data.result.length > 0 && isFetched) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:110` |
-| `state.directory.channels-table.110a0` | directory | data?.result && data.result.length > 0 && isFetched | <> | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:110` |
+| `state.directory.channels-table.110a0` | directory | data?.result && data.result.length > 0 && isFetched | <> | 登录 → `/directory`；shot:directory-channels.png；general 行 | [实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:110` |
 | `state.directory.channels-table.131a1` | directory | !(isFetched && data?.result.length === 0) | null | 登录 → `/directory`；空列表/无数据 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:131` |
 | `state.directory.channels-table.131a0` | directory | isFetched && data?.result.length === 0 | GenericNoResults | 登录 → `/directory`；空列表/无数据 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:131` |
 | `state.directory.channels-table.132a1` | directory | !(isError) | null | 登录 → `/directory`；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:132` |
 | `state.directory.channels-table.132a0` | directory | isError | States | 登录 → `/directory`；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTable.tsx:132` |
 | `state.directory.channels-table-row.27a1` | directory | !(avatarUrl) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTableRow.tsx:27` |
-| `state.directory.channels-table-row.27a0` | directory | avatarUrl | Avatar | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTableRow.tsx:27` |
+| `state.directory.channels-table-row.27a0` | directory | avatarUrl | Avatar | 登录 → `/directory`；shot:directory-channels.png；general 头像 | [实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTableRow.tsx:27` |
 | `state.directory.channels-table-row.36a1` | directory | !(topic) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTableRow.tsx:36` |
 | `state.directory.channels-table-row.36a0` | directory | topic | MarkdownText | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTableRow.tsx:36` |
 | `state.directory.channels-table-row.43a1` | directory | !(mediaQuery && ts) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTableRow.tsx:43` |
-| `state.directory.channels-table-row.43a0` | directory | mediaQuery && ts | GenericTableCell | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTableRow.tsx:43` |
+| `state.directory.channels-table-row.43a0` | directory | mediaQuery && ts | GenericTableCell | 登录 → `/directory`；shot:directory-channels.png；Created at 单元格 | [实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTableRow.tsx:43` |
 | `state.directory.channels-table-row.48a1` | directory | !(mediaQuery) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTableRow.tsx:48` |
-| `state.directory.channels-table-row.48a0` | directory | mediaQuery | GenericTableCell | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTableRow.tsx:48` |
+| `state.directory.channels-table-row.48a0` | directory | mediaQuery | GenericTableCell | 登录 → `/directory`；shot:directory-channels.png；Last Message 单元格 | [实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTableRow.tsx:48` |
 | `state.directory.channels-table-row.53a1` | directory | !(mediaQuery) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTableRow.tsx:53` |
-| `state.directory.channels-table-row.53a0` | directory | mediaQuery | GenericTableCell | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTableRow.tsx:53` |
-| `state.directory.teams-tab.9i` | directory | canViewPublicRooms | TeamsTable | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTab.tsx:9` |
+| `state.directory.channels-table-row.53a0` | directory | mediaQuery | GenericTableCell | 登录 → `/directory`；shot:directory-channels.png；Belongs To 单元格 | [实测] | （无） | `apps/meteor/client/views/directory/tabs/channels/ChannelsTable/ChannelsTableRow.tsx:53` |
+| `state.directory.teams-tab.9i` | directory | canViewPublicRooms | TeamsTable | 登录 → `/directory`；shot:directory-teams.png；TeamsTable | [实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTab.tsx:9` |
 | `state.directory.teams-tab.13d` | directory | 前述 if-ret 均不成立（default return） | NotAuthorizedPage | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTab.tsx:13` |
 | `state.directory.teams-table.40a1` | directory | !(mediaQuery) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTable/TeamsTable.tsx:40` |
 | `state.directory.teams-table.40a0` | directory | mediaQuery | GenericTableHeaderCell | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTable/TeamsTable.tsx:40` |
@@ -3718,7 +3722,7 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.directory.teams-table.86a1` | directory | !(data?.result && data.result.length > 0 && isFetched) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTable/TeamsTable.tsx:86` |
 | `state.directory.teams-table.86a0` | directory | data?.result && data.result.length > 0 && isFetched | <> | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTable/TeamsTable.tsx:86` |
 | `state.directory.teams-table.112a1` | directory | !(isFetched && data?.result.length === 0) | null | 登录 → `/directory`；空列表/无数据 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTable/TeamsTable.tsx:112` |
-| `state.directory.teams-table.112a0` | directory | isFetched && data?.result.length === 0 | GenericNoResults | 登录 → `/directory`；空列表/无数据 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTable/TeamsTable.tsx:112` |
+| `state.directory.teams-table.112a0` | directory | isFetched && data?.result.length === 0 | GenericNoResults | 登录 → `/directory`；空列表/无数据；shot:directory-teams.png；No results found | [实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTable/TeamsTable.tsx:112` |
 | `state.directory.teams-table.113a1` | directory | !(isError) | null | 登录 → `/directory`；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTable/TeamsTable.tsx:113` |
 | `state.directory.teams-table.113a0` | directory | isError | States | 登录 → `/directory`；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTable/TeamsTable.tsx:113` |
 | `state.directory.teams-table-row.27a1` | directory | !(avatarUrl) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTable/TeamsTableRow.tsx:27` |
@@ -3727,30 +3731,30 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.directory.teams-table-row.36a0` | directory | topic | MarkdownText | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTable/TeamsTableRow.tsx:36` |
 | `state.directory.teams-table-row.43a1` | directory | !(mediaQuery && ts) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTable/TeamsTableRow.tsx:43` |
 | `state.directory.teams-table-row.43a0` | directory | mediaQuery && ts | GenericTableCell | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/teams/TeamsTable/TeamsTableRow.tsx:43` |
-| `state.directory.users-tab.14i` | directory | canViewOutsideRoom && canViewDM | UsersTable | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTab.tsx:14` |
+| `state.directory.users-tab.14i` | directory | canViewOutsideRoom && canViewDM | UsersTable | 登录 → `/directory`；shot:directory-users.png；UsersTable | [实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTab.tsx:14` |
 | `state.directory.users-tab.18d` | directory | 前述 if-ret 均不成立（default return） | NotAuthorizedPage | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTab.tsx:18` |
 | `state.directory.users-table.45a1` | directory | !(mediaQuery && canViewFullOtherUserInfo) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:45` |
-| `state.directory.users-table.45a0` | directory | mediaQuery && canViewFullOtherUserInfo | GenericTableHeaderCell | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:45` |
+| `state.directory.users-table.45a0` | directory | mediaQuery && canViewFullOtherUserInfo | GenericTableHeaderCell | 登录 → `/directory`；shot:directory-users.png；Email 列（full info） | [实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:45` |
 | `state.directory.users-table.57a1` | directory | !(federation) | null | 登录 → `/directory`；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:57` |
 | `state.directory.users-table.57a0` | directory | federation | GenericTableHeaderCell | 登录 → `/directory`；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:57` |
 | `state.directory.users-table.69a1` | directory | !(mediaQuery) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:69` |
-| `state.directory.users-table.69a0` | directory | mediaQuery | GenericTableHeaderCell | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:69` |
+| `state.directory.users-table.69a0` | directory | mediaQuery | GenericTableHeaderCell | 登录 → `/directory`；shot:directory-users.png；宽屏用户表头 | [实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:69` |
 | `state.directory.users-table.106a1` | directory | !(isLoading) | null | 登录 → `/directory`；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:106` |
 | `state.directory.users-table.106a0` | directory | isLoading | GenericTable | 登录 → `/directory`；等查询 in-flight | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:106` |
 | `state.directory.users-table.114a1` | directory | !(data?.result && data.result.length > 0 && isFetched) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:114` |
-| `state.directory.users-table.114a0` | directory | data?.result && data.result.length > 0 && isFetched | <> | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:114` |
+| `state.directory.users-table.114a0` | directory | data?.result && data.result.length > 0 && isFetched | <> | 登录 → `/directory`；shot:directory-users.png；admin 用户行 | [实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:114` |
 | `state.directory.users-table.142a1` | directory | !(isFetched && data?.result.length === 0) | null | 登录 → `/directory`；空列表/无数据 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:142` |
 | `state.directory.users-table.142a0` | directory | isFetched && data?.result.length === 0 | GenericNoResults | 登录 → `/directory`；空列表/无数据 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:142` |
 | `state.directory.users-table.143a1` | directory | !(isError) | null | 登录 → `/directory`；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:143` |
 | `state.directory.users-table.143a0` | directory | isError | States | 登录 → `/directory`；让该查询/mutation 失败 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTable.tsx:143` |
 | `state.directory.users-table-row.32a1` | directory | !(username) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTableRow.tsx:32` |
-| `state.directory.users-table-row.32a0` | directory | username | UserAvatar | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTableRow.tsx:32` |
+| `state.directory.users-table-row.32a0` | directory | username | UserAvatar | 登录 → `/directory`；shot:directory-users.png；用户头像 | [实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTableRow.tsx:32` |
 | `state.directory.users-table-row.49a1` | directory | !(mediaQuery && canViewFullOtherUserInfo) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTableRow.tsx:49` |
-| `state.directory.users-table-row.49a0` | directory | mediaQuery && canViewFullOtherUserInfo | GenericTableCell | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTableRow.tsx:49` |
+| `state.directory.users-table-row.49a0` | directory | mediaQuery && canViewFullOtherUserInfo | GenericTableCell | 登录 → `/directory`；shot:directory-users.png；Email 单元格 | [实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTableRow.tsx:49` |
 | `state.directory.users-table-row.52a1` | directory | !(federation) | null | 登录 → `/directory`；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTableRow.tsx:52` |
 | `state.directory.users-table-row.52a0` | directory | federation | GenericTableCell | 登录 → `/directory`；联邦房间 | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTableRow.tsx:52` |
 | `state.directory.users-table-row.53a1` | directory | !(mediaQuery) | null | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTableRow.tsx:53` |
-| `state.directory.users-table-row.53a0` | directory | mediaQuery | GenericTableCell | 登录 → `/directory` | [待渲染实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTableRow.tsx:53` |
+| `state.directory.users-table-row.53a0` | directory | mediaQuery | GenericTableCell | 登录 → `/directory`；shot:directory-users.png；宽屏用户单元格 | [实测] | （无） | `apps/meteor/client/views/directory/tabs/users/UsersTable/UsersTableRow.tsx:53` |
 
 ### teams（64）
 
@@ -4259,11 +4263,11 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.comp.room-icon.35i` | comp | !iconPropsOrReactNode | null | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/RoomIcon/RoomIcon.tsx:35` |
 | `state.comp.room-icon.39d` | comp | 前述 if-ret 均不成立（default return） | Icon | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/RoomIcon/RoomIcon.tsx:39` |
 | `state.comp.header.16a1` | comp | !((title ¦¦ onClose)) | null | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/Header.tsx:16` |
-| `state.comp.header.16a0` | comp | (title ¦¦ onClose) | Box | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/Header.tsx:16` |
+| `state.comp.header.16a0` | comp | (title ¦¦ onClose) | Box | 登录后主壳（由 client/main.ts 闭包挂载）；shot:account-security.png；Account 侧栏标题区 | [实测] | （无） | `apps/meteor/client/components/Sidebar/Header.tsx:16` |
 | `state.comp.header.18a1` | comp | !(title) | null | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/Header.tsx:18` |
-| `state.comp.header.18a0` | comp | title | Box | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/Header.tsx:18` |
+| `state.comp.header.18a0` | comp | title | Box | 登录后主壳（由 client/main.ts 闭包挂载）；shot:account-security.png；Account 标题 | [实测] | （无） | `apps/meteor/client/components/Sidebar/Header.tsx:18` |
 | `state.comp.header.23a1` | comp | !(onClose) | null | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/Header.tsx:23` |
-| `state.comp.header.23a0` | comp | onClose | IconButton | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/Header.tsx:23` |
+| `state.comp.header.23a0` | comp | onClose | IconButton | 登录后主壳（由 client/main.ts 闭包挂载）；shot:account-security.png；Account Close | [实测] | （无） | `apps/meteor/client/components/Sidebar/Header.tsx:23` |
 | `state.comp.list-item.25a1` | comp | !(icon) | null | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/ListItem.tsx:25` |
 | `state.comp.list-item.25a0` | comp | icon | OptionIcon | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/ListItem.tsx:25` |
 | `state.comp.list-item.26a1` | comp | !(gap) | null | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/ListItem.tsx:26` |
@@ -4273,11 +4277,11 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.comp.list-item.29a1` | comp | !(children) | null | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/ListItem.tsx:29` |
 | `state.comp.list-item.29a0` | comp | children | OptionColumn | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/ListItem.tsx:29` |
 | `state.comp.sidebar-items-assembler.21t1` | comp | !(isSidebarItem(props)) | Divider | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/SidebarItemsAssembler.tsx:21` |
-| `state.comp.sidebar-items-assembler.21t0` | comp | isSidebarItem(props) | SidebarNavigationItem | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/SidebarItemsAssembler.tsx:21` |
+| `state.comp.sidebar-items-assembler.21t0` | comp | isSidebarItem(props) | SidebarNavigationItem | 登录后主壳（由 client/main.ts 闭包挂载）；shot:account-security.png；Account 导航项 | [实测] | （无） | `apps/meteor/client/components/Sidebar/SidebarItemsAssembler.tsx:21` |
 | `state.comp.sidebar-navigation-item.33i` | comp | permissionGranted === false ¦¦ (typeof permissionGranted === 'function' && !permissionGranted()) | null | 登录后主壳（由 client/main.ts 闭包挂载）；切换对应权限 | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/SidebarNavigationItem.tsx:33` |
-| `state.comp.sidebar-navigation-item.37d` | comp | 前述 if-ret 均不成立（default return） | SidebarGenericItem | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/SidebarNavigationItem.tsx:37` |
+| `state.comp.sidebar-navigation-item.37d` | comp | 前述 if-ret 均不成立（default return） | SidebarGenericItem | 登录后主壳（由 client/main.ts 闭包挂载）；shot:account-security.png；Profile/Preferences/Security 等项 | [实测] | （无） | `apps/meteor/client/components/Sidebar/SidebarNavigationItem.tsx:37` |
 | `state.comp.sidebar-navigation-item.39a1` | comp | !(icon) | null | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/SidebarNavigationItem.tsx:39` |
-| `state.comp.sidebar-navigation-item.39a0` | comp | icon | Icon | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/SidebarNavigationItem.tsx:39` |
+| `state.comp.sidebar-navigation-item.39a0` | comp | icon | Icon | 登录后主壳（由 client/main.ts 闭包挂载）；shot:account-security.png；导航项图标 | [实测] | （无） | `apps/meteor/client/components/Sidebar/SidebarNavigationItem.tsx:39` |
 | `state.comp.sidebar-navigation-item.50a1` | comp | !(tag) | null | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/SidebarNavigationItem.tsx:50` |
 | `state.comp.sidebar-navigation-item.50a0` | comp | tag | Tag | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/SidebarNavigationItem.tsx:50` |
 | `state.comp.sidebar-navigation-item.52t1` | comp | !(Badge) | null | 登录后主壳（由 client/main.ts 闭包挂载） | [待渲染实测] | （无） | `apps/meteor/client/components/Sidebar/SidebarNavigationItem.tsx:52` |
@@ -4451,7 +4455,7 @@ kind 等式（只核行数）：`1518+1518+146+146+524+346+23 = 4221`。
 | `state.uiclient.page-header-no-shadow.39a1` | uiclient | !(onClickBack) | null | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/Page/PageHeaderNoShadow.tsx:39` |
 | `state.uiclient.page-header-no-shadow.39a0` | uiclient | onClickBack | IconButton | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/Page/PageHeaderNoShadow.tsx:39` |
 | `state.uiclient.password-verifier-list.18i` | uiclient | !validations?.length | span | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/PasswordVerifier/PasswordVerifierList.tsx:18` |
-| `state.uiclient.password-verifier-list.22d` | uiclient | 前述 if-ret 均不成立（default return） | <> | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/PasswordVerifier/PasswordVerifierList.tsx:22` |
+| `state.uiclient.password-verifier-list.22d` | uiclient | 前述 if-ret 均不成立（default return） | <> | 被 meteor 客户端宿主挂载；shot:account-security.png；Password must have 列表 | [实测] | （无） | `packages/ui-client/src/components/PasswordVerifier/PasswordVerifierList.tsx:22` |
 | `state.uiclient.sidebar-toggler-button.18a1` | uiclient | !(badge) | null | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/SidebarToggler/SidebarTogglerButton.tsx:18` |
 | `state.uiclient.sidebar-toggler-button.18a0` | uiclient | badge | SidebarTogglerBadge | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/SidebarToggler/SidebarTogglerButton.tsx:18` |
 | `state.uiclient.wizard-actions.11t1` | uiclient | !(annotation) | null | 被 meteor 客户端宿主挂载 | [待渲染实测] | （无） | `packages/ui-client/src/components/Wizard/WizardActions.tsx:11` |
@@ -4604,5 +4608,5 @@ find apps/meteor/app -type d -name client | wc -l
 - 不扫 `apps/meteor/server`、`ee/server`、`ee/apps`（无 client UI）。
 - spec/stories 已分类，不抽 state。
 - setting/permission 闭集是 vol 6/7；本卷只在「关联」列回指字面量。
-- 无 `[实测]` 行。boot 修好后只能把已点击行升级为 `[实测]`，不能把未点击行改成不可达来清零。
+- 只能把已截图行升级为 `[实测]`，不能把未点击行改成不可达来清零。本卷不是 live-closed。
 - 本卷没有功能总数。
