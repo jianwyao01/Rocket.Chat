@@ -1,51 +1,135 @@
-# Round 2 总账 (e519470)
+# Round 2 总账（e519470）
 
-冻结提交 **`e519470d35b6caf5b228d81aef41c86aab3051f4`**（短 SHA `e519470`）。本文是分层覆盖账本，**只索引已落地的闭集卷，并披露剩余空洞**。不是功能清单。
+冻结 **`e519470d35b6caf5b228d81aef41c86aab3051f4`**（短 SHA `e519470`）。不扫 `develop`。
 
-源 PR（均保持 draft）：[#20](https://github.com/jianwyao01/Rocket.Chat/pull/20) [#21](https://github.com/jianwyao01/Rocket.Chat/pull/21) [#22](https://github.com/jianwyao01/Rocket.Chat/pull/22) [#23](https://github.com/jianwyao01/Rocket.Chat/pull/23) [#24](https://github.com/jianwyao01/Rocket.Chat/pull/24)。本文件是索引，不替代各卷正文。
+本文是 **分层覆盖账本**：索引各卷闭集大小、诚实标签、以及 Community seed 上关不掉的空洞。  
+**不是功能清单。总账 ≠ 功能总数。禁止把纸面行数相加成「功能」。**
 
----
-
-## 0. What this ledger can claim
-
-- Closed-set volumes **6 / 7 / 13 / 14 / 15** are **`[读]`** inventories with replayable commands. Counts below are those inventories’ closed-set sizes, **not** features.
-- Behavior volumes **5 / 8 / 9 / 10 / 11 / 12** are **NOT done**. Vol 5 instance still running as of **2026-08-21**. This ledger invents **no** live results for them.
-- Round-1 atlas ([PR #19](https://github.com/jianwyao01/Rocket.Chat/pull/19), develop `e10bd504b9`) is **structural**, not this freeze’s live truth. Vol 5’s checklist source is that atlas’s `[待渲染实测]` tags; an operator-mentioned “~1117” is **recount pending** and is **not** written here as a verified freeze count.
-- Nothing in this ledger is **`[实测]`**. Tags stay `[读]` (closed-set vols) or unset (not-started vols) unless vol 5 later upgrades tags after a successful live boot.
+源 PR 均保持 draft。本文件是索引，不替代各卷正文。数字以各卷文件为准（2026-08-23 从对应分支读出），不以口头约数。
 
 ---
 
-## 1. Volume status table
+## 1. 冻结 + 本账能说什么
 
-| Vol | Status | PR | File | Closed-set size | Honesty | Remaining hole |
+| 能说 | 不能说 |
+| --- | --- |
+| 某卷纸面闭集有多大、命令能否复跑 | 「一共有 N 个功能」 |
+| 某卷已 live 走到哪、标签升到哪 | 任一行为卷 **live-closed** |
+| leftover 仍是 leftover（Honesty > leftover=0） | 把 leftover 盖成 `[不可达]` 凑 0 |
+| Community / 无 license 关不掉的洞 | 未点到 = 不可达 |
+
+**闭集卷（纸面闭合）**：6 / 7 / 13 / 14 / 15 — 库存 + 可复跑命令。标签 **`[读]`**。纸面闭合 ≠ 已实测。
+
+**行为卷（有 live 走查，全部未闭合）**：5 / 8 / 9 / 10 / 11 / 12。有 `[实测]` 也不等于 live-closed。
+
+本环境 **未再起 Meteor**。live 标签引自各卷文件行号。产品 merge-base 仍是冻结 SHA。
+
+---
+
+## 2. 分卷表
+
+| Vol | PR / 分支 | 闭合类型 | 纸面行数 | live 标签 | 纸面闭合？ | live 闭合？ |
 | --- | --- | --- | --- | --- | --- | --- |
-| 5 | **RUNNING** (as of 2026-08-21). No PR yet. | — | — | Checklist = PR #19 `[待渲染实测]` tags. Operator-mentioned ~1117 is **recount pending**, not verified on this freeze. | Checklist tags only. No live upgrade in this ledger. | Live replay of `[待渲染实测]`. **If boot fails → STOP.** Do not invent pass/fail. |
-| 6 | Closed-set `[读]` inventory (draft) | [#23](https://github.com/jianwyao01/Rocket.Chat/pull/23) | `docs/qa/pm-feature-atlas/round-2/06-settings-impact.md` | **243** client-read keys (235 same-line + 8 multiline) | all `[读]` | **32** high-impact keys still need `[实测]` |
-| 7 | Closed-set `[读]` inventory (draft) | [#22](https://github.com/jianwyao01/Rocket.Chat/pull/22) | `docs/qa/pm-feature-atlas/round-2/07-permissions-impact.md` | **148** client-checked permission keys | all `[读]` | Excluded: server-only fixtures, Apps runtime keys, commented `leave-team`. No `[实测]`. |
-| 8 | **NOT STARTED** | — | — | — | — | Gated on live instance (vol 5). |
-| 9 | **NOT STARTED** | — | — | — | — | Gated on live instance (vol 5). |
-| 10 | **NOT STARTED** | — | — | — | — | Gated on live instance (vol 5). |
-| 11 | **NOT STARTED** | — | — | — | — | Gated on live instance (vol 5). |
-| 12 | **NOT STARTED** | — | — | — | — | Gated on live instance (vol 5). |
-| 13 | Closed-set `[读]` inventory (draft) | [#21](https://github.com/jianwyao01/Rocket.Chat/pull/21) | `docs/qa/pm-feature-atlas/round-2/13-admin-settings-fields.md` + `export-13-admin-settings-fields.mjs` | **1044** admin fields (973 static/expanded + 71 templates; 430 public) | all `[读]` | Vol 13’s own client-read grep = **229** (narrower than vol 6). Leftovers: `Chatops_Username`, `PageSize` vs `Search.defaultProvider.PageSize`. |
-| 14 | Closed-set `[读]` reverse-diff (draft) | [#20](https://github.com/jianwyao01/Rocket.Chat/pull/20) | `docs/qa/pm-feature-atlas/round-2/14-pin-reverse-diff.md` | freeze vs develop `e10bd504b9`: registry / settings / perms `only_freeze = 0`; i18n `only_freeze = 29` (interpolation rename); **3** `[读]` CHANGED rows | all `[读]` | MatrixFederation file moves sit **outside** vol 14’s three closed sets. No `[实测]`. |
-| 15 | Closed-set `[读]` i18n reverse-check (draft) | [#24](https://github.com/jianwyao01/Rocket.Chat/pull/24) | `docs/qa/pm-feature-atlas/round-2/15-i18n-full.md` | en keys **7385**; EXTRACTED **929** = HIT **423** + MISS **24** + OOS **482** | all `[读]` | **24 must-fill keys still open** (list in §3.2). HIT ids refer to round-1 atlas, not this freeze’s live UI. |
+| 5 | [#26](https://github.com/jianwyao01/Rocket.Chat/pull/26) `cursor/pm-atlas-r2-vol5-0dac` `05-live-behavior.md` | 00 UNION 去重 id | **1082** | **828** `[实测]` + **189** 真不可达 + **65** `[待渲染实测]` | 是（1082） | **否** |
+| 6 | [#23](https://github.com/jianwyao01/Rocket.Chat/pull/23) `06-settings-impact.md` | client-read settings | **243**（235+8） | 全 `[读]` | 是 | **否**（文末 33 条高影响仍须 `[实测]`） |
+| 7 | [#22](https://github.com/jianwyao01/Rocket.Chat/pull/22) `07-permissions-impact.md` | client-checked perms | **148** `SYMDIFF []` | 全 `[读]` | 是 | **否** |
+| 8 | [#32](https://github.com/jianwyao01/Rocket.Chat/pull/32) `cursor/r2-vol8-states-95f3` `08-states.md` | JSX 条件渲染分支 | **4221**；TARGET_FILES **3817**；`VERIFY_OK 3817 4221` | **175** `[实测]` + **4046** `[待渲染实测]` + **0** `[不可达]` | 是（4221） | **否** |
+| 9 | [#27](https://github.com/jianwyao01/Rocket.Chat/pull/27) `09-realtime.md` | stream/event bind | **44** `COUNT 44 SYMDIFF []` | **14** `[实测]` + **12** `[待渲染实测]` + **18** `[读]` | 是（44） | **否**（typing 从未出现） |
+| 10 | [#30](https://github.com/jianwyao01/Rocket.Chat/pull/30) `10-errors.md` | 用户可见错误路径 | **390** `ROWS 390 SYMDIFF []` | **11** `[实测]` + **379** `[读]` | 是（390） | **否** |
+| 11 | [#29](https://github.com/jianwyao01/Rocket.Chat/pull/29) `11-keyboard-timing.md` | tinykeys / 邻接 | paper：tinykeys 调用 **6** / 和弦 **10** / SHORTCUTS **9** / FocusScope **13** / debounce **107** / `runOptimistic` **2** | 和弦 live **7/10** `[实测]`（3 leftover `[读]`） | 是（各闭集） | **否** |
+| 12 | [#31](https://github.com/jianwyao01/Rocket.Chat/pull/31) `12-environment.md` | 浏览器环境 API | **93** `COUNT 93 SYMDIFF []` | **52** `[实测]` + **41** leftover `[读]` | 是（93） | **否** |
+| 13 | [#21](https://github.com/jianwyao01/Rocket.Chat/pull/21) `13-admin-settings-fields.md` | admin registry 字段 | **1044**（973+71）；public 430；client-read 229 | 全 `[读]` | 是 | **否** |
+| 14 | [#20](https://github.com/jianwyao01/Rocket.Chat/pull/20) `14-pin-reverse-diff.md` | freeze vs develop `e10bd504b9` 反向差 | registry / settings.add / perms `only_freeze=0`；i18n `only_freeze=29`；8 列 **3** | 全 `[读]` | 是 | **否** |
+| 15 | [#24](https://github.com/jianwyao01/Rocket.Chat/pull/24) + [#28](https://github.com/jianwyao01/Rocket.Chat/pull/28) | i18n VERB 反查 + MISS 8 列 | EXTRACTED **929** = HIT **423** + MISS **24** + OOS **482**；#28 把 24 MISS 写成 `fill.*` | 全 `[读]`（#28 未升实测） | 是（929 / 24） | **否** |
 
-Do **not** add these rows. There is no grand-total of features.
+不要把上表行数相加。
 
 ---
 
-## 2. Closed-set arithmetic (no feature total)
+## 3. 空洞图（必须可见）
 
-Replay **on `e519470`**. A mismatch means reject that volume, not “close the hole by inventing a number.”
+Community seed（`hasValidLicense=false` `activeModules=[]`）上，剩余 live leftover **关不掉**。披露为空洞。禁止盖 `[不可达]`。
 
-### 2.1 Settings (vol 6) — `235 + 8 = 243`
+### 3.1 Vol 5 — Community seed 耗尽的用户范围 leftover
+
+用户范围曾 **9** 条。已升 `[实测]`（不再算 leftover）：
+
+- `user.action.add-to-room`（非成员用户卡 add-to-room）
+- `page.create.channel.submit.permission-denied`（guest Create → `error-not-allowed`）
+- `page.create.team.submit.permission-denied`（guest Create disabled）
+- `composer.state.typing.truncated`（≥5 人 “and others are typing”）
+- `sidebar.sidepanel.back`（tablet 副栏 Back）
+
+**仍 leftover（4，不盖不可达）**：
+
+| id | 为何关不掉 | 出处（#26 `05-live-behavior.md`） |
+| --- | --- | --- |
+| `msg.read-receipts` | 已开 `Message_Read_Receipt_*`；More 仍无 Read receipts（服务端另要 license `message-read-receipt`） | L178 |
+| `page.account.profile.avatar.suggest` | `settings.oauth` services=[]；`GET users.getAvatarSuggestion` → `{}`；Profile 无建议头像钮 | L508 |
+| `page.account.profile.delete.last-owner` | REST `users.deleteOwnAccount` 返 `[user-last-owner]`；UI 停在密码框，无 `ConfirmOwnerChangeModal`（REST only） | L531 |
+| `page.account.preferences.login-email` | `Device_Management_*` GET 400 未注册；Notifications 无 Receive Login Detection Emails | L542 |
+
+`828+189+65=1082`（#26 §5）。65 含下面 3.2 的范围外项。**leftover ≠ 0。**
+
+### 3.2 用户范围外（EE / 通话 / Game / Outlook / …）— 列为范围外空洞
+
+这些仍在 Vol 5 的 65 `[待渲染实测]` 里。**范围外 ≠ 已关闭。** 不并进用户范围 leftover=0。
+
+| 范围外 | leftover id（#26 表体） |
+| --- | --- |
+| E2EE | `acct.gap.e2e.reset.2fa` |
+| Video Call | `room.toolbox.calls` `room.members.action.video-call` `user.action.video-call` `room.chrome.sidebar.call-accept` `room.chrome.call.incoming.mute` `room.chrome.call.outgoing.cancel` |
+| Game | `room.toolbox.game-center` |
+| Outlook | `room.toolbox.outlook-calendar` `page.account.preferences.calendar-notify` |
+| VoIP | `room.members.action.voice-call` `room.chrome.voip.forward` `room.chrome.voip.hangup` `nav.voip.call` `nav.voip.history` `page.admin.users.form.voip-extension` `page.account.preferences.mobile-ringing` |
+| Apps | `msg.apps.action` `msg.apps.ai` `room.toolbox.ai-actions` `room.apps.toolbox-inject` `nav.user.apps-inject` `page.admin.ai-center.mcp` `page.admin.ai-center.section.save` |
+| federation | `page.create.channel.members.external-rejected` `directory.external` `page.directory.tab.external` |
+| SAML | `route.saml` `page.admin.settings.saml.import-metadata` |
+| omni | `room.toolbox.canned-responses` `room.canned.use-from-list`；`omni.agent.sidepanel.priority` / `canned.*` / `resume` / `transcript.pdf` / `composer.denied`；`omni.manager.businesshours.create|delete` `omni.manager.security.save`；`omni.widget.transcript` / `department` / `finished.new` |
+| admin / 其它 | `nav.user.status.visibility` `page.account.profile.status-visibility` `page.account.sessions.*` `page.admin.workspace.*` `page.admin.subscription.*` `page.admin.users.seats` `page.admin.permissions.role.delete` `route.token-login` `mkt.installed.update-server` |
+
+真不可达 **189** 只含已走入口后页/控件不在者（Premium 模态、Audit 404、Marketplace 0 apps 的应用级控件等）。见 #26 §5。未点 ≠ 不可达。
+
+### 3.3 Vol 8–12 live 剩余（全部未闭合）
+
+| Vol | 剩余 | 不要写成 |
+| --- | --- | --- |
+| 8 | **4046** `[待渲染实测]`（只晋级已截图分支） | live-closed；用 `[不可达]` 清零 |
+| 9 | **12** `[待渲染实测]` + **18** `[读]`。`notify-room/user-activity`：两真浏览器同房，composer 上方仍无 `is typing`（**Typing never appeared**） | leftover=0 |
+| 10 | **379** `[读]`（只升了 11 条有 toast/inline 截图的） | leftover=0 |
+| 11 | 和弦 leftover **3/10**：Alt legacy / Alt v2（行上无 kebab）/ Konami（无 license tab）。Ctrl+Esc = OS 抢走。FocusScope：invite / ImageGallery / VideoConf / VoIP / UiKit 未开。107 debounce **纸面** | 3 leftover 盖不可达；107 当功能数 |
+| 12 | **41** leftover `[读]`：通知权限条、桌面 `setFavicon`、Outlook 日历通知、VoIP AudioContext/拨号音、E2EE/2FA clipboard、desktop 协议壳部分路径等 | leftover=0 |
+
+### 3.4 纸面闭集卷仍开着的洞
+
+- **Vol 6**：文末 **33** 条高影响 key 仍须事后 `[实测]`（`06-settings-impact.md` L368–404）。243 全 `[读]`。
+- **Vol 7**：排除 Apps 运行时键、`manage-selected-settings` 开集、注释 `leave-team`、服务端-only fixtures。无 `[实测]`。
+- **Vol 13**：client-read grep **229**（窄于 vol 6 的 243）。对不齐：`Chatops_Username`（无 `registry.add`）、`PageSize` vs `Search.defaultProvider.PageSize`。
+- **Vol 14**：MatrixFederation 文件挪动在三闭集外。未发明第四闭集。
+- **Vol 15**：MISS **24 ≠ 0**。#28 写成 8 列，仍 `[读]`。HIT 423 对的是 round-1 atlas id，不是本冻结 live UI。
+
+---
+
+## 4. 复跑命令（各卷文件；数字对不上 = 拒收该卷）
+
+均在 **`e519470d35b6caf5b228d81aef41c86aab3051f4`** 上跑。本账不重数。长 python 以源文件为准。
+
+### Vol 5 — `05-live-behavior.md` §2 / §5（L105–129，L1328–1339）
 
 ```bash
-git rev-parse HEAD
-# expect e519470d35b6caf5b228d81aef41c86aab3051f4
+# 清单来源：PR #19 atlas。闭集 = 00 去重稳定 id = 1082（不发明 1117）
+rg -c '^\| [a-z]' docs/qa/pm-feature-atlas/round-2/05-live-behavior.md
+# 诚实：828 [实测] + 189 [不可达] + 65 [待渲染实测] = 1082
+```
 
-# 命令 A — 同行字面量（235）
+本环境未起产品。live 标签以该文件 §4 表体 + §5 为准。
+
+### Vol 6 — `06-settings-impact.md` 闭合判据（L408+）
+
+```bash
+git rev-parse HEAD   # expect e519470d35b6caf5b228d81aef41c86aab3051f4
+
+# 命令 A — 同行字面量 235
 rg -n --no-heading \
   -o "(?:useSetting(?:<[^>]+>)?|settings\.peek(?:<[^>]+>)?|settings\.observe|useSettingStructure)\(\s*['\"]([A-Za-z0-9_.-]+)['\"]" \
   -r '$1' \
@@ -56,232 +140,124 @@ rg -n --no-heading \
   | sed 's/.*://' | sort -u | wc -l
 # expect 235
 
-# 表体 / 去重 id
 rg -c '^\| `set\.' docs/qa/pm-feature-atlas/round-2/06-settings-impact.md
 rg -o '^\| `set\.[^`]+' docs/qa/pm-feature-atlas/round-2/06-settings-impact.md | sort -u | wc -l
-# expect 243 and 243
+# expect 243 243
 ```
 
-Equality: **`235 + 8 = 243`**. The 8 are multiline / ternary / CMSPage union / `FORGET_SESSION_SETTING_ID` (vol 6 命令 B). Split-table check in that file: `51+30+25+16+19+20+13+13+5+5+5+5+4+9+23 = 243`.
+`235+8=243`。分表 `51+30+25+16+19+20+13+13+5+5+5+5+4+9+23=243`。
 
-### 2.2 Permissions (vol 7) — `rg perm. = 148` / `SYMDIFF []`
+### Vol 7 — `07-permissions-impact.md` 闭合判据（L200–274）
 
 ```bash
-git rev-parse HEAD
-# expect e519470d35b6caf5b228d81aef41c86aab3051f4
-
 rg -c '^\| `perm\.' docs/qa/pm-feature-atlas/round-2/07-permissions-impact.md
 rg -o '^\| `perm\.[^`]+`' docs/qa/pm-feature-atlas/round-2/07-permissions-impact.md | sort | uniq | wc -l
-# expect 148 and 148
+# expect 148 148
+# 抽键 python：该文件 §闭合判据 #4 → COUNT 148 / TABLE 148 / SYMDIFF []
 ```
 
-Full key-extract python (direct args + named arrays; skip `//` comments) lives in [PR #22](https://github.com/jianwyao01/Rocket.Chat/pull/22) `07-permissions-impact.md` §闭合判据 #4. Expect:
-
-```
-COUNT 148
-TABLE 148
-SYMDIFF []
-```
-
-Equality: **`148 = 148 = 148`**.
-
-### 2.3 Admin fields (vol 13) — `1044 = 973 + 71`
-
-Exporter: `docs/qa/pm-feature-atlas/round-2/export-13-admin-settings-fields.mjs` (lives on the vol 13 branch / [PR #21](https://github.com/jianwyao01/Rocket.Chat/pull/21)).
+### Vol 8 — `08-states.md` §7（L4523–4568）
 
 ```bash
-git rev-parse HEAD
-# expect e519470d35b6caf5b228d81aef41c86aab3051f4
+python3 docs/qa/pm-feature-atlas/round-2/export-08-states.py --verify
+# TARGET_FILES 3817
+# CLASS_SUM 3817
+# STATES 4221
+# UNIQUE_IDS 4221
+# VERIFY_OK 3817 4221
 
+rg -c '^\| `state\.' docs/qa/pm-feature-atlas/round-2/08-states.md
+# expect 4221
+```
+
+kind：`1518+1518+146+146+524+346+23=4221`。`[待渲染实测]+[不可达]+[实测]=4221`。
+
+### Vol 9 — `09-realtime.md` §5（L148–306）
+
+```bash
+rg -c '^\| `rt\.' docs/qa/pm-feature-atlas/round-2/09-realtime.md
+# expect 44
+# 抽键 python：该文件 §5 → COUNT 44 TABLE 44 SYMDIFF []
+```
+
+### Vol 10 — `10-errors.md` 闭合段（L1057–1106）
+
+```bash
+# 该文件闭合 python → ROWS 390 UNIQ 390 SYMDIFF_TOAST_API [] SYMDIFF_ISERROR []
+rg -c '^\| `err\.[^`]+` .*\[实测\]' docs/qa/pm-feature-atlas/round-2/10-errors.md
+# expect 11
+# 298 toast + 14 qmeta + 78 inline = 390
+# 11 [实测] + 379 [读] = 390
+```
+
+### Vol 11 — `11-keyboard-timing.md` §11（L268–341）
+
+```bash
+# tinykeys 调用（去 import）expect 6；`^\| \`kb\.reg\.` expect 10
+# SHORTCUTS `id: '` expect 9；<FocusScope expect 13
+# 77+20+1+8+1=107；runOptimistic expect 2
+# 和弦拆分 python → COMBOS 10
+```
+
+命令全文在该文件 L270–341。
+
+### Vol 12 — `12-environment.md` §12（L229+）
+
+```bash
+rg -c '^\| `env\.' docs/qa/pm-feature-atlas/round-2/12-environment.md
+# expect 93
+# 抽点 python §12.2 → COUNT 93 TABLE 93 SYMDIFF []
+# 6+4+1+6+16+12+20+28=93
+```
+
+### Vol 13 — `13-admin-settings-fields.md` CLOSURE（L2360+）
+
+```bash
 node docs/qa/pm-feature-atlas/round-2/export-13-admin-settings-fields.mjs --count
 node docs/qa/pm-feature-atlas/round-2/export-13-admin-settings-fields.mjs --verify
-node docs/qa/pm-feature-atlas/round-2/export-13-admin-settings-fields.mjs --client-read | wc -l
-
-python3 -c "from pathlib import Path; t=Path('docs/qa/pm-feature-atlas/round-2/13-admin-settings-fields.md').read_text().splitlines(); print(sum(1 for l in t if l.startswith('| ') and not l.startswith('| key') and not l.startswith('| ---')))"
+# fields.total 1044 = 973 + 71；public_yes 430；client_read.keys 229
 ```
 
-Vol 13 `--count` / `--verify` (that PR’s environment; replay on e519470):
+`243` 与 `1044` 是不同闭集。不要相加。
 
-```
-fields.total              1044
-fields.static_or_expanded  973
-fields.template             71
-fields.public_yes          430
-client_read.keys           229
-```
-
-Equality: **`1044 = 973 + 71`**. These are export/reconciliation counts, not feature counts.
-
-### 2.4 Reverse diff (vol 14)
-
-Freeze vs `origin/develop` at `e10bd504b9` (read-only counterpart, not this freeze’s live UI).
+### Vol 14 — `14-pin-reverse-diff.md` §4.3（L459+）
 
 ```bash
-# i18n key set-diff
 python3 -c "import json,subprocess; f=json.loads(subprocess.check_output(['git','show','e519470d35:packages/i18n/src/locales/en.i18n.json'])); d=json.loads(subprocess.check_output(['git','show','origin/develop:packages/i18n/src/locales/en.i18n.json'])); print(len(f),len(d),len(set(f)-set(d)),len(set(d)-set(f)))"
-# expect: 7385 7392 29 36
-
-# 8-col CHANGED rows on the vol 14 file
+# expect 7385 7392 29 36
 rg -c '^\| `rev\.' docs/qa/pm-feature-atlas/round-2/14-pin-reverse-diff.md
 # expect 3
 ```
 
-Equalities:
+`7385-29=7356`；`1009+3=1012`；`199+1=200`；`only_freeze`（registry/settings/perms）=0。
 
-```
-7385 - 29 = 7356
-7392 - 36 = 7356
-1009 + 3  = 1012     # settings.add freeze + only_develop
-199  + 1  = 200      # permission ids freeze + only_develop
-only_freeze (registry / settings.add / permission) = 0
-8-col rev.* = 3      # 1 composer + 0 i18n CRA + 2 LDAP/SAML alert
-```
-
-### 2.5 i18n full reverse-check (vol 15) — `929 = 423 + 24 + 482`
-
-Authoritative extract (replay on e519470; same VERB set as [PR #24](https://github.com/jianwyao01/Rocket.Chat/pull/24) §2.1):
+### Vol 15 — `15-i18n-full.md` §2.1 / §3 + `15-i18n-must-fill-rows.md` §3
 
 ```bash
-python3 - <<'PY'
-import json, re
-data = json.load(open('packages/i18n/src/locales/en.i18n.json'))
-VERBS = {
-  "Pin","Unpin","Star","Unstar","Edit","Delete","Invite","Join","Leave","Create",
-  "Remove","Add","Save","Send","Reply","Forward","Share","Copy","Upload",
-  "Download","Import","Export","Archive","Unarchive","Mute","Unmute","Block","Unblock",
-  "Report","Search","Enable","Disable","Update","Cancel","Accept","Decline","Reject",
-  "Approve","Assign","Transfer","Close","Open","Hide","Show","Follow","Unfollow",
-  "Ignore","Mention","React","Quote","Prune","Reset","Restore","Ban","Kick",
-  "Register","Login","Logout","Subscribe","Unsubscribe","Connect","Disconnect",
-  "Install","Uninstall","Purchase","Request","Review","Publish",
-  "Convert","Move","Start","Stop","Pause","Resume","Record","Play","Call",
-  "Answer","Hold","Merge","Split","Lock","Unlock","Verify","Confirm","Submit",
-  "Apply","Clear","Filter","Sort","Refresh","Reload","Expand","Collapse",
-  "Select","Toggle","Change","Set","Grant","Revoke","Allow","Deny","Promote",
-  "Encrypt","Decrypt","Backup","Wipe","Purge","Scan","Check","Forgot",
-  "Translate","Favorite","Unfavorite","Mark","Jump","Reveal","Enter",
-}
-def flat(v):
-    if isinstance(v, str): return v
-    if isinstance(v, dict):
-        for k in ("other", "one", "zero"):
-            if isinstance(v.get(k), str): return v[k]
-        for x in v.values():
-            if isinstance(x, str): return x
-    return None
-n = 0
-for k, raw in data.items():
-    v = flat(raw)
-    if not v: continue
-    words = re.findall(r"[A-Za-z']+", v)
-    if not (1 <= len(words) <= 4): continue
-    first = words[0][:1].upper() + words[0][1:]
-    if first not in VERBS: continue
-    n += 1
-print("TOTAL", len(data), "EXTRACTED", n)
-PY
-# expect: TOTAL 7385 EXTRACTED 929
+# EXTRACTED python：15-i18n-full.md §2.1 → TOTAL 7385 EXTRACTED 929
+# 切片 python：§3 → HIT 423 MISS 24 OOS 482 SUM 929 MUST 24
+rg -c '^\| `fill\.' docs/qa/pm-feature-atlas/round-2/15-i18n-must-fill-rows.md
+# expect 24
 ```
 
-Slice (PR #24 §3): **`HIT 423  MISS 24  OOS 482  SUM 929  MUST 24`**.
-
-Equality: **`929 = 423 + 24 + 482`**.
-
-### 2.6 `6 ≤ 13` (do not collapse the two sets)
-
-- **Vol 6 `243` is the authoritative client-read closed set** (same-line 235 + multiline 8).
-- Vol 13’s own exporter grep was **`229`** — a **narrower** literal-first-arg scan (`useSetting` / `useSettingStructure` / `useSettingSetValue` / `settings.peek` / `settings.observe` / `settings.get`). It is not a second 243.
-- Leftovers that client-read but do **not** line up with a vol 13 registry row:
-  - `Chatops_Username` — client reads it; this freeze has **no** `settingsRegistry.add` for that id.
-  - `PageSize` — client literal; registry id is `Search.defaultProvider.PageSize`.
-
-`243` and `1044` are different closed sets (client-read keys vs admin registry fields). Do not add them.
+`929=423+24+482`。24 ≠ 0。
 
 ---
 
-## 3. Remaining holes (must stay visible)
+## 5. 总账 ≠ 功能总数
 
-### 3.1 Not started volumes (5, 8–12)
-
-| Vol | Why it is still a hole |
-| --- | --- |
-| 5 | Behavior replay of `[待渲染实测]` against a **live** e519470 instance. Agent still **RUNNING** as of 2026-08-21. **No PR.** If the instance does not boot, the assigned rule is **STOP** — do not paper over a failed boot with `[读]` rows or invented `[实测]`. Checklist source = [PR #19](https://github.com/jianwyao01/Rocket.Chat/pull/19) atlas tags (develop `e10bd504b9`, structural). Tag **recount is pending**; do not treat any unofficial ~N as this freeze’s verified checklist size. |
-| 8 | Not started. Gated on a live instance (vol 5). |
-| 9 | Not started. Gated on a live instance (vol 5). |
-| 10 | Not started. Gated on a live instance (vol 5). |
-| 11 | Not started. Gated on a live instance (vol 5). |
-| 12 | Not started. Gated on a live instance (vol 5). |
-
-Also still open on **finished** `[读]` volumes (not “done” in the live sense):
-
-- Vol 6: **32** high-impact keys listed at the end of `06-settings-impact.md` still require `[实测]`.
-- Vol 7 / 13 / 14 / 15: inventories only. No live upgrade.
-
-### 3.2 i18n 24 must-fill (from [PR #24](https://github.com/jianwyao01/Rocket.Chat/pull/24) §5)
-
-MISS keys that have a user-clickable control on **e519470** and are **not** covered by round-1 00–16. This ledger does **not** invent 8-column rows. Freeze `file:line` copied from that §5 (do not retarget develop).
-
-| # | key | freeze `file:line` (e519470, via PR #24 §5) |
-| --- | --- | --- |
-| 1 | `Accept_without_mic` | `packages/ui-voip/src/views/PermissionFlow/PermissionFlowModal.tsx:46` |
-| 2 | `VoIP_allow_and_accept` | `packages/ui-voip/src/views/PermissionFlow/PermissionFlowModal.tsx:49` |
-| 3 | `Call_without_mic` | `packages/ui-voip/src/views/PermissionFlow/PermissionFlowModal.tsx:55` |
-| 4 | `VoIP_allow_and_call` | `packages/ui-voip/src/views/PermissionFlow/PermissionFlowModal.tsx:58` |
-| 5 | `Allow` | `packages/ui-voip/src/views/PermissionFlow/PermissionFlowModal.tsx:67` |
-| 6 | `Open_sidebar` | `apps/meteor/client/components/SidebarToggler/SidebarTogglerButton.tsx:18` |
-| 7 | `Close_sidebar` | `apps/meteor/client/components/SidebarToggler/SidebarTogglerButton.tsx:18` |
-| 8 | `Remove_filter` | `apps/meteor/client/navbar/NavBarSearch/NavBarSearchInputAddon.tsx:38` |
-| 9 | `Connect` | `apps/meteor/client/components/connectionStatus/ConnectionStatusBar.tsx:67` |
-| 10 | `Confirm_new_workspace` | `apps/meteor/client/components/FingerprintChangeModalConfirmation.tsx:19` |
-| 11 | `Confirm_configuration_update` | `apps/meteor/client/components/FingerprintChangeModalConfirmation.tsx:19` |
-| 12 | `Open_dialpad` | `packages/ui-voip/src/views/MediaCallWidget/OngoingCall.tsx:80` |
-| 13 | `Close_dialpad` | `packages/ui-voip/src/views/MediaCallWidget/OngoingCall.tsx:80` |
-| 14 | `Open_in_room` | `packages/ui-voip/src/components/Cards/StreamCard/StreamCardOpenInRoom.tsx:16` |
-| 15 | `Stop_sharing` | `packages/ui-voip/src/components/Cards/StreamCard/StreamCardStopSharingButton.tsx:16` |
-| 16 | `Voice_call__user__cancel` | `packages/ui-voip/src/hooks/useMediaCallAction.ts:38` |
-| 17 | `Voice_call__user__reject` | `packages/ui-voip/src/hooks/useMediaCallAction.ts:46` |
-| 18 | `Call_again` | `packages/fuselage-ui-kit/src/blocks/VideoConferenceBlock/VideoConferenceBlock.tsx:155` |
-| 19 | `Call_back` | `packages/fuselage-ui-kit/src/blocks/VideoConferenceBlock/VideoConferenceBlock.tsx:155` |
-| 20 | `Open_call` | `apps/meteor/client/views/room/contextualBar/VideoConference/VideoConfBlockModal.tsx:13` |
-| 21 | `Set_up_2FA` | `apps/meteor/client/views/root/MainLayout/TwoFactorRequiredModal.tsx:23` |
-| 22 | `Add_more_users` | `apps/meteor/client/views/admin/users/AdminUserCreated.tsx:18` |
-| 23 | `Reload_to_update` | `apps/meteor/client/components/AutoupdateToastMessage.tsx:23` |
-| 24 | `Open_settings` | `apps/meteor/client/views/room/contextualBar/VideoConference/VideoConfConfigModal.tsx:78` |
-
-**24 ≠ 0.** Vol 15 is a reverse-check input, not an 8-column fill.
-
-### 3.3 Known exclusions
-
-These are **out of the closed sets on purpose**. Do not silently grow a volume to absorb them.
-
-- **Apps runtime permission keys** — `useApplyButtonFilters` / `/apps/actionButtons` is an open set (vol 7 §4).
-- **`manage-selected-settings` per-setting ids** — one permission opens an open set of setting-scoped ids; client does not enumerate them (vol 7).
-- **Server-only permission fixtures** — client has zero checks (vol 7). Examples called out there: `mention-all` / `mention-here` / `mobile-upload-file` / `view-p-room` (guest whitelist only) / `manage-moderation-actions` / `on-hold-livechat-room`.
-- **Commented `leave-team`** — `useLeaveTeam.tsx:25` is commented; not in the 148.
-- **`useUserPreference`** — user preference, not workspace setting (vol 6 exclusion).
-- **`settings.watch` / `getSetting` server-only** — not in the vol 6 client-read set.
-- **`Accounts_Default_User_Preferences_${effectiveKey}` dynamic family** — preference fallback, not the vol 6 workspace-key set.
-- **`packages/livechat` visitor widget** — a different client; not in vol 6.
-- **Admin Settings editor `useSettings()`** — pulls the whole table; not a closed key list (vol 6 / vol 13).
-- **MatrixFederation file moves** — develop relocated `MatrixFederationSearch/*` / `useMatrixFederationItems.ts` etc. That is **outside** vol 14’s three closed sets (toolbar/composer/routes · i18n verb-like · settings.add / permission id). Vol 14 did not invent a fourth set.
-- **Vol 15 OOS 482** — settings/permission/error/noun keys extracted by the VERB filter but not treated as must-fill actions.
-- **Vol 15 HIT 423** — string/id hits against **round-1** atlas ids, not a live pass on e519470.
-
-### 3.4 Honesty
-
-- This ledger contains **no `[实测]`**. Closed-set volumes are `[读]`. Behavior volumes are not started (vol 5 running, no results recorded here).
-- A later vol 5 PR may upgrade individual `[待渲染实测]` tags to `[实测]` **only after** a live boot and replay. Until that file exists, treat every behavior claim as unfinished.
-- Round-1 PR #19 is a structural merge on develop `e10bd504b9`. It is a **checklist source**, not this freeze’s live truth, and not a substitute for vols 5 / 8–12.
-- Do not paper over holes by summing 243 + 148 + 1044 + 929 or by quoting an unverified ~1117.
+- 不要加 `1082+243+148+4221+44+390+10+93+1044+3+929`。这些是 **不同闭集**（行为 id / settings / perms / JSX 分支 / stream / 错误路径 / 快捷键注册 / 环境 API / admin 字段 / 反向差 / i18n 动词）。
+- Vol 8 的 4221 是条件渲染分支，不是 4221 个功能。
+- Vol 11 的 6/10/9/13/107/2 是四套纸面闭集，不要加成「键盘功能」。
+- `[实测]` 只表示该行有截图，不表示该卷做完。
+- leftover 留下比写成 0 更诚实。
 
 ---
 
-## 4. How to merge
+## 6. 怎么合
 
-1. Keep source PRs **#20 #21 #22 #23 #24 as drafts**. They own the volume files and exporters. This file is the **index**.
-2. Branch this ledger from **`e519470d35b6caf5b228d81aef41c86aab3051f4`**. Do not rewrite volume counts against `develop`.
-3. When stacking onto one tree, take each volume file from its draft PR; do not re-export or re-count in this PR.
-4. Vol 5 / 8–12 stay absent until a live instance exists. A failed boot is a stop, not a merge candidate.
-5. After a real `[实测]` upgrade, add a pointer from this ledger to that volume’s PR — do not silently flip honesty tags here.
-
-`file:line` in this ledger is freeze-tree only (copied from the source volume PRs). No product code.
+1. 源 PR **#20–#24、#26–#32 保持 draft**。本文件只做索引。
+2. 本分支从冻结点长出，只改这一份 markdown。
+3. 合树时取各卷文件，不在本 PR 重导出。
+4. 以后某卷真的 live-closed，在 **该卷** 改标签，再回来改本表。不要在总账里静默翻成已闭合。
+5. `file:line` 只保证在 `e519470` + 各卷文件上存在。不改产品代码。
