@@ -1,0 +1,512 @@
+{
+  "_id": "6a89b4a6ccc27ae0f1f26304",
+  "wizard": {
+    "organizationType": "",
+    "industry": "",
+    "size": "",
+    "country": "",
+    "language": "",
+    "serverType": "",
+    "registerServer": false
+  },
+  "uniqueId": "7397b762-bb90-45d9-aba4-06995a1dfd01",
+  "installedAt": "2026-08-22T14:39:28.235Z",
+  "deploymentFingerprintHash": "",
+  "deploymentFingerprintVerified": true,
+  "version": "8.8.0-develop",
+  "tag": null,
+  "branch": null,
+  "totalUsers": 0,
+  "activeUsers": 0,
+  "activeGuests": 0,
+  "nonActiveUsers": 0,
+  "appUsers": 0,
+  "onlineUsers": 0,
+  "awayUsers": 0,
+  "busyUsers": 0,
+  "totalConnectedUsers": 0,
+  "offlineUsers": 0,
+  "totalRooms": 0,
+  "userLanguages": {
+    "none": 0
+  },
+  "totalChannels": 0,
+  "totalPrivateGroups": 0,
+  "totalDirect": 0,
+  "totalLivechat": 0,
+  "totalDiscussions": 0,
+  "totalThreads": 0,
+  "totalLivechatVisitors": 0,
+  "totalLivechatAgents": 0,
+  "totalLivechatManagers": 0,
+  "livechatEnabled": true,
+  "isDepartmentRemovalEnabled": false,
+  "departments": 0,
+  "totalTriggers": 0,
+  "totalCustomFields": 0,
+  "totalLivechatRoomsWithDepartment": 0,
+  "archivedDepartments": 0,
+  "omnichannelSources": [],
+  "totalLivechatPublicCustomFields": 0,
+  "livechatAutomaticForwardingUnansweredChats": true,
+  "routingAlgorithm": "Auto_Selection",
+  "onHoldEnabled": null,
+  "lastChattedAgentPreferred": null,
+  "assignNewConversationsToContactManager": null,
+  "visitorAbandonment": null,
+  "emailInboxes": 0,
+  "BusinessHours": {
+    "total": 0,
+    "strategy": ""
+  },
+  "totalChannelMessages": 0,
+  "omnichannelContactsBySource": {
+    "contactsCount": 0,
+    "conversationsCount": 0,
+    "sources": []
+  },
+  "uniqueContactsOfYesterday": {
+    "contactsCount": 0,
+    "conversationsCount": 0,
+    "sources": []
+  },
+  "uniqueContactsOfLastWeek": {
+    "contactsCount": 0,
+    "conversationsCount": 0,
+    "sources": []
+  },
+  "chatsOnHold": 0,
+  "uniqueContactsOfLastMonth": {
+    "contactsCount": 0,
+    "conversationsCount": 0,
+    "sources": []
+  },
+  "totalPrivateGroupMessages": 0,
+  "totalDiscussionsMessages": 0,
+  "totalDirectMessages": 0,
+  "totalLivechatMessages": 0,
+  "totalMessages": 0,
+  "lastLogin": "",
+  "lastSeenSubscription": "",
+  "os": {
+    "type": "Linux",
+    "platform": "linux",
+    "arch": "x64",
+    "release": "6.12.94+",
+    "uptime": 1796.78,
+    "loadavg": [
+      0.96,
+      2.12,
+      1.18
+    ],
+    "totalmem": 16791945216,
+    "freemem": 11948445696,
+    "cpus": [
+      {
+        "model": "Intel(R) Xeon(R) Processor",
+        "speed": 0,
+        "times": {
+          "user": 148250,
+          "nice": 0,
+          "sys": 27960,
+          "idle": 1614530,
+          "irq": 0
+        }
+      },
+      {
+        "model": "Intel(R) Xeon(R) Processor",
+        "speed": 0,
+        "times": {
+          "user": 144620,
+          "nice": 0,
+          "sys": 33040,
+          "idle": 1611600,
+          "irq": 0
+        }
+      },
+      {
+        "model": "Intel(R) Xeon(R) Processor",
+        "speed": 0,
+        "times": {
+          "user": 163230,
+          "nice": 0,
+          "sys": 34030,
+          "idle": 1593340,
+          "irq": 0
+        }
+      },
+      {
+        "model": "Intel(R) Xeon(R) Processor",
+        "speed": 0,
+        "times": {
+          "user": 151130,
+          "nice": 0,
+          "sys": 32000,
+          "idle": 1605910,
+          "irq": 0
+        }
+      }
+    ]
+  },
+  "process": {
+    "nodeVersion": "v22.22.1",
+    "pid": 12529,
+    "uptime": 14.952979916
+  },
+  "deploy": {
+    "method": "tar",
+    "platform": "selfinstall"
+  },
+  "fips": false,
+  "readReceiptsEnabled": false,
+  "readReceiptsDetailed": false,
+  "enterpriseReady": true,
+  "fileStoreType": "GridFS",
+  "uploadsTotal": 0,
+  "migration": {
+    "_id": "control",
+    "_updatedAt": "2026-08-22T14:39:28.730Z",
+    "locked": false,
+    "version": 335
+  },
+  "uploadsTotalSize": 0,
+  "instanceCount": 0,
+  "msEnabled": false,
+  "oplogEnabled": false,
+  "mongoVersion": "8.0.12",
+  "mongoStorageEngine": "wiredTiger",
+  "apps": {
+    "engineVersion": "1.66.0-develop",
+    "totalInstalled": false,
+    "totalActive": false,
+    "totalFailed": false,
+    "totalPrivateApps": false,
+    "totalPrivateAppsEnabled": false
+  },
+  "uniqueUsersOfYesterday": {
+    "year": 2026,
+    "month": 8,
+    "day": 21,
+    "data": []
+  },
+  "uniqueUsersOfLastMonth": {
+    "year": 2026,
+    "month": 8,
+    "day": 21,
+    "data": []
+  },
+  "uniqueUsersOfLastWeek": {
+    "year": 2026,
+    "month": 8,
+    "day": 21,
+    "data": []
+  },
+  "uniqueDevicesOfLastMonth": {
+    "year": 2026,
+    "month": 8,
+    "day": 21,
+    "data": []
+  },
+  "uniqueDevicesOfLastWeek": {
+    "year": 2026,
+    "month": 8,
+    "day": 21,
+    "data": []
+  },
+  "uniqueOSOfYesterday": {
+    "year": 2026,
+    "month": 8,
+    "day": 21,
+    "data": []
+  },
+  "uniqueOSOfLastWeek": {
+    "year": 2026,
+    "month": 8,
+    "day": 21,
+    "data": []
+  },
+  "uniqueOSOfLastMonth": {
+    "year": 2026,
+    "month": 8,
+    "day": 21,
+    "data": []
+  },
+  "uniqueDevicesOfYesterday": {
+    "year": 2026,
+    "month": 8,
+    "day": 21,
+    "data": []
+  },
+  "services": {
+    "ldap": {
+      "users": 0,
+      "enabled": false,
+      "loginFallback": false,
+      "encryption": "plain",
+      "mergeUsers": false,
+      "syncRoles": null,
+      "syncRolesAutoRemove": null,
+      "syncData": null,
+      "syncChannels": null,
+      "syncAvatar": true,
+      "groupFilter": false,
+      "backgroundSync": {
+        "enabled": null,
+        "interval": null,
+        "newUsers": null,
+        "existingUsers": null
+      },
+      "ee": {
+        "syncActiveState": null,
+        "syncTeams": null,
+        "syncRoles": null
+      }
+    },
+    "saml": {
+      "enabled": null,
+      "users": 0,
+      "signatureValidationType": null,
+      "generateUsername": null,
+      "updateSubscriptionsOnLogin": null,
+      "syncRoles": null,
+      "userDataCustomFieldMap": false
+    },
+    "cas": {
+      "enabled": false,
+      "users": 0,
+      "allowUserCreation": true,
+      "alwaysSyncUserData": true
+    },
+    "oauth": {
+      "apple": {
+        "enabled": false,
+        "users": 0
+      },
+      "dolphin": {
+        "enabled": false,
+        "users": 0
+      },
+      "drupal": {
+        "enabled": false,
+        "users": 0
+      },
+      "facebook": {
+        "enabled": false,
+        "users": 0
+      },
+      "github": {
+        "enabled": false,
+        "users": 0
+      },
+      "githubEnterprise": {
+        "enabled": false,
+        "users": 0
+      },
+      "gitlab": {
+        "enabled": false,
+        "users": 0
+      },
+      "google": {
+        "enabled": false,
+        "users": 0
+      },
+      "linkedin": {
+        "enabled": false,
+        "users": 0
+      },
+      "meteor": {
+        "enabled": false,
+        "users": 0
+      },
+      "nextcloud": {
+        "enabled": false,
+        "users": 0
+      },
+      "twitter": {
+        "enabled": false,
+        "users": 0
+      },
+      "wordpress": {
+        "enabled": false,
+        "users": 0
+      },
+      "custom": {}
+    }
+  },
+  "importer": {
+    "totalCSVImportedUsers": 0,
+    "totalHipchatEnterpriseImportedUsers": 0,
+    "totalSlackImportedUsers": 0,
+    "totalSlackUsersImportedUsers": 0
+  },
+  "videoConf": {
+    "videoConference": {
+      "started": 0,
+      "ended": 0
+    },
+    "direct": {
+      "calling": 0,
+      "started": 0,
+      "ended": 0
+    },
+    "livechat": {
+      "started": 0,
+      "ended": 0
+    },
+    "settings": {
+      "provider": "",
+      "dms": null,
+      "channels": null,
+      "groups": null,
+      "teams": null
+    }
+  },
+  "contactVerification": {
+    "totalContacts": 0,
+    "totalUnknownContacts": 0,
+    "totalMergedContacts": null,
+    "totalConflicts": 0,
+    "totalResolvedConflicts": null,
+    "totalBlockedContacts": 0,
+    "totalPartiallyBlockedContacts": 0,
+    "totalFullyBlockedContacts": 0,
+    "totalVerifiedContacts": 0,
+    "avgChannelsPerContact": 0,
+    "totalContactsWithoutChannels": 0,
+    "totalImportedContacts": null,
+    "totalUpsellViews": null,
+    "totalUpsellClicks": null
+  },
+  "dashboardCount": 0,
+  "messageAuditApply": 0,
+  "messageAuditLoad": 0,
+  "joinJitsiButton": 0,
+  "slashCommandsJitsi": 0,
+  "settings": {
+    "accounts": {
+      "account2fa": true
+    },
+    "e2ee": {
+      "e2e": false,
+      "e2eDefaultDirectRoom": false,
+      "e2eDefaultPrivateRoom": false
+    },
+    "email": {
+      "smtp": {
+        "smtpHost": "",
+        "smtpPort": "",
+        "fromEmail": ""
+      }
+    },
+    "fileUpload": {
+      "fileUploadEnable": true
+    },
+    "general": {
+      "apps": {
+        "frameworkDevMode": null,
+        "frameworkEnable": null
+      },
+      "nps": {
+        "surveyEnabled": true
+      },
+      "update": {
+        "updateChecker": true
+      }
+    },
+    "liveStreamAndBroadcasting": {
+      "liveStream": null,
+      "broadcasting": null
+    },
+    "message": {
+      "allowEditing": true,
+      "allowDeleting": true,
+      "allowUnrecognizedSlashCommand": false,
+      "allowBadWordsFilter": false,
+      "readReceiptEnabled": false,
+      "readReceiptStoreUsers": false
+    },
+    "push": {
+      "pushEnable": true
+    },
+    "search": {
+      "defaultProvider": {
+        "globalSearchEnabled": null
+      }
+    },
+    "threads": {
+      "threadsEnabled": true
+    },
+    "webRTC": {
+      "webRTCEnableChannel": null,
+      "webRTCEnablePrivate": null,
+      "webRTCEnableDirect": null
+    }
+  },
+  "pushQueue": 0,
+  "totalBroadcastRooms": 0,
+  "totalTriggeredEmails": 0,
+  "enterprise": {
+    "modules": [],
+    "tags": [],
+    "seatRequests": 0
+  },
+  "totalRoomsWithStarred": 0,
+  "integrations": {
+    "totalIntegrations": 0,
+    "totalIncoming": 0,
+    "totalIncomingActive": 0,
+    "totalOutgoing": 0,
+    "totalOutgoingActive": 0,
+    "totalWithScriptEnabled": 0
+  },
+  "totalRoomsWithPinned": 0,
+  "teams": {
+    "totalTeams": 0,
+    "totalRoomsInsideTeams": 0,
+    "totalDefaultRoomsInsideTeams": 0
+  },
+  "totalUserTOTP": 0,
+  "totalUserEmail2fa": 0,
+  "totalPinned": 0,
+  "totalStarred": 0,
+  "totalLinkInvitation": 0,
+  "totalLinkInvitationUses": 0,
+  "totalEmailInvitation": 0,
+  "totalE2ERooms": 0,
+  "logoChange": false,
+  "showHomeButton": true,
+  "totalEncryptedMessages": 0,
+  "totalManuallyAddedUsers": 0,
+  "totalSubscriptionRoles": 3,
+  "totalUserRoles": 9,
+  "totalCustomRoles": 0,
+  "totalWebRTCCalls": null,
+  "uncaughtExceptionsCount": 0,
+  "push": 3,
+  "pushSecured": false,
+  "homeTitleChanged": false,
+  "homeBodyChanged": false,
+  "customCSSChanged": false,
+  "onLogoutCustomScriptChanged": false,
+  "loggedOutCustomScriptChanged": false,
+  "loggedInCustomScriptChanged": false,
+  "dailyPeakConnections": 0,
+  "maxMonthlyPeakConnections": 0,
+  "matrixFederation": {
+    "enabled": false,
+    "maximumSizeOfPublicRoomsUsers": false,
+    "biggestRoom": null,
+    "smallestRoom": null,
+    "amountOfExternalUsers": 0,
+    "amountOfFederatedRooms": 0,
+    "externalConnectedServers": {
+      "quantity": 0,
+      "servers": []
+    }
+  },
+  "allowUnsafeQueryAndFieldsApiParamsEnabled": false,
+  "createdAt": "2026-08-22T14:39:34.671Z",
+  "_updatedAt": "2026-08-22T14:39:34.761Z",
+  "statsToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3b3Jrc3BhY2VJZCI6IiIsInVuaXF1ZUlkIjoiNzM5N2I3NjItYmI5MC00NWQ5LWFiYTQtMDY5OTVhMWRmZDAxIiwicmVjb3JkSWQiOiI2YTg5YjRhNmNjYzI3YWUwZjFmMjYzMDQiLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTIyVDE0OjM5OjM0Ljc1OTkxODEzMVoiLCJpbmZvIjp7InRvdGFsVXNlcnMiOjAsImFjdGl2ZVVzZXJzIjowLCJ0b3RhbENvbm5lY3RlZFVzZXJzIjowLCJvbW5pQ2hhbm5lbENvbnZlcnNhdGlvbnMiOjAsInRvdGFsUm9vbXMiOjAsInRvdGFsTWVzc2FnZXMiOjAsInVwbG9hZHNUb3RhbFNpemUiOjAsIm1pY3Jvc2VydmljZUVuYWJsZWQiOmZhbHNlLCJmaWxlU3RvcmVUeXBlIjoiR3JpZEZTIn19.OwU8pSkke1wrlTirOZ2QOxKBjSbAW3O4kh7pPK5cC2ZW8zFpqs1UDULOQZZ-kSNyyMje-B-tZXzDF9Yqbw4_dQTetbMWqfPDl3D_aqrQgprIVMShuNTrTrW8TzNRkWGrywTFIVUGm6n3zL20s9kbnaV7V_Q1E8RJxLVVz6AKVmZTgCEckjTw0ewB9y7OJ0sUk6FZ4SdbM8a1pbXsyaqFqo9bnJbJCfhMCqa81Afwz4zIlDQkW2wsigRSMaaxcRO-JEeg-0MUqHK41DVX3ijjeCrqK-u6zjq4bPuvlbETddprJJgoWEE-rURtaSBFtN0dvMaUceHRpftF2KF3-zUmXA",
+  "success": true
+}
