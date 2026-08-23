@@ -77,9 +77,9 @@
 | `rt.notify-logged/permissions-changed` | `notify-logged` / `permissions-changed` | 权限矩阵热更新 | CachedStore | PermissionsCachedStore | 按钮/侧栏/路由门随 `usePermission` 显隐 | vol 7 148 键 | `apps/meteor/client/cachedStores/PermissionsCachedStore.ts:8` [待渲染实测] |
 | `rt.notify-logged/private-settings-changed` | `notify-logged` / `private-settings-changed` | 私有/特权设置热更新 | sdk.stream（覆盖 CachedStore） | 有特权设置权的会话 | Admin Settings 私有集与 `settings.peek` 依赖处刷新 | `rt.notify-all/public-settings-changed` | `apps/meteor/client/cachedStores/PrivateSettingsCachedStore.ts:17` [读] |
 | `rt.notify-logged/roles-change` | `notify-logged` / `roles-change` | 用户房间/全局角色加减 | useStream | 用户角色 query；房间角色 query；成员列表 | 成员徽章、房间角色、成员表行即时变 | `rt.roles/roles` | `useUserRolesQuery.ts:31` `useRoomRolesQuery.ts:31` `useMembersList.ts:125` [实测] `shots/rt-12-realname-livepeer.png` |
-| `rt.notify-logged/updateAvatar` | `notify-logged` / `updateAvatar` | 他人头像 etag 变 | useStream | 已登录 UserProvider | 对应用户头像 src 带新 etag 重载 | `rt.notify-logged/Users:NameChanged` | `apps/meteor/client/providers/UserProvider/hooks/useUpdateAvatar.ts:13` [待渲染实测] |
+| `rt.notify-logged/updateAvatar` | `notify-logged` / `updateAvatar` | 他人头像 etag 变 | useStream | 已登录 UserProvider | 对应用户头像 src 带新 etag 重载 | `rt.notify-logged/Users:NameChanged` | `apps/meteor/client/providers/UserProvider/hooks/useUpdateAvatar.ts:13` [实测] `shots/rt-12-realname-livepeer.png`（黄 L）→ `shots/rt-41-admin-room-before-typing.png`（蓝方块，32×32 UFS 成功） |
 | `rt.notify-logged/updateCustomUserStatus` | `notify-logged` / `updateCustomUserStatus` | 新增/改自定义状态预设 | useStream+watch | 头像菜单 Status | Status 菜单出现/改名该自定义项 | `rt.notify-logged/deleteCustomUserStatus` | `useStatusItems.tsx:26` → `userStatuses.ts:75` [待渲染实测] |
-| `rt.notify-logged/updateEmojiCustom` | `notify-logged` / `updateEmojiCustom` | 新增/改自定义 emoji | useStream | EmojiPickerProvider | 选择器出现/更新该 emoji | `rt.notify-logged/deleteEmojiCustom` | `apps/meteor/client/providers/EmojiPickerProvider/useUpdateCustomEmoji.ts:14` [待渲染实测] |
+| `rt.notify-logged/updateEmojiCustom` | `notify-logged` / `updateEmojiCustom` | 新增/改自定义 emoji | useStream | EmojiPickerProvider | 选择器出现/更新该 emoji | `rt.notify-logged/deleteEmojiCustom` | `apps/meteor/client/providers/EmojiPickerProvider/useUpdateCustomEmoji.ts:14` [实测] `shots/rt-45-emoji-picker-vol9cat.png` `shots/rt-49-emoji-picker-vol9dog.png` |
 
 本表数据行：**12**。
 
@@ -88,7 +88,7 @@
 | 稳定语义 id | stream/event | 功能一句话 | 订阅 API | 何时订 | UI 效果 | 关联 | 出处 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `rt.notify-room/deleteMessage` | `notify-room` / `${rid}/deleteMessage` | 单条消息删除 | useStream + sdk.stream | 打开房间；无限列表；线程栏 | 气泡消失；线程引用剥掉 tmid | `rt.notify-room/deleteMessageBulk`；`rt.room-messages/rid` | `LegacyRoomManager.ts:214` `useInfiniteMessageQueryUpdates.ts:89` `useThreadMainMessageQuery.ts:40` `useThreadMessagesQuery.ts:62` [实测] `shots/rt-23-rt-live-ready-for-delete.png` → `shots/rt-36-admin-sees-typing.png` |
-| `rt.notify-room/deleteMessageBulk` | `notify-room` / `${rid}/deleteMessageBulk` | 批量删/只删文件/显示已删占位 | useStream + sdk.stream | 同上 | 时间线/线程一批消失，或附件被替换，或变 `t=rm` 占位 | 上一行 | `LegacyRoomManager.ts:223` `useInfiniteMessageQueryUpdates.ts:98` `useThreadMainMessageQuery.ts:44` `useThreadMessagesQuery.ts:71` [待渲染实测] |
+| `rt.notify-room/deleteMessageBulk` | `notify-room` / `${rid}/deleteMessageBulk` | 批量删/只删文件/显示已删占位 | useStream + sdk.stream | 同上 | 时间线/线程一批消失，或附件被替换，或变 `t=rm` 占位 | 上一行 | `LegacyRoomManager.ts:223` `useInfiniteMessageQueryUpdates.ts:98` `useThreadMainMessageQuery.ts:44` `useThreadMessagesQuery.ts:71` [实测] `shots/rt-41-admin-room-before-typing.png` → `shots/rt-48-after-bulk-prune-now.png` |
 | `rt.notify-room/messagesImported` | `notify-room` / `${rid}/messagesImported` | 房间完成消息导入 | sdk.stream | LegacyRoomManager 打开该房 | 清空历史再拉一页，时间线整段重载 | `rt.room-messages/rid` | `apps/meteor/app/ui-utils/client/lib/LegacyRoomManager.ts:210` [读] |
 | `rt.notify-room/messagesRead` | `notify-room` / `${rid}/messagesRead` | 已读回执/未读条清除 | useStream + sdk.stream | 打开房间；线程栏；已读回执弹层 | 未读点/条消失；线程消息标已读；ReadReceipts 表刷新 | `rt.room-messages/rid` | `LegacyRoomManager.ts:246` `useThreadMainMessageQuery.ts:54` `useThreadMessagesQuery.ts:90` `ReadReceiptsModal.tsx:37` [实测] `shots/rt-11-general-opened-unread-cleared.png` |
 | `rt.notify-room/user-activity` | `notify-room` / `${rid}/user-activity` | 他人正在输入/录音/上传/播放 | sdk.stream | `UserAction.addStream(rid)`（进房） | composer 上方出现「正在输入…」等活动条（忽略自己） | 本行只订不发；发出走 `sdk.publish` | `apps/meteor/app/ui/client/lib/UserAction.ts:87` [待渲染实测] |
@@ -105,7 +105,7 @@
 | `rt.notify-user/departmentAgentData` | `notify-user` / `${uid}/departmentAgentData` | 坐席部门数据变，重订询盘流 | useStream | Omni 手动队列（showQueue 且非 autoAssign 且坐席 available） | 重新 `initializeLivechatInquiryStream`，队列池换部门订阅 | 队列三键 | `apps/meteor/client/providers/OmnichannelProvider.tsx:139` [读] |
 | `rt.notify-user/force_logout` | `notify-user` / `${uid}/force_logout` | 服务端强制登出 | useStream | 已登录 `useForceLogout` | `forceLogout` session；SDK 传输下再 wipe 本地 token，回到 /login | `rt.notify-user/userData` | `apps/meteor/client/views/root/hooks/loggedIn/useForceLogout.ts:16` [读] |
 | `rt.notify-user/media-signal` | `notify-user` / `${uid}/media-signal` | 团队语音信令入站 | useStream | `useMediaSessionInstance` 有 userId | 来电铃/接通/挂断小组件；发出走 `useWriteStream` `media-calls`（非本行） | `rt.notify-user/video-conference` | `packages/ui-voip/src/providers/useMediaSessionInstance.ts:308` [读] |
-| `rt.notify-user/message` | `notify-user` / `${uid}/message` | 私密/ephemeral 消息进本地 Messages | sdk.stream | `onLoggedIn` | 当前房间时间线出现仅自己可见的私密气泡（缺省作者 rocket.cat）；线程缓存同步 | `rt.room-messages/rid` | `apps/meteor/client/startup/incomingMessages.ts:12` [待渲染实测] |
+| `rt.notify-user/message` | `notify-user` / `${uid}/message` | 私密/ephemeral 消息进本地 Messages | sdk.stream | `onLoggedIn` | 当前房间时间线出现仅自己可见的私密气泡（缺省作者 rocket.cat）；线程缓存同步 | `rt.room-messages/rid` | `apps/meteor/client/startup/incomingMessages.ts:12` [实测] `shots/rt-50-ephemeral-visible.png` |
 | `rt.notify-user/notification` | `notify-user` / `${uid}/notification` | 桌面通知 + 新消息铃声 | useStream | 已登录 `useNotifyUser`；embedded 仅失焦且在本房 | 系统/桌面通知；`notificationSounds.playNewMessage`；`notification` 全局事件 | `rt.notify-user/subscriptions-changed` | `apps/meteor/client/views/root/hooks/loggedIn/useNotifyUser.ts:59` [待渲染实测] |
 | `rt.notify-user/rooms-changed` | `notify-user` / `${uid}/rooms-changed` | 房间文档增改删，合并进订阅侧栏 | CachedStore | RoomsCachedStore | 侧栏房间名/主题/未读来源/Omni 字段即时变 | `rt.notify-user/subscriptions-changed` | `apps/meteor/client/cachedStores/RoomsCachedStore.ts:12` [实测] `shots/rt-07-rt-live-topic-keep.png` |
 | `rt.notify-user/subscriptions-changed` | `notify-user` / `${uid}/subscriptions-changed` | 订阅增改删：侧栏、忽略、踢出、新房间提示 | useStream + sdk.stream + CachedStore | 登录后常驻 + 开房/embedded | 侧栏增行/消失；被移出 toast 并回 /home（Omni 走 close 路由）；ignore 灰掉消息；新房间铃声；embedded 补订 | `rt.notify-user/rooms-changed`；`rt.notify-user/notification` | `SubscriptionsCachedStore.ts:12` `incomingMessages.ts:25` `useNotifyUser.ts:61` `useGoToHomeOnRemoved.ts:23` `useClearRemovedRoomsHistory.ts:14` `RoomOpenerEmbedded.tsx:41` [实测] `shots/rt-01-login-home.png` `shots/rt-11-general-opened-unread-cleared.png` |
@@ -122,7 +122,7 @@
 
 冻结 `e519470`。Meteor 3.4.1 `dsv` + Mongo 8.0.12 `rs0` 已起；`http://127.0.0.1:3000` = 200。登录 `rocketchat.internal.admin.test`。第二用户 `livepeer` / REST。房间 `#rt-live`。截图在 `docs/qa/pm-feature-atlas/round-2/shots/`。
 
-**本趟升 `[实测]`（10）** — 每行都有用户可见后果图（不用 `| \`rt.` 表头，避免污染 §5 `rg`）：
+**已升 `[实测]`（14）** — 每行都有用户可见后果图（不用 `| \`rt.` 表头，避免污染 §5 `rg`）：
 
 - room-messages/rid — livepeer 气泡 `rt-live peer ping 1`；其后 KEEP / KEEP2 — rt-03, rt-12, rt-36
 - user-presence/* — 成员卡 `Offline - away-live` — rt-08
@@ -130,12 +130,16 @@
 - notify-all/public-settings-changed — Home 标题 `RT Live Home` + body `rt-live home body` — rt-06
 - notify-logged/Users:NameChanged — 作者 `Live Peer Renamed @livepeer`（开了 `UI_Use_Real_Name`）— rt-12
 - notify-logged/roles-change — 消息/卡片徽章 `Livechat Agent` — rt-12
+- notify-logged/updateAvatar — livepeer 黄 L → 蓝 32×32（UFS `users.setAvatar` 成功）— rt-12 → rt-41
+- notify-logged/updateEmojiCustom — 选择器搜 `vol9cat` 橙方、`vol9dog` 绿方 — rt-45, rt-49
 - notify-room/deleteMessage — KEEP 在 rt-23 在、rt-36 已消失 — rt-23 → rt-36
+- notify-room/deleteMessageBulk — 四条 `bulk-prune target` + KEEP3 清空 — rt-41 → rt-48
 - notify-room/messagesRead — `#general` 未读角标 1 打开后消失 — rt-11
+- notify-user/message — rocket.cat ephemeral「Only you can see… not in this room」— rt-50
 - notify-user/rooms-changed — 房头 topic `rt-live topic NOW`；Favorites 收纳 — rt-07
 - notify-user/subscriptions-changed — `#general` 未读 1；开房后清；侧栏增 Omni/收藏 — rt-01, rt-11
 
-**触发过、本趟没拍到合格后果（`[待渲染实测]`）**：`user-activity`（DDP + 第二窗打字，composer 上无「正在输入」）；`deleteMessageBulk`（`rooms.cleanHistory` 两次成功，未拍到时间线批量消失瞬间）；`updateEmojiCustom`（`emoji-custom.create` 成功，选择器搜 `rtlive` 空）；`updateCustomUserStatus` / `deleteCustomUserStatus`（Admin `/admin/user-status` 表有 `rt-live-status`，那是 REST 列表，不是头像 Status 菜单流）；`public-info`（`custom-sounds.create` + Admin Sounds 表有 `rt-live-sound`，不是通知铃声 mux）；`permissions-changed`（`permissions.update` 成功，无矩阵热更新图）；`Users:Deleted`（删了 `doomed`，无时间线抹迹图）；`updateAvatar`（`users.setAvatar` UFS 写失败）；`message`（`@outsider` 已发，ephemeral 块未入镜）；`notification`（只有 tab/侧栏未读，无桌面通知）；`userData`（未隔离「自己的文档」热更新）；`importers/progress` / `integrationHistory`（Admin 页打开失败或表空）；队列 `agent` / `department`（无部门、无坐席专属队列图）。
+**本趟仍 leftover（`[待渲染实测]`）**：`user-activity`（两真浏览器同房，livepeer 作曲器有字且逐键输入，admin composer 上方仍无 `is typing`）；`updateCustomUserStatus` / `deleteCustomUserStatus`（Admin 表 REST，不是头像 Status 菜单流）；`public-info`；`permissions-changed`；`Users:Deleted`；`notification`；`userData`；`importers/progress` / `integrationHistory`；队列 `agent` / `department`。
 
 **未强行触发、保持 `[读]`**：Apps / UiKit、canned-responses、角色定义 CRUD（`roles.create` 回 EE）、license、Cloud banner/calendar、VoIP `media-signal`、WebDAV、`videoconf`（`no-videoconf-provider-app`）、`messagesImported`、`force_logout`（会踢掉本会话，本趟没放）、`omnichannel.priority-changed`、`departmentAgentData`、`deleteEmojiCustom`。
 
@@ -315,8 +319,8 @@ PY
 | `useStream` files | 37 | 37 |
 | `sdk.stream` files | 13 | 13 |
 | `Notifications.on` files | 0 | 0 |
-| `[实测]` 行 | 有后果截图才升 | 10 |
-| `[待渲染实测]` 行 | 本 seed 触发过但未拍到 | 16 |
+| `[实测]` 行 | 有后果截图才升 | 14 |
+| `[待渲染实测]` 行 | 本 seed 触发过但未拍到 | 12 |
 | `[读]` 行 | 未强行触发 / 非本 Community 门面 | 18 |
 
 `44 = 44 = 44`。`68 − 24 重复 bind = 44`。Hunch 与抽键一致。**不是 live-closed。**
