@@ -40,11 +40,11 @@
 | `ROOT_URL` | `http://127.0.0.1:3000` → **HTTP 200**；`TEST_MODE=true` `OVERWRITE_SETTING_Show_Setup_Wizard=completed` |
 | 登录 | `rocketchat.internal.admin.test` / 同密 |
 | 版本 | 8.8.0-develop；Community；`hasValidLicense=false` |
-| Feature preview | `/account/feature-preview` = 「No feature to preview」（`aiSearch` / `secondarySidebar` 未挂） |
+| Feature preview | **本 pass**：`Accounts_AllowFeaturePreview=true`（API `POST /settings/Accounts_AllowFeaturePreview`，与 Vol.5 同门）。Account → Feature preview 出现 **Filters and secondary sidebar** + **AI Search**，两开关已开。shot `24-account-feature-preview-toggles.webp` `25-feature-preview-enabled.webp`。此前空页 `19-feature-preview.webp` 仍作对照 |
 | 房间 | 仅 `#general`；无联邦房、无消息图、无 UiKit app、无 VoIP |
-| OS | Xfce：**Ctrl+Esc 打开系统应用菜单**，不是 RC leftover「未绑定」 |
+| OS | Xfce：**Ctrl+Esc 打开系统应用菜单**（leftover，不盖「不可达」） |
 
-登录页 / 进房：`01-login.webp` `02-home.webp`。preview 空页：`19-feature-preview.webp`。
+登录页 / 进房：`01-login.webp` `02-home.webp`。
 
 纸面闭合在 boot 后复跑仍对齐：tinykeys 调用 **6**、和弦 **10**、SHORTCUTS **9**、FocusScope **13**、`77+20+1+8+1=107`、`runOptimistic` **2**。
 
@@ -77,15 +77,15 @@
 | `kb.reg.search.mod-k.classic` | Ctrl/Cmd+K 聚焦房间搜索 | `$mod+K` | `FeaturePreviewOff` `aiSearch`；`NavBarSearch` 已挂 | `[实测]` ①`setFocus('filterText')`；placeholder「Search rooms (Ctrl+K)」= classic。Ctrl+K → 蓝框 + Recent（`#general` / admin / rocket.cat / 自己）。②无 REST。③不 persist。shot `03-ctrl-k-search.webp` | core+preview | `kb.doc.openSearch` | `apps/meteor/client/navbar/NavBarSearch/NavBarSearch.tsx:56-59` |
 | `kb.reg.search.mod-p.classic` | Ctrl/Cmd+P 同上 | `$mod+P` | 同左 | `[实测]` 同 K。本机未抢打印。shot `05-ctrl-p-search.webp` | core+preview | `kb.reg.search.mod-k.classic` | `NavBarSearch.tsx:61-64` |
 | `kb.reg.search.esc.classic` | Escape 清空并关搜索 overlay | `Escape` | 同左；全局 `window` | `[实测]` ①`resetField` + `close`；Esc 后 overlay 没了。②无 REST。③无。**无输入守卫**未另测。shot `04-escape-cleared.webp` | core+preview | `kb.reg.search.mod-k.classic` | `NavBarSearch.tsx:65-68` |
-| `kb.reg.search.mod-k.ai` | AI 搜索栏的 Ctrl/Cmd+K | `$mod+K` | `FeaturePreviewOn` `aiSearch` | `[读]` leftover：Community preview 页「No feature to preview」，顶栏仍是 classic placeholder。shot `19-feature-preview.webp` | core+preview | `kb.reg.search.mod-k.classic` | `apps/meteor/client/navbar/NavBarSearch/NavBarAISearch.tsx:61-64` |
-| `kb.reg.search.mod-p.ai` | AI 搜索栏的 Ctrl/Cmd+P | `$mod+P` | 同左 | `[读]` leftover 同 `mod-k.ai` | core+preview | `kb.reg.search.mod-k.ai` | `NavBarAISearch.tsx:66-69` |
-| `kb.reg.search.esc.ai` | Escape 清文本+滤镜并关 overlay | `Escape` | 同左 | `[读]` leftover 同 `mod-k.ai` | core+preview | `kb.reg.search.esc.classic` | `NavBarAISearch.tsx:70-73` |
+| `kb.reg.search.mod-k.ai` | AI 搜索栏的 Ctrl/Cmd+K | `$mod+K` | `FeaturePreviewOn` `aiSearch` | `[实测]` 开 AI Search 后顶栏挂 `NavBarAISearch`（右侧 **sparkle/stars**，不是 classic-only）。Ctrl+K → 获焦 + Recent。placeholder 仍写「Search rooms (Ctrl+K)」（`aiSearchActive` 无 license 时不会变成 ask-AI）。②无 REST。③不 persist。shot `25-feature-preview-enabled.webp` `26-ai-search-mounted.webp` `26b-search-addon-crop.webp` `27-ai-ctrl-k.webp` | core+preview | `kb.reg.search.mod-k.classic` | `apps/meteor/client/navbar/NavBarSearch/NavBarAISearch.tsx:61-64` |
+| `kb.reg.search.mod-p.ai` | AI 搜索栏的 Ctrl/Cmd+P | `$mod+P` | 同左 | `[实测]` Ctrl+P 同 overlay，未抢打印。shot `29-ai-ctrl-p.webp` | core+preview | `kb.reg.search.mod-k.ai` | `NavBarAISearch.tsx:66-69` |
+| `kb.reg.search.esc.ai` | Escape 清文本+滤镜并关 overlay | `Escape` | 同左 | `[实测]` Esc 关 overlay。Community 无 AI 滤镜 chip 可清。shot `28-ai-esc.webp` | core+preview | `kb.reg.search.esc.classic` | `NavBarAISearch.tsx:70-73` |
 | `kb.reg.shortcuts.shift-question` | Shift+? 打开快捷键说明 | `Shift+?` | `AppLayout` 已挂；目标不是 contentEditable / INPUT / TEXTAREA / SELECT / `dialog[open]` | `[实测]` ①`GenericModal`「Keyboard shortcuts」。用户菜单同入口。②无 REST。③关后不 persist。shot `06-keyboard-shortcuts-modal.webp` `06b-shortcuts-all-rows.webp` `18-user-menu.webp` `18b-shortcuts-from-menu.webp` | core | `kb.doc.openKeyboardShortcuts` | `apps/meteor/client/views/root/hooks/useKeyboardShortcutsHotkey.tsx:7-21,39-40`；`AppLayout.tsx:57` |
-| `kb.reg.sidebar.alt.legacy` | 焦点在侧栏房间项时 Alt 点开 kebab | `Alt` | `FeaturePreviewOff` `secondarySidebar`；目标 class 含 `rcx-sidebar-item` | `[读]` leftover：侧栏是 legacy（Channels / `# general`）；点房间行再按 Alt，**无 kebab**。shot `07-alt-key-leftover.webp` `22-alt-sidebar-retry.webp` | core+preview | `kb.reg.sidebar.alt.v2` | `apps/meteor/client/sidebar/hooks/useShortcutOpenMenu.ts:8-15`；`sidebar/RoomList/RoomList.tsx:50` |
-| `kb.reg.sidebar.alt.v2` | 新侧栏房间项 Alt 开菜单 | `Alt` | `FeaturePreviewOn` `secondarySidebar`；class 含 `rcx-sidebar-v2-item` | `[读]` leftover：`secondarySidebar` 未挂；preview 页无开关。shot `19-feature-preview.webp` | core+preview | `kb.reg.sidebar.alt.legacy` | `apps/meteor/client/views/navigation/sidebar/hooks/useShortcutOpenMenu.ts:8-15`；`navigation/sidebar/RoomList/RoomList.tsx:37` |
+| `kb.reg.sidebar.alt.legacy` | 焦点在侧栏房间项时 Alt 点开 kebab | `Alt` | `FeaturePreviewOff` `secondarySidebar`；目标 class 含 `rcx-sidebar-item` | `[读]` leftover：preview 开后 legacy 行已卸。此前 Off 时点房间行按 Alt **无 kebab**（不重试：行上没有 kebab）。shot `07-alt-key-leftover.webp` `22-alt-sidebar-retry.webp` | core+preview | `kb.reg.sidebar.alt.v2` | `apps/meteor/client/sidebar/hooks/useShortcutOpenMenu.ts:8-15`；`sidebar/RoomList/RoomList.tsx:50` |
+| `kb.reg.sidebar.alt.v2` | 新侧栏房间项 Alt 开菜单 | `Alt` | `FeaturePreviewOn` `secondarySidebar`；class 含 `rcx-sidebar-v2-item` | `[读]` leftover：v2 已挂（All / Favorites / Discussions…）。`SidebarItemWithData` **不传 `menu`**，行上无 kebab；hover `#general` 只有 tooltip。未再发明 Alt+click。shot `30-v2-sidebar.webp` `31-v2-alt-leftover.webp` | core+preview | `kb.reg.sidebar.alt.legacy` | `apps/meteor/client/views/navigation/sidebar/hooks/useShortcutOpenMenu.ts:8-15`；`navigation/sidebar/RoomList/RoomList.tsx:37` |
 | `kb.reg.subscription.konami` | Admin 订阅页 Konami 切 license tab | `ArrowUp ArrowUp ArrowDown ArrowDown ArrowLeft ArrowRight ArrowLeft ArrowRight b a` | 仅 `SubscriptionPage` 挂载时；`useSessionStorage('admin:showLicenseTab')` | `[读]` leftover：`/admin/subscription` 打 Konami 后仍是 Community 卡，**无 license tab**。不发明第二次成功。shot `08-subscription-page.webp` `09-konami-leftover.webp` | core+admin | （无） | `apps/meteor/client/views/admin/subscription/SubscriptionPage.tsx:39-42` |
 
-**A 计数**：10。调用点 6。实机：`[实测]` 4（classic K/P/Esc + Shift+?）+ leftover 6（AI×3 + Alt legacy/v2 + Konami）= 10。
+**A 计数**：10。调用点 6。实机：`[实测]` 7（classic K/P/Esc + Shift+? + AI K/P/Esc）+ leftover 3（Alt legacy / Alt v2 无 kebab / Konami）= 10。
 
 互斥挂载（不是排除，只是运行时二选一）：
 
@@ -154,8 +154,8 @@
 | `focus.main-content` | 主列 `main#main-content` | hash `#main-content` | 已登录主壳 | `[读]` leftover：未走 `#main-content` hash | core | `focus.skip.main` | `MainContent.tsx:23-26` |
 | `focus.scope.navbar-search` | 顶栏搜索包一层 FocusScope | （无 trap） | 非 embed | `[实测]` ①Ctrl+K 后搜索获焦 + Recent listbox。②无。③无。shot `03-ctrl-k-search.webp` | core | `kb.reg.search.mod-k.*` | `NavBarNavigation.tsx:17` |
 | `focus.scope.sidebar.legacy` | 旧侧栏 FocusScope | （无 trap） | `secondarySidebar` Off | `[实测]` ①legacy 侧栏已挂（Channels / `# general`）。无 contain trap。②无。③无。shot `02-home.webp` `22-alt-sidebar-retry.webp` | core+preview | `kb.adj.sidebar.arrows` | `sidebar/SidebarRegion.tsx:93` |
-| `focus.scope.nav.primary` | 新导航第一块 FocusScope | （无 trap） | `secondarySidebar` On | `[读]` leftover：v2 导航未挂。shot `19-feature-preview.webp` | core+preview | `focus.scope.nav.secondary` | `NavigationRegion.tsx:95` |
-| `focus.scope.nav.secondary` | 新导航第二块 FocusScope | （无 trap） | 同左 | `[读]` leftover 同左 | core+preview | `focus.scope.nav.primary` | `NavigationRegion.tsx:102` |
+| `focus.scope.nav.primary` | 新导航第一块 FocusScope | （无 trap） | `secondarySidebar` On | `[实测]` ①v2 左栏已挂（All / Favorites / Discussions / In progress / Queue / On hold）。无 contain trap。②无。③无。shot `25-feature-preview-enabled.webp` `30-v2-sidebar.webp` | core+preview | `focus.scope.nav.secondary` | `NavigationRegion.tsx:95` |
+| `focus.scope.nav.secondary` | 新导航第二块 FocusScope | （无 trap） | 同左 | `[实测]` ①房间列 / SidePanel 与滤镜同开（`#general` 预览「You: vol11-opt-send-…」）。shot `30-v2-sidebar.webp` `30b-sidebar-crop.webp` | core+preview | `focus.scope.nav.primary` | `NavigationRegion.tsx:102` |
 | `focus.scope.room.invite` | 邀请订阅房间整页 FocusScope | （无 trap） | `isInviteSubscription` | `[读]` leftover：无 invite 订阅房间 | core | `focus.scope.room` | `Room.tsx:44` |
 | `focus.scope.room` | 普通房间壳 FocusScope | （无 trap） | 非 invite | `[实测]` ①`#general` 房间壳。关 mark-all 后焦点回到消息 listitem 蓝框。②无。③无。shot `15-markall-modal-esc-restore.webp` | core | `kb.adj.msglist.tab` | `Room.tsx:53` |
 | `focus.scope.contextualbar` | 上下文栏 autoFocus + restoreFocus | Esc 关栏 | toolbox tab 打开 | `[实测]` ①Channel info `/channel-settings`。Tab 仍在栏内。未截关栏还焦。②无。③无。shot `12-room-contextual-bar.webp` `12b-contextual-bar-tab-focus.webp` | core | `kb.adj.contextualbar.esc` | `ContextualbarDialog.tsx:40` |
@@ -171,7 +171,7 @@
 
 **B 计数**：FocusScope JSX 13 + skip + main + 3 list hooks = **18** 行。`13` 必须能被下面的 `rg '<FocusScope'` 复跑对上。
 
-实机能开：navbar-search / sidebar.legacy / room / contextualbar / modal（+ Create channel）。打不开 leftover：invite / NavigationRegion×2 / ImageGallery / VideoConf / VoIP×2 / UiKit。skip-link 未 Tab 出。
+实机能开：navbar-search / sidebar.legacy（preview Off 时）/ NavigationRegion×2（preview On 时）/ room / contextualbar / modal（+ Create channel）。打不开 leftover：invite / ImageGallery / VideoConf / VoIP×2 / UiKit。skip-link 未 Tab 出。Video/VoIP/UiKit/Konami 本 pass 不重试。
 
 ---
 
@@ -353,7 +353,8 @@ PY
 - **`apps/meteor/ee/client`**：本冻结路径不存在。
 - **livechat visitor widget**（`packages/livechat`）：另一客户端，不进本闭集。
 - **debounce/throttle 107**：纸面计数。不发明 DOM 时序实测。
-- **打不开的 FocusScope**：invite / v2 NavigationRegion×2 / ImageGallery / VideoConf / VoIP×2 / UiKit。Community + 本库只有 `#general`。
-- **Ctrl+Esc**：Xfce 系统菜单，不是 RC unbound。
+- **打不开的 FocusScope**：invite / ImageGallery / VideoConf / VoIP×2 / UiKit。Community + 本库只有 `#general`。本 pass 不重试 Video/VoIP/UiKit/Konami。
+- **Ctrl+Esc**：Xfce 系统菜单 leftover，不盖「不可达」。
+- **侧栏 Alt**：v2 行无 `menu`/kebab；legacy 行此前也无 kebab。不发明 Alt+click。
 
 `file:line` 只保证在 `e519470` 上存在。
