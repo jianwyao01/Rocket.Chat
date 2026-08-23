@@ -27,7 +27,7 @@
 
 走访文件 **3339**。表体数据行 **390** = toast 298 + qmeta 14 + inline 78。
 
-Live（2026-08-22，同一冻结，boot 已通）：**8 `[实测]` + 382 `[读]` = 390**。未把任何一行盖成不可达。Volume 10 **未** live-closed。
+Live（2026-08-23，同一冻结，boot 已通）：**11 `[实测]` + 379 `[读]` = 390**。未把任何一行盖成不可达。Volume 10 **未** live-closed。
 
 ## 3. 闭集表（一行一路径）
 
@@ -382,7 +382,7 @@ Live（2026-08-22，同一冻结，boot 已通）：**8 `[实测]` + 382 `[读]`
 | `err.t.useQuickActions.216` | visitor Email 失败 | error toast：`Customer_without_registered_email` 「The customer does not have a registered email address」 | 关闭 toast；重试同一动作 | `toast` | `room` | Customer_without_registered_email | `apps/meteor/client/views/room/Header/Omnichannel/QuickActions/hooks/useQuickActions.tsx:216` [读] |
 | `err.t.ShareLocationModal.54` | on Confirm — catch | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `room` | api | `apps/meteor/client/views/room/ShareLocation/ShareLocationModal.tsx:54` [读] |
 | `err.t.ComposerAnonymous.31` | result — mutation/query onError | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `room` | api | `apps/meteor/client/views/room/composer/ComposerAnonymous.tsx:31` [读] |
-| `err.t.ComposerJoinWithPassword.29` | handle Join Channel — catch; 提交/保存 | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `room` | api | `apps/meteor/client/views/room/composer/ComposerJoinWithPassword.tsx:29` [读] |
+| `err.t.ComposerJoinWithPassword.29` | 普通用户直达 `/channel/vol10-secret`（`joinCodeRequired`），预览栏填错误口令并 Join | error toast：「Invalid code [error-code-invalid]」；口令框红框 | 关 toast；仍停在预览，未入房；回 `/home` | `toast` | `room` | error-code-invalid | `apps/meteor/client/views/room/composer/ComposerJoinWithPassword.tsx:29` [实测] `shots/vol10/22-join-wrong-password.webp` + `-recover.webp` |
 | `err.t.ComposerMessage.38` | composer Props — catch; 点击 | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `room` | api | `apps/meteor/client/views/room/composer/ComposerMessage.tsx:38` [读] |
 | `err.t.ComposerMessage.65` | new Message Sent — catch | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `room` | api | `apps/meteor/client/views/room/composer/ComposerMessage.tsx:65` [读] |
 | `err.t.ComposerOmnichannelInquiry.37` | handle Take Inquiry — catch | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `room` | api | `apps/meteor/client/views/room/composer/ComposerOmnichannel/ComposerOmnichannelInquiry.tsx:37` [读] |
@@ -463,11 +463,11 @@ Live（2026-08-22，同一冻结，boot 已通）：**8 `[实测]` + 382 `[读]`
 | `err.t.processMessageUploads.155` | composed Message — catch | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `shell` | api | `apps/meteor/client/lib/chats/flows/processMessageUploads.ts:155` [读] |
 | `err.t.processSetReaction.31` | last Message — catch | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `shell` | api | `apps/meteor/client/lib/chats/flows/processSetReaction.ts:31` [读] |
 | `err.t.processTooLongMessage.20` | `#general` 发送 ≥81 字（本种子 `Message_MaxAllowedSize=80` 且关闭转附件） | error toast：「Message too long」 | 关闭 toast；超长稿仍留在 composer | `toast` | `shell` | Message_too_long | `apps/meteor/client/lib/chats/flows/processTooLongMessage.ts:20` [实测] `shots/vol10/02-message-too-long.webp` + `-recover.webp` |
-| `err.t.requestMessageDeletion.11` | request Message Deletion 失败 | error toast：`Message_deleting_blocked` 「This message cannot be deleted anymore」 | 关闭 toast；检查权限/房间设置后再试 | `toast` | `shell` | Message_deleting_blocked | `apps/meteor/client/lib/chats/flows/requestMessageDeletion.ts:11` [读] |
+| `err.t.requestMessageDeletion.11` | 本种子 `Message_AllowDeleting=false`；`vol10user` 对己消息无 Delete 菜单，Edit 后清空 composer 再发送 | error toast：「This message cannot be deleted anymore」；编辑态仍在、原文被 reset 回 composer | 关 toast；Esc 取消编辑 | `toast` | `shell` | Message_deleting_blocked | `apps/meteor/client/lib/chats/flows/requestMessageDeletion.ts:11` [实测] `shots/vol10/23-delete-blocked.webp` + `-recover.webp` |
 | `err.t.sendMessage.76` | send Message — catch | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `shell` | api | `apps/meteor/client/lib/chats/flows/sendMessage.ts:76` [读] |
 | `err.t.sendMessage.123` | original Message — catch | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `shell` | api | `apps/meteor/client/lib/chats/flows/sendMessage.ts:123` [读] |
 | `err.t.sendMessage.146` | original Message — catch | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `shell` | api | `apps/meteor/client/lib/chats/flows/sendMessage.ts:146` [读] |
-| `err.t.uploadFiles.19` | merged Files Length 失败 | error toast：`You_cant_upload_more_than__count__files` 「You can't upload more than {{count}} files at once.」 | 关闭 toast；按文案改正输入后再提交 | `toast` | `shell` | You_cant_upload_more_than__count__files | `apps/meteor/client/lib/chats/flows/uploadFiles.ts:19` [读] |
+| `err.t.uploadFiles.19` | `#general` composer 一次附上 11 个文件（上限 10） | error toast：「You can't upload more than 10 files at once.」 | 关 toast；composer 仍空 | `toast` | `shell` | You_cant_upload_more_than__count__files | `apps/meteor/client/lib/chats/flows/uploadFiles.ts:19` [实测] `shots/vol10/25-upload-11-toast.webp` + `-recover.webp` |
 | `err.t.uploadFiles.28` | room 失败 | error toast：`You_cant_send_unencrypted_files_in_an_encrypted_room` | 关闭 toast；按文案改正输入后再提交 | `toast` | `shell` | You_cant_send_unencrypted_files_in_an_encrypted_room | `apps/meteor/client/lib/chats/flows/uploadFiles.ts:28` [读] |
 | `err.t.uploadFiles.50` | encrypted File 失败 | error toast：`Error_encrypting_file` 「Error while encrypting file」 | 关闭 toast；重试同一动作 | `toast` | `shell` | Error_encrypting_file | `apps/meteor/client/lib/chats/flows/uploadFiles.ts:50` [读] |
 | `err.t.callWithErrorHandling.13` | call With Error Handling — catch | error toast：`getErrorMessage(error)`（API `reason`/`error`/`message`，经 `t()`） | 关闭 toast；按 API 文案修正后重试同一动作 | `toast` | `shell` | api | `apps/meteor/client/lib/utils/callWithErrorHandling.ts:13` [读] |
@@ -546,7 +546,7 @@ cd apps/meteor && meteor npm run dsv
 
 ## 7. Live 等式（未关闭）
 
-**8 + 382 = 390**。`[实测]` 只这 8 行（截图在 `shots/vol10/`）。下面不是表体，不计入 `rg '^\| \`err\.'`：
+**11 + 379 = 390**。`[实测]` 只这 11 行（截图在 `shots/vol10/`）。下面不是表体，不计入 `rg '^\| \`err\.'`：
 
 1. `err.t.useValidateInviteQuery.42` — Failed to validate invite token — 关 toast；`/home`
 2. `err.t.useInviteTokenMutation.31` — Failed to activate invite token — 关 toast；`/home`
@@ -556,19 +556,25 @@ cd apps/meteor && meteor npm run dsv
 6. `err.i.EditDepartmentWithData.30` — Department not found — 离开 Departments
 7. `err.i.RoomOpener.40` — Room not found / The room does not exist or you may not have access permission — Homepage → `/home`
 8. `err.i.UserInfoWithData.110` — User not found（#general User Info 栏）— 关栏
+9. `err.t.ComposerJoinWithPassword.29` — Invalid code [error-code-invalid] — 关 toast；仍预览
+10. `err.t.requestMessageDeletion.11` — This message cannot be deleted anymore — 关 toast；Esc 取消编辑
+11. `err.t.uploadFiles.19` — You can't upload more than 10 files at once. — 关 toast
 
 本种子走过但 **不升**（DOM 对不上该行，不盖不可达）：
 
 - `err.i.MessageSearchTab.123`：`/channel/general/rocket-search` 显示 **No results found**，Search Provider 在本种子是活的，没有 Callout。
 - `err.t.CreateChannelModal.184`：重名 `general` 是字段红字 **The channel '#general' already exists.**，不是 catch toast。
-- `err.t.requestMessageDeletion.11`：删 `vol10-seed-delete-me` 出确认框 **Are you sure?**，不是 `Message_deleting_blocked` toast（未关 `Message_AllowDeleting`）。
-- `err.t.RegisterForm.116`：注册页是字段 **Name required** / 密码复杂度，不是 `error-too-many-requests` toast。
+- 登录错密 / 假邮箱：登录卡字段红字 **User not found or incorrect password**（`20-login-wrong.webp`、`20b-login-invalid-email.webp`）。`LoginForm` 不在 390 闭集，不发明行。
+- `err.t.RegisterForm.116`：空表是 **Name/Email/Username/Password required**；占用邮箱是字段/浮层 **The email entered is invalid** + 密码复杂度（`21-register-empty.webp`、`21-register-taken.webp`）。不是 `error-too-many-requests` toast。
+- 管理员删 `vol10-seed-delete-me`（当时未关删除）：确认框 **Are you sure?**，不是 blocked toast（`08-delete-confirm-modal.webp`）。本轮关 `Message_AllowDeleting` 后已用 `vol10user` 升 `.11`。
+- 跳转 `/channel/general?msg=not-a-real-message-vol10`：房间照常打开，无 toast / 无 inline（`24-jump-missing-msg-miss.webp`）。`useTryToJumpToMessage` 无 error UI；`Message_not_found` 是 warning toast 且不在本册。
+- `err.t.usePermalinkAction.43`：未走 copy-link catch（跳缺失消息不是该调用点）。
 - `err.t.useInviteTokenMutation.18`（onSuccess 且无 `room.name`）：本种子走的是 onError `.31`，没截到 `.18`。
 - `err.i.AgentInfo.42`：`/omnichannel/agents/info/not-a-real-agent-vol10` 是 **Application Error / The application GUI just crashed.**，不是 `User_not_found`（`13-agent-not-found-miss.webp`）。
 - `err.i.AppInstances.53`：`/marketplace/explore/info/…/instances` 停在 App Info skeleton，没有「App not found」（`14-app-not-found-miss.webp`）。
 - `err.i.EditRolePageWithData.28`：假 role 走的是 line 20 Callout **Invalid role**，不是 line 28 `GenericError`（`15-role-not-found.webp`）。
 - `err.i.OAuthAuthorizationPage.27`：`/oauth/authorize` 与假 `client_id` 都被服务端重定向到 `/oauth/error/404` 的 `OAuthErrorPage`（「Error」/「Invalid OAuth client」）。该页不在 390 闭集，不是 AuthorizationPage isError（`16-oauth-error.webp`、`18-oauth-authorize.webp`）。
-- composer 上传（`FileUpload_MaxFileSize=10`）：composer 卡片红字 **Upload failed**，没有 toast，不升 `processMessageUploads` / `uploadFiles` 任一行（`17-upload-fail-inline.webp`）。
+- composer 超小体积上传（当时 `FileUpload_MaxFileSize=10`）：卡片红字 **Upload failed**，没有 toast，不升 `processMessageUploads` / `uploadFiles.28/.50`（`17-upload-fail-inline.webp`）。11 文件上限 toast 已升 `.19`。
 - `Avatar_format_invalid`：`.txt` 走 `isValidImageFormat` 只 `resolve(false)`，一般不抛 toast。
 - 2FA：`TEST_MODE` 短路，本轮没做成。
 
@@ -1091,11 +1097,11 @@ PY
 
 ```bash
 rg -c '\[实测\]' docs/qa/pm-feature-atlas/round-2/10-errors.md
-# 表体 8 行 + 正文提及；表体用：
+# 表体 11 行 + 正文提及；表体用：
 rg -c '^\| `err\.[^`]+` .*\[实测\]' docs/qa/pm-feature-atlas/round-2/10-errors.md
-# expect 8
+# expect 11
 ```
 
 闭集等式：**298 + 14 + 78 = 390**。
-Live 等式：**8 `[实测]` + 382 `[读]` = 390**。Volume 10 未 live-closed。
+Live 等式：**11 `[实测]` + 379 `[读]` = 390**。Volume 10 未 live-closed。
 toast API 分类等式见 §6。
