@@ -1720,9 +1720,9 @@ kind 等式（只核行数）：`@@KIND_EQ@@ = @@NSTATES@@`。
 | 登录 | `rocketchat.internal.admin.test` 成功 |
 | 产品 merge-base | `e519470` |
 
-Walk 并截图：login、account security / profile / preferences、home、`#general`（header / composer / message / toolbox / More 菜单）、channel info、members、directory channels / users / teams、Create channel / team / DM / discussion 弹层、account security 2FA（TOTP / Email）展开。
+Walk 并截图：既有表面，加上 Threads 空/有列表/打开线程、Search 空/有结果、Mentions 空、Pinned/Starred 有消息、Files 空、Notifications、Members UserInfo/Invite/Add、emoji picker、Create channel/team 空名 FieldError。
 
-未打开因而不晋级：Create 弹层内 FieldError / broadcast hint、DM 弹层无 errors.users（0 行）、TOTP QR / backup codes（未开启）、E2EE accordion、Video/Voice call chrome、Game Center、Outlook、VoIP 组、Apps inject、federation External、SAML。More 内层 Pin/Star/Follow/Copy/Edit/Delete 等是 hook 配置，闭集无独立 JSX 行，只晋级 GenericMenu sections / GenericMenuItem icon+content。
+未打开因而不晋级：Create broadcast hint、DM FieldError、TOTP QR / backup、E2EE accordion、Video/Voice/Game/Outlook/VoIP/Apps/federation/SAML、Files 非空、emoji 搜索/preview。Bold/Italic 只 wrap 文本、Add link 弹层直线无闭集行。
 
 截图目录：`docs/qa/pm-feature-atlas/round-2/shots/`。标签回写：同目录 `live-08-states.json` 只改诚实列，不改抽取器、不改 4221 行集。未点击可达行仍 `[待渲染实测]`。不要用 `[不可达]` 清零。本卷 **不是** live-closed。
 
